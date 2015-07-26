@@ -1,0 +1,14 @@
+[package]
+name = "r2fa"
+version = "0.1.0"
+authors = ["Rodolphe Breard <rodolphe@what.tf>"]
+description = "Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication."
+repository = "https://github.com/breard-r/r2fa"
+keywords = ["2fa", "otp", "hotp", "totp"]
+license = "ISC"
+
+[dependencies]
+rustc-serialize = "^0.3.15"
+rust-crypto = "^0.2.31"
+base32 = "^0.3.0"
+time = "^0.1.31"
