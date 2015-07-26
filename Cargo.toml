@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
 description = "Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication."
 repository = "https://github.com/breard-r/r2fa"
+readme = "README.md"
 keywords = ["2fa", "otp", "hotp", "totp"]
 license = "ISC"
 
