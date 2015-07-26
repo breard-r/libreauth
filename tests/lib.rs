@@ -21,10 +21,10 @@ use r2fa::{TOTPBuilder, HOTPBuilder};
 
 #[test]
 fn test_hotp() {
-    let key = "12345678901234567890".to_string().into_bytes();
+    let key_ascii = "12345678901234567890".to_string();
 
     let code = HOTPBuilder::new()
-        .key(&key)
+        .ascii_key(&key_ascii)
         .finalize()
         .generate();
 
@@ -34,10 +34,10 @@ fn test_hotp() {
 
 #[test]
 fn test_totp() {
-    let key = "12345678901234567890".to_string().into_bytes();
+    let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 
     let code = TOTPBuilder::new()
-        .key(&key)
+        .base32_key(&key_base32)
         .finalize()
         .generate();
 
