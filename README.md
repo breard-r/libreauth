@@ -42,6 +42,7 @@ let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 let code = TOTPBuilder::new()
     .base32_key(&key)
     .finalize()
+    .unwrap()
     .generate();
 assert_eq!(code.len(), 6);
 ```

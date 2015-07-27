@@ -42,20 +42,24 @@ impl TOTP {
     /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
     /// let mut totp = r2fa::otp::TOTPBuilder::new()
     ///     .base32_key(&key_base32)
-    ///     .finalize();
+    ///     .finalize()
+    ///     .unwrap();
     ///
     /// let code = totp.generate();
     /// assert_eq!(code.len(), 6);
     /// ```
     pub fn generate(&mut self) -> String {
         let counter = self.get_counter();
-        HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .key(&self.key.clone())
             .counter(counter)
             .nb_digits(self.nb_digits)
             .hash_function(self.hash_function)
-            .finalize()
-            .generate()
+            .finalize();
+        match hotp {
+            Ok(mut h) => h.generate(),
+            Err(e) => panic!(e),
+        }
     }
 }
 
@@ -67,7 +71,8 @@ impl TOTP {
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 /// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .key(&key)
-///     .finalize();
+///     .finalize()
+///     .unwrap();
 ///```
 ///
 ///```
@@ -95,7 +100,7 @@ impl TOTP {
 ///     .finalize();
 ///```
 pub struct TOTPBuilder {
-    key: Vec<u8>,
+    key: Option<Vec<u8>>,
     timestamp: u64,
     period: u32,
     initial_time: u64,
@@ -107,7 +112,7 @@ impl TOTPBuilder {
     /// Generates the base configuration for TOTP code generation.
     pub fn new() -> TOTPBuilder {
         TOTPBuilder {
-            key: vec![],
+            key: None,
             timestamp: time::now().to_timespec().sec as u64,
             period: 30,
             initial_time: 0,
@@ -118,25 +123,26 @@ impl TOTPBuilder {
 
     /// Sets the shared secret.
     pub fn key(&mut self, key: &Vec<u8>) -> &mut TOTPBuilder {
-        self.key = key.clone();
+        self.key = Some(key.clone());
         self
     }
 
     /// Sets the shared secret. This secret is passed as an ASCII string.
     pub fn ascii_key(&mut self, key: &String) -> &mut TOTPBuilder {
-        self.key = key.clone().into_bytes();
+        self.key = Some(key.clone().into_bytes());
         self
     }
 
     /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
     pub fn hex_key(&mut self, key: &String) -> &mut TOTPBuilder {
-        self.key = key.from_hex().unwrap();
+        self.key = Some(key.from_hex().unwrap());
         self
     }
 
     /// Sets the shared secret. This secret is passed as a base32 encoded string.
     pub fn base32_key(&mut self, key: &String) -> &mut TOTPBuilder {
-        self.key = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key).unwrap();
+        let raw_key = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key).unwrap();
+        self.key = Some(raw_key);
         self
     }
 
@@ -174,14 +180,17 @@ impl TOTPBuilder {
     }
 
     /// Returns the finalized TOTP object.
-    pub fn finalize(&self) -> TOTP {
-        TOTP {
-            key: self.key.clone(),
-            timestamp: self.timestamp,
-            initial_time: self.initial_time,
-            period: self.period,
-            nb_digits: self.nb_digits,
-            hash_function: self.hash_function,
+    pub fn finalize(&self) -> Result<TOTP, &'static str> {
+        match self.key {
+            Some(ref k) => Ok(TOTP {
+                key: k.clone(),
+                timestamp: self.timestamp,
+                initial_time: self.initial_time,
+                period: self.period,
+                nb_digits: self.nb_digits,
+                hash_function: self.hash_function,
+            }),
+            None => Err("No key provided."),
         }
     }
 }
@@ -197,7 +206,8 @@ mod tests {
 
         let mut totp = TOTPBuilder::new()
             .key(&key)
-            .finalize();
+            .finalize()
+            .unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.nb_digits, 6);
@@ -220,7 +230,8 @@ mod tests {
             .period(70)
             .nb_digits(8)
             .hash_function(HashFunction::Sha256)
-            .finalize();
+            .finalize()
+            .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
@@ -239,7 +250,8 @@ mod tests {
 
         let mut totp = TOTPBuilder::new()
             .ascii_key(&key_ascii)
-            .finalize();
+            .finalize()
+            .unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.nb_digits, 6);
@@ -263,7 +275,8 @@ mod tests {
             .period(70)
             .nb_digits(8)
             .hash_function(HashFunction::Sha256)
-            .finalize();
+            .finalize()
+            .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
@@ -282,7 +295,8 @@ mod tests {
 
         let mut totp = TOTPBuilder::new()
             .hex_key(&key_hex)
-            .finalize();
+            .finalize()
+            .unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.nb_digits, 6);
@@ -306,7 +320,8 @@ mod tests {
             .period(70)
             .nb_digits(8)
             .hash_function(HashFunction::Sha256)
-            .finalize();
+            .finalize()
+            .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
@@ -325,7 +340,8 @@ mod tests {
 
         let mut totp = TOTPBuilder::new()
             .base32_key(&key_base32)
-            .finalize();
+            .finalize()
+            .unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.nb_digits, 6);
@@ -349,7 +365,8 @@ mod tests {
             .period(70)
             .nb_digits(8)
             .hash_function(HashFunction::Sha256)
-            .finalize();
+            .finalize()
+            .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
@@ -359,6 +376,14 @@ mod tests {
         let code = totp.generate();
         assert_eq!(code.len(), 8);
         assert_eq!(code, "04696041");
+    }
+
+    #[test]
+    fn test_nokey() {
+        match TOTPBuilder::new().finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
     }
 
     #[test]
@@ -379,6 +404,7 @@ mod tests {
                 .nb_digits(8)
                 .hash_function(hash_function)
                 .finalize()
+                .unwrap()
                 .generate();
             assert_eq!(code.len(), 8);
             assert_eq!(code, ref_code);
@@ -403,6 +429,7 @@ mod tests {
                 .nb_digits(8)
                 .hash_function(hash_function)
                 .finalize()
+                .unwrap()
                 .generate();
             assert_eq!(code.len(), 8);
             assert_eq!(code, ref_code);
@@ -427,6 +454,7 @@ mod tests {
                 .nb_digits(8)
                 .hash_function(hash_function)
                 .finalize()
+                .unwrap()
                 .generate();
             assert_eq!(code.len(), 8);
             assert_eq!(code, ref_code);
