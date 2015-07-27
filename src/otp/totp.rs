@@ -166,9 +166,6 @@ impl TOTPBuilder {
 
     /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut TOTPBuilder {
-        if nb_digits < 6 {
-            panic!("There must be at least 6 digits.")
-        }
         self.nb_digits = nb_digits;
         self
     }
@@ -181,6 +178,9 @@ impl TOTPBuilder {
 
     /// Returns the finalized TOTP object.
     pub fn finalize(&self) -> Result<TOTP, &'static str> {
+        if self.nb_digits < 6 {
+            return Err("There must be at least 6 digits.");
+        }
         match self.key {
             Some(ref k) => Ok(TOTP {
                 key: k.clone(),
@@ -376,6 +376,15 @@ mod tests {
         let code = totp.generate();
         assert_eq!(code.len(), 8);
         assert_eq!(code, "04696041");
+    }
+
+    #[test]
+    fn test_totp_digits() {
+        let key_ascii = "12345678901234567890".to_string();
+        match TOTPBuilder::new().ascii_key(&key_ascii).nb_digits(5).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
     }
 
     #[test]

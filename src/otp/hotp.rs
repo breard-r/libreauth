@@ -178,9 +178,6 @@ impl HOTPBuilder {
 
     /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut HOTPBuilder {
-        if nb_digits < 6 {
-            panic!("There must be at least 6 digits.")
-        }
         self.nb_digits = nb_digits;
         self
     }
@@ -193,6 +190,9 @@ impl HOTPBuilder {
 
     /// Returns the finalized HOTP object.
     pub fn finalize(&self) -> Result<HOTP, &'static str> {
+        if self.nb_digits < 6 {
+            return Err("There must be at least 6 digits.");
+        }
         match self.key {
             Some(ref k) => Ok(HOTP {
                 key: k.clone(),
@@ -406,13 +406,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "There must be at least 6 digits.")]
     fn test_hotp_digits() {
         let key_ascii = "12345678901234567890".to_string();
-        let _ = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .nb_digits(5)
-            .finalize();
+        match HOTPBuilder::new().ascii_key(&key_ascii).nb_digits(5).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
     }
 
     #[test]
