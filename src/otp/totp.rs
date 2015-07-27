@@ -106,6 +106,7 @@ pub struct TOTPBuilder {
     initial_time: u64,
     nb_digits: u8,
     hash_function: HashFunction,
+    runtime_error: Option<&'static str>,
 }
 
 impl TOTPBuilder {
@@ -118,6 +119,7 @@ impl TOTPBuilder {
             initial_time: 0,
             nb_digits: 6,
             hash_function: HashFunction::Sha1,
+            runtime_error: None,
         }
     }
 
@@ -166,7 +168,11 @@ impl TOTPBuilder {
 
     /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut TOTPBuilder {
-        self.nb_digits = nb_digits;
+        if nb_digits < 6 {
+            self.runtime_error = Some("There must be at least 6 digits.");
+        } else {
+            self.nb_digits = nb_digits;
+        }
         self
     }
 
@@ -178,8 +184,9 @@ impl TOTPBuilder {
 
     /// Returns the finalized TOTP object.
     pub fn finalize(&self) -> Result<TOTP, &'static str> {
-        if self.nb_digits < 6 {
-            return Err("There must be at least 6 digits.");
+        match self.runtime_error {
+            Some(e) => return Err(e),
+            None => (),
         }
         match self.key {
             Some(ref k) => Ok(TOTP {

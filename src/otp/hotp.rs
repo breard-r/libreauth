@@ -132,6 +132,7 @@ pub struct HOTPBuilder {
     counter: u64,
     nb_digits: u8,
     hash_function: HashFunction,
+    runtime_error: Option<&'static str>,
 }
 
 impl HOTPBuilder {
@@ -142,6 +143,7 @@ impl HOTPBuilder {
             counter: 0,
             nb_digits: 6,
             hash_function: HashFunction::Sha1,
+            runtime_error: None,
         }
     }
 
@@ -178,7 +180,11 @@ impl HOTPBuilder {
 
     /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut HOTPBuilder {
-        self.nb_digits = nb_digits;
+        if nb_digits < 6 {
+            self.runtime_error = Some("There must be at least 6 digits.");
+        } else {
+            self.nb_digits = nb_digits;
+        }
         self
     }
 
@@ -190,8 +196,9 @@ impl HOTPBuilder {
 
     /// Returns the finalized HOTP object.
     pub fn finalize(&self) -> Result<HOTP, &'static str> {
-        if self.nb_digits < 6 {
-            return Err("There must be at least 6 digits.");
+        match self.runtime_error {
+            Some(e) => return Err(e),
+            None => (),
         }
         match self.key {
             Some(ref k) => Ok(HOTP {
@@ -202,6 +209,7 @@ impl HOTPBuilder {
             }),
             None => Err("No key provided."),
         }
+
     }
 }
 
