@@ -1,6 +1,7 @@
 # R2FA
 
 [![Build Status](https://api.travis-ci.org/breard-r/r2fa.svg?branch=master)](https://travis-ci.org/breard-r/r2fa)
+[![R2FA on crates.io](https://img.shields.io/crates/v/r2fa.svg)](https://crates.io/crates/r2fa)
 
 Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication.
 
