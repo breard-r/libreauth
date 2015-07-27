@@ -22,12 +22,12 @@ use hotp;
 
 
 pub struct TOTP {
-    pub key: Vec<u8>,
-    pub timestamp: u64,
-    pub period: u32,
-    pub initial_time: u64,
-    pub nb_digits: u8,
-    pub hash_function: HashFunction,
+    key: Vec<u8>,
+    timestamp: u64,
+    period: u32,
+    initial_time: u64,
+    nb_digits: u8,
+    hash_function: HashFunction,
 }
 
 impl TOTP {

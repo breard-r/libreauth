@@ -25,10 +25,10 @@ use base32;
 
 
 pub struct HOTP {
-    pub key: Vec<u8>,
-    pub counter: u64,
-    pub nb_digits: u8,
-    pub hash_function: HashFunction,
+    key: Vec<u8>,
+    counter: u64,
+    nb_digits: u8,
+    hash_function: HashFunction,
 }
 
 impl HOTP {
