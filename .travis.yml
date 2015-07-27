@@ -1,3 +1,6 @@
+env:
+  global:
+    - secure: HztT/6I2TqwurnL5PpiMoo07U5w3NA0zOXOnPUg+OjWE1i+4lp16GrmsBduLxlmdvo2/eBwuU0aRtouHtIqRwktxDbydmYeqp/Qrggm+qppuDB8q8sjIPdtQs2ixsOsh15GgCpTJq61miDiQ/tCoqoiVbzVDVxXf5LpbttBEaf25sYBfBEg3tagfZTrV7/mfyhuiY8wJEUrLJESbaQNg46xa2yfweG3Wrt0KzGUEvoWVDIliy9KYfEKzAxm+apUUAshn8fC6UnQRXVuHcGy+8cpX0jhIkhYJK0I0+Jl17atuGITmPu6nnCiHonP4NvJbETK0JDPcvH5PiXpplCdohgHas6SV40QfZ44wvJx1plPqnVR5MfzxcgZdV/mSUQ9BafyfIkLoO+n7O8RP9paR8LMiaKrJq4/0VOerilQwrKSxCT7zRbSdVy4X+KuL8RO9K6WmIhi0uYoX+aD4GbPwa294ltQ3Wpa+jdVUfP2x+6zQzb54HOZTXO7byVWrUXTRKZMYAWQCTFoUWwcVRPs0Q7XhWrONWy2/4fSOEwt3INeWEJ/eHtcn0qSI/teX70lc86QrONR0FD/i84OuR6XZHg1j99wT+2b9d+unKS6uG52ESiVZk9AgKXotMfnE+zQJQszDes5ZTZx/xMpJaOWoPGDVLFUrKPBUTmiqB7Xa8TI=
 language: rust
 rust:
   - stable
@@ -6,3 +9,5 @@ rust:
 matrix:
   allow_failure:
     - rust: nightly
+after_script:
+  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
