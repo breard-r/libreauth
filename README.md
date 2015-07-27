@@ -30,3 +30,18 @@ You can find R2FA on [crates.io](https://crates.io/crates/r2fa) and include it i
 ```toml
 r2fa = "^0.1.0"
 ```
+
+
+## Quick example
+
+```rust
+extern crate r2fa;
+use r2fa::otp::TOTPBuilder;
+
+let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+let code = TOTPBuilder::new()
+    .base32_key(&key)
+    .finalize()
+    .generate();
+assert_eq!(code.len(), 6);
+```
