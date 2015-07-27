@@ -20,7 +20,7 @@ use crypto::mac::{Mac, MacResult};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::sha1::Sha1;
-use otp::HashFunction;
+use super::HashFunction;
 use base32;
 
 

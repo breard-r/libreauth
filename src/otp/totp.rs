@@ -15,10 +15,10 @@
 //
 
 use rustc_serialize::hex::FromHex;
-use otp::HashFunction;
+use super::HashFunction;
 use base32;
 use time;
-use hotp;
+use super::HOTPBuilder;
 
 
 pub struct TOTP {
@@ -49,7 +49,7 @@ impl TOTP {
     /// ```
     pub fn generate(&mut self) -> String {
         let counter = self.get_counter();
-        hotp::HOTPBuilder::new()
+        HOTPBuilder::new()
             .key(&self.key.clone())
             .counter(counter)
             .nb_digits(self.nb_digits)

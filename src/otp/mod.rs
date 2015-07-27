@@ -14,9 +14,15 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-extern crate rustc_serialize;
-extern crate base32;
-extern crate crypto;
-extern crate time;
+#[derive(Clone, Copy)]
+pub enum HashFunction {
+    Sha1,
+    Sha256,
+    Sha512,
+}
 
-pub mod otp;
+pub mod hotp;
+pub mod totp;
+
+pub type HOTPBuilder = hotp::HOTPBuilder;
+pub type TOTPBuilder = totp::TOTPBuilder;
