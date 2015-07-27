@@ -16,9 +16,9 @@
 
 use rustc_serialize::hex::FromHex;
 use super::HashFunction;
+use super::HOTPBuilder;
 use base32;
 use time;
-use super::HOTPBuilder;
 
 
 pub struct TOTP {
@@ -137,14 +137,19 @@ impl TOTPBuilder {
 
     /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
     pub fn hex_key(&mut self, key: &String) -> &mut TOTPBuilder {
-        self.key = Some(key.from_hex().unwrap());
+        match key.from_hex() {
+            Ok(k) => { self.key = Some(k); }
+            Err(_) => { self.runtime_error = Some("Invalid key."); }
+        }
         self
     }
 
     /// Sets the shared secret. This secret is passed as a base32 encoded string.
     pub fn base32_key(&mut self, key: &String) -> &mut TOTPBuilder {
-        let raw_key = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key).unwrap();
-        self.key = Some(raw_key);
+        match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
+            Some(k) => { self.key = Some(k); }
+            None => { self.runtime_error = Some("Invalid key."); }
+        }
         self
     }
 
@@ -397,6 +402,24 @@ mod tests {
     #[test]
     fn test_nokey() {
         match TOTPBuilder::new().finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_invalid_hexkey() {
+        let key = "!@#$%^&".to_string();
+        match TOTPBuilder::new().hex_key(&key).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_invalid_base32key() {
+        let key = "!@#$%^&".to_string();
+        match TOTPBuilder::new().base32_key(&key).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
