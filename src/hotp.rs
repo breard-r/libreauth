@@ -88,6 +88,42 @@ impl HOTP {
     }
 }
 
+/// # Examples
+///
+/// The following examples uses the same shared secret passed in various forms.
+///
+///```
+/// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+/// let mut hotp = r2fa::HOTPBuilder::new()
+///     .key(&key)
+///     .finalize();
+///```
+///
+///```
+/// let key_ascii = "12345678901234567890".to_string();
+/// let mut hotp = r2fa::HOTPBuilder::new()
+///     .ascii_key(&key_ascii)
+///     .counter(42)
+///     .finalize();
+///```
+///
+///```
+/// let key_hex = "3132333435363738393031323334353637383930".to_string();
+/// let mut hotp = r2fa::HOTPBuilder::new()
+///     .hex_key(&key_hex)
+///     .counter(69)
+///     .nb_digits(8)
+///     .finalize();
+///```
+///
+///```
+/// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+/// let mut hotp = r2fa::HOTPBuilder::new()
+///     .base32_key(&key_base32)
+///     .nb_digits(8)
+///     .hash_function(r2fa::otp::HashFunction::Sha256)
+///     .finalize();
+///```
 pub struct HOTPBuilder {
     key: Vec<u8>,
     counter: u64,
@@ -96,6 +132,7 @@ pub struct HOTPBuilder {
 }
 
 impl HOTPBuilder {
+    /// Generates the base configuration for HOTP code generation.
     pub fn new() -> HOTPBuilder {
         HOTPBuilder {
             key: vec![],
@@ -105,31 +142,37 @@ impl HOTPBuilder {
         }
     }
 
+    /// Sets the shared secret.
     pub fn key(&mut self, key: &Vec<u8>) -> &mut HOTPBuilder {
         self.key = key.clone();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as an ASCII string.
     pub fn ascii_key(&mut self, key: &String) -> &mut HOTPBuilder {
         self.key = key.clone().into_bytes();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
     pub fn hex_key(&mut self, key: &String) -> &mut HOTPBuilder {
         self.key = key.from_hex().unwrap();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as a base32 encoded string.
     pub fn base32_key(&mut self, key: &String) -> &mut HOTPBuilder {
         self.key = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key).unwrap();
         self
     }
 
+    /// Sets the counter. Default is 0.
     pub fn counter(&mut self, counter: u64) -> &mut HOTPBuilder {
         self.counter = counter;
         self
     }
 
+    /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut HOTPBuilder {
         if nb_digits < 6 {
             panic!("There must be at least 6 digits.")
@@ -138,11 +181,13 @@ impl HOTPBuilder {
         self
     }
 
+    /// Sets the hash function. Default is Sha1.
     pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut HOTPBuilder {
         self.hash_function = hash_function;
         self
     }
 
+    /// Returns the finalized HOTP object.
     pub fn finalize(&self) -> HOTP {
         HOTP {
             key: self.key.clone(),

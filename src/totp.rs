@@ -59,6 +59,41 @@ impl TOTP {
     }
 }
 
+/// # Examples
+///
+/// The following examples uses the same shared secret passed in various forms.
+///
+///```
+/// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+/// let mut totp = r2fa::TOTPBuilder::new()
+///     .key(&key)
+///     .finalize();
+///```
+///
+///```
+/// let key_ascii = "12345678901234567890".to_string();
+/// let mut totp = r2fa::TOTPBuilder::new()
+///     .ascii_key(&key_ascii)
+///     .period(42)
+///     .finalize();
+///```
+///
+///```
+/// let key_hex = "3132333435363738393031323334353637383930".to_string();
+/// let mut totp = r2fa::TOTPBuilder::new()
+///     .hex_key(&key_hex)
+///     .timestamp(1234567890)
+///     .finalize();
+///```
+///
+///```
+/// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+/// let mut totp = r2fa::TOTPBuilder::new()
+///     .base32_key(&key_base32)
+///     .nb_digits(8)
+///     .hash_function(r2fa::otp::HashFunction::Sha256)
+///     .finalize();
+///```
 pub struct TOTPBuilder {
     key: Vec<u8>,
     timestamp: u64,
@@ -69,6 +104,7 @@ pub struct TOTPBuilder {
 }
 
 impl TOTPBuilder {
+    /// Generates the base configuration for TOTP code generation.
     pub fn new() -> TOTPBuilder {
         TOTPBuilder {
             key: vec![],
@@ -80,41 +116,49 @@ impl TOTPBuilder {
         }
     }
 
+    /// Sets the shared secret.
     pub fn key(&mut self, key: &Vec<u8>) -> &mut TOTPBuilder {
         self.key = key.clone();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as an ASCII string.
     pub fn ascii_key(&mut self, key: &String) -> &mut TOTPBuilder {
         self.key = key.clone().into_bytes();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
     pub fn hex_key(&mut self, key: &String) -> &mut TOTPBuilder {
         self.key = key.from_hex().unwrap();
         self
     }
 
+    /// Sets the shared secret. This secret is passed as a base32 encoded string.
     pub fn base32_key(&mut self, key: &String) -> &mut TOTPBuilder {
         self.key = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key).unwrap();
         self
     }
 
+    /// Sets a custom value for the current Unix time instead of the real one.
     pub fn timestamp(&mut self, timestamp: u64) -> &mut TOTPBuilder {
         self.timestamp = timestamp;
         self
     }
 
+    /// Sets the time step in seconds (X). Default is 30.
     pub fn period(&mut self, period: u32) -> &mut TOTPBuilder {
         self.period = period;
         self
     }
 
+    /// Sets the Unix time to start counting time steps (T0). Default is 0.
     pub fn initial_time(&mut self, initial_time: u64) -> &mut TOTPBuilder {
         self.initial_time = initial_time;
         self
     }
 
+    /// Sets the number of digits for the code. The minimum is 6. Default is 6.
     pub fn nb_digits(&mut self, nb_digits: u8) -> &mut TOTPBuilder {
         if nb_digits < 6 {
             panic!("There must be at least 6 digits.")
@@ -123,11 +167,13 @@ impl TOTPBuilder {
         self
     }
 
+    /// Sets the hash function. Default is Sha1.
     pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut TOTPBuilder {
         self.hash_function = hash_function;
         self
     }
 
+    /// Returns the finalized TOTP object.
     pub fn finalize(&self) -> TOTP {
         TOTP {
             key: self.key.clone(),
