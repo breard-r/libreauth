@@ -65,7 +65,7 @@ impl HOTP {
     /// # Examples
     /// ```
     /// let key_ascii = "12345678901234567890".to_string();
-    /// let mut hotp = r2fa::HOTPBuilder::new()
+    /// let mut hotp = r2fa::otp::HOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize();
     ///
@@ -94,14 +94,14 @@ impl HOTP {
 ///
 ///```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-/// let mut hotp = r2fa::HOTPBuilder::new()
+/// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize();
 ///```
 ///
 ///```
 /// let key_ascii = "12345678901234567890".to_string();
-/// let mut hotp = r2fa::HOTPBuilder::new()
+/// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .counter(42)
 ///     .finalize();
@@ -109,7 +109,7 @@ impl HOTP {
 ///
 ///```
 /// let key_hex = "3132333435363738393031323334353637383930".to_string();
-/// let mut hotp = r2fa::HOTPBuilder::new()
+/// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .counter(69)
 ///     .nb_digits(8)
@@ -118,7 +118,7 @@ impl HOTP {
 ///
 ///```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
-/// let mut hotp = r2fa::HOTPBuilder::new()
+/// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .nb_digits(8)
 ///     .hash_function(r2fa::otp::HashFunction::Sha256)

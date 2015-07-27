@@ -29,7 +29,10 @@ pub mod otp {
         Sha256,
         Sha512,
     }
-}
 
-pub type HOTPBuilder = hotp::HOTPBuilder;
-pub type TOTPBuilder = totp::TOTPBuilder;
+    use totp;
+    use hotp;
+
+    pub type HOTPBuilder = hotp::HOTPBuilder;
+    pub type TOTPBuilder = totp::TOTPBuilder;
+}

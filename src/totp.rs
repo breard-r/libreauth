@@ -40,7 +40,7 @@ impl TOTP {
     /// # Examples
     /// ```
     /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
-    /// let mut totp = r2fa::TOTPBuilder::new()
+    /// let mut totp = r2fa::otp::TOTPBuilder::new()
     ///     .base32_key(&key_base32)
     ///     .finalize();
     ///
@@ -65,14 +65,14 @@ impl TOTP {
 ///
 ///```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-/// let mut totp = r2fa::TOTPBuilder::new()
+/// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize();
 ///```
 ///
 ///```
 /// let key_ascii = "12345678901234567890".to_string();
-/// let mut totp = r2fa::TOTPBuilder::new()
+/// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .period(42)
 ///     .finalize();
@@ -80,7 +80,7 @@ impl TOTP {
 ///
 ///```
 /// let key_hex = "3132333435363738393031323334353637383930".to_string();
-/// let mut totp = r2fa::TOTPBuilder::new()
+/// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .timestamp(1234567890)
 ///     .finalize();
@@ -88,7 +88,7 @@ impl TOTP {
 ///
 ///```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
-/// let mut totp = r2fa::TOTPBuilder::new()
+/// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .nb_digits(8)
 ///     .hash_function(r2fa::otp::HashFunction::Sha256)
