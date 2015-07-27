@@ -60,6 +60,20 @@ impl HOTP {
         snum % base.pow(self.nb_digits as u32)
     }
 
+    /// Generate the HOTP value and increment the internal counter.
+    ///
+    /// # Examples
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_string();
+    /// let mut hotp = r2fa::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize();
+    ///
+    /// let code = hotp.generate();
+    /// assert_eq!(code, "755224");
+    /// let code = hotp.generate();
+    /// assert_eq!(code, "287082");
+    /// ```
     pub fn generate(&mut self) -> String {
         let result = match self.hash_function {
             HashFunction::Sha1 => self.compute_hmac(Sha1::new()),

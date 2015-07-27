@@ -35,6 +35,18 @@ impl TOTP {
         (self.timestamp - self.initial_time) / self.period as u64
     }
 
+    /// Generate the current TOTP value.
+    ///
+    /// # Examples
+    /// ```
+    /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+    /// let mut totp = r2fa::TOTPBuilder::new()
+    ///     .base32_key(&key_base32)
+    ///     .finalize();
+    ///
+    /// let code = totp.generate();
+    /// assert_eq!(code.len(), 6);
+    /// ```
     pub fn generate(&mut self) -> String {
         let counter = self.get_counter();
         hotp::HOTPBuilder::new()
