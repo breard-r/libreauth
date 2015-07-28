@@ -110,8 +110,8 @@ impl HOTP {
         let code = code.clone().into_bytes();
         let (code, ref_code) = match self.hash_function {
             HashFunction::Sha1 => (self.compute_hmac(Sha1::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
-            HashFunction::Sha256 => (self.compute_hmac(Sha256::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
-            HashFunction::Sha512 => (self.compute_hmac(Sha512::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
+            HashFunction::Sha256 => (self.compute_hmac(Sha256::new(), &code), self.compute_hmac(Sha256::new(), &ref_code)),
+            HashFunction::Sha512 => (self.compute_hmac(Sha512::new(), &code), self.compute_hmac(Sha512::new(), &ref_code)),
         };
         code == ref_code
     }
@@ -524,11 +524,12 @@ mod tests {
     }
 
     #[test]
-    fn test_valid_code() {
+    fn test_valid_sha1_code() {
         let key_ascii = "12345678901234567890".to_string();
         let user_code = "755224".to_string();
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha1)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -536,11 +537,64 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_code() {
+    fn test_valid_sha256_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "875740".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha512_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "125165".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_invalid_sha1_code() {
         let key_ascii = "12345678901234567890".to_string();
         let user_code = "123456".to_string();
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha1)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha256_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "123456".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha512_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "123456".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
