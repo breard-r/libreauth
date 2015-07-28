@@ -48,7 +48,7 @@ impl TOTP {
     /// let code = totp.generate();
     /// assert_eq!(code.len(), 6);
     /// ```
-    pub fn generate(&mut self) -> String {
+    pub fn generate(&self) -> String {
         let counter = self.get_counter();
         let hotp = HOTPBuilder::new()
             .key(&self.key.clone())
@@ -216,7 +216,7 @@ mod tests {
     fn test_totp_key_simple() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .key(&key)
             .finalize()
             .unwrap();
@@ -236,7 +236,7 @@ mod tests {
     fn test_totp_keu_full() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .key(&key)
             .timestamp(1111111109)
             .period(70)
@@ -260,7 +260,7 @@ mod tests {
         let key_ascii = "12345678901234567890".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -281,7 +281,7 @@ mod tests {
         let key_ascii = "12345678901234567890".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(1111111109)
             .period(70)
@@ -305,7 +305,7 @@ mod tests {
         let key_hex = "3132333435363738393031323334353637383930".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .hex_key(&key_hex)
             .finalize()
             .unwrap();
@@ -326,7 +326,7 @@ mod tests {
         let key_hex = "3132333435363738393031323334353637383930".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .hex_key(&key_hex)
             .timestamp(1111111109)
             .period(70)
@@ -350,7 +350,7 @@ mod tests {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .base32_key(&key_base32)
             .finalize()
             .unwrap();
@@ -371,7 +371,7 @@ mod tests {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 
-        let mut totp = TOTPBuilder::new()
+        let totp = TOTPBuilder::new()
             .base32_key(&key_base32)
             .timestamp(1111111109)
             .period(70)
