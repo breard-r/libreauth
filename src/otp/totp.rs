@@ -61,6 +61,32 @@ impl TOTP {
             Err(e) => panic!(e),
         }
     }
+
+    /// Checks if the given code is valid. This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
+    ///
+    /// # Examples
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_string();
+    /// let user_code = "755224".to_string();
+    /// let valid = r2fa::otp::TOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap()
+    ///     .is_valid(&user_code);
+    /// ```
+    pub fn is_valid(&self, code: &String) -> bool {
+        let counter = self.get_counter();
+        let hotp = HOTPBuilder::new()
+            .key(&self.key.clone())
+            .counter(counter)
+            .nb_digits(self.nb_digits)
+            .hash_function(self.hash_function)
+            .finalize();
+        match hotp {
+            Ok(h) => h.is_valid(code),
+            Err(e) => panic!(e),
+        }
+    }
 }
 
 /// # Examples
@@ -498,5 +524,61 @@ mod tests {
             assert_eq!(code.len(), 8);
             assert_eq!(code, ref_code);
         }
+    }
+
+    #[test]
+    fn test_valid_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "94287082".to_string();
+        let valid = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .timestamp(59)
+            .nb_digits(8)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_invalid_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "12345678".to_string();
+        let valid = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .timestamp(59)
+            .nb_digits(8)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_bad_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "!@#$%^&*".to_string();
+        let valid = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .timestamp(59)
+            .nb_digits(8)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_empty_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "".to_string();
+        let valid = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .timestamp(59)
+            .nb_digits(8)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
     }
 }

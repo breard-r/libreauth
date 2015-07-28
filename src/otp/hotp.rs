@@ -32,19 +32,9 @@ pub struct HOTP {
 }
 
 impl HOTP {
-    fn compute_hmac<H: Digest>(&self, digest: H) -> MacResult {
+    fn compute_hmac<H: Digest>(&self, digest: H, msg: &Vec<u8>) -> MacResult {
         let mut hmac = Hmac::new(digest, &self.key);
-        let cnt = vec![
-            ((self.counter >> 56) & 0xff) as u8,
-            ((self.counter >> 48) & 0xff) as u8,
-            ((self.counter >> 40) & 0xff) as u8,
-            ((self.counter >> 32) & 0xff) as u8,
-            ((self.counter >> 24) & 0xff) as u8,
-            ((self.counter >> 16) & 0xff) as u8,
-            ((self.counter >> 8) & 0xff) as u8,
-            (self.counter & 0xff) as u8,
-        ];
-        hmac.input(&cnt[..]);
+        hmac.input(msg);
         hmac.result()
     }
 
@@ -58,6 +48,27 @@ impl HOTP {
 
         let base: u32 = 10;
         snum % base.pow(self.nb_digits as u32)
+    }
+
+    fn get_code(&self) -> String {
+        let msg = vec![
+            ((self.counter >> 56) & 0xff) as u8,
+            ((self.counter >> 48) & 0xff) as u8,
+            ((self.counter >> 40) & 0xff) as u8,
+            ((self.counter >> 32) & 0xff) as u8,
+            ((self.counter >> 24) & 0xff) as u8,
+            ((self.counter >> 16) & 0xff) as u8,
+            ((self.counter >> 8) & 0xff) as u8,
+            (self.counter & 0xff) as u8,
+        ];
+        let result = match self.hash_function {
+            HashFunction::Sha1 => self.compute_hmac(Sha1::new(), &msg),
+            HashFunction::Sha256 => self.compute_hmac(Sha256::new(), &msg),
+            HashFunction::Sha512 => self.compute_hmac(Sha512::new(), &msg),
+        };
+        let hs = result.code();
+        let nb = self.reduce_result(&hs);
+        format!("{:01$}", nb, self.nb_digits as usize)
     }
 
     /// Generate the HOTP value and increment the internal counter.
@@ -76,16 +87,33 @@ impl HOTP {
     /// assert_eq!(code, "287082");
     /// ```
     pub fn generate(&mut self) -> String {
-        let result = match self.hash_function {
-            HashFunction::Sha1 => self.compute_hmac(Sha1::new()),
-            HashFunction::Sha256 => self.compute_hmac(Sha256::new()),
-            HashFunction::Sha512 => self.compute_hmac(Sha512::new()),
-        };
-        let hs = result.code();
-        let nb = self.reduce_result(&hs);
+        let code = self.get_code();
         self.counter += 1;
+        code
+    }
 
-        format!("{:01$}", nb, self.nb_digits as usize)
+    /// Checks if the given code is valid. This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
+    ///
+    /// # Examples
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_string();
+    /// let user_code = "755224".to_string();
+    /// let valid = r2fa::otp::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap()
+    ///     .is_valid(&user_code);
+    /// assert_eq!(valid, true);
+    /// ```
+    pub fn is_valid(&self, code: &String) -> bool {
+        let ref_code = self.get_code().into_bytes();
+        let code = code.clone().into_bytes();
+        let (code, ref_code) = match self.hash_function {
+            HashFunction::Sha1 => (self.compute_hmac(Sha1::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
+            HashFunction::Sha256 => (self.compute_hmac(Sha256::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
+            HashFunction::Sha512 => (self.compute_hmac(Sha512::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
+        };
+        code == ref_code
     }
 }
 
@@ -493,4 +521,51 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_valid_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "755224".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_invalid_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "123456".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_bad_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "!@#$%^".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_empty_code() {
+        let key_ascii = "12345678901234567890".to_string();
+        let user_code = "".to_string();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
 }
