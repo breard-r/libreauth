@@ -57,7 +57,7 @@ impl TOTP {
             .hash_function(self.hash_function)
             .finalize();
         match hotp {
-            Ok(mut h) => h.generate(),
+            Ok(h) => h.generate(),
             Err(e) => panic!(e),
         }
     }

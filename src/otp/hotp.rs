@@ -50,7 +50,22 @@ impl HOTP {
         snum % base.pow(self.nb_digits as u32)
     }
 
-    fn get_code(&self) -> String {
+    /// Generate the HOTP value.
+    ///
+    /// # Examples
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_string();
+    /// let mut hotp = r2fa::otp::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let code = hotp.generate();
+    /// assert_eq!(code, "755224");
+    /// let code = hotp.increment_counter().generate();
+    /// assert_eq!(code, "287082");
+    /// ```
+    pub fn generate(&self) -> String {
         let msg = vec![
             ((self.counter >> 56) & 0xff) as u8,
             ((self.counter >> 48) & 0xff) as u8,
@@ -71,25 +86,10 @@ impl HOTP {
         format!("{:01$}", nb, self.nb_digits as usize)
     }
 
-    /// Generate the HOTP value and increment the internal counter.
-    ///
-    /// # Examples
-    /// ```
-    /// let key_ascii = "12345678901234567890".to_string();
-    /// let mut hotp = r2fa::otp::HOTPBuilder::new()
-    ///     .ascii_key(&key_ascii)
-    ///     .finalize()
-    ///     .unwrap();
-    ///
-    /// let code = hotp.generate();
-    /// assert_eq!(code, "755224");
-    /// let code = hotp.generate();
-    /// assert_eq!(code, "287082");
-    /// ```
-    pub fn generate(&mut self) -> String {
-        let code = self.get_code();
+    /// Increments the internal counter.
+    pub fn increment_counter(&mut self) -> &mut HOTP {
         self.counter += 1;
-        code
+        self
     }
 
     /// Checks if the given code is valid. This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
@@ -106,7 +106,7 @@ impl HOTP {
     /// assert_eq!(valid, true);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
-        let ref_code = self.get_code().into_bytes();
+        let ref_code = self.generate().into_bytes();
         let code = code.clone().into_bytes();
         let (code, ref_code) = match self.hash_function {
             HashFunction::Sha1 => (self.compute_hmac(Sha1::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
@@ -256,7 +256,7 @@ mod tests {
     fn test_hotp_key_simple() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .key(&key)
             .finalize()
             .unwrap();
@@ -278,7 +278,7 @@ mod tests {
     fn test_hotp_key_full() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .key(&key)
             .counter(5)
             .nb_digits(8)
@@ -304,7 +304,7 @@ mod tests {
         let key_ascii = "12345678901234567890".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -327,7 +327,7 @@ mod tests {
         let key_ascii = "12345678901234567890".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .counter(5)
             .nb_digits(8)
@@ -353,7 +353,7 @@ mod tests {
         let key_hex = "3132333435363738393031323334353637383930".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .hex_key(&key_hex)
             .finalize()
             .unwrap();
@@ -376,7 +376,7 @@ mod tests {
         let key_hex = "3132333435363738393031323334353637383930".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .hex_key(&key_hex)
             .counter(5)
             .nb_digits(8)
@@ -402,7 +402,7 @@ mod tests {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .base32_key(&key_base32)
             .finalize()
             .unwrap();
@@ -425,7 +425,7 @@ mod tests {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .base32_key(&key_base32)
             .counter(5)
             .nb_digits(8)
@@ -516,6 +516,8 @@ mod tests {
             let code2 = hotp2.generate();
             assert_eq!(code1, examples[count]);
             assert_eq!(code2, examples[count]);
+            hotp1.increment_counter();
+            hotp2.increment_counter();
             assert_eq!(hotp1.counter, counter + 1);
             assert_eq!(hotp2.counter, counter + 1);
         }
