@@ -34,6 +34,8 @@ r2fa = "^0.1.0"
 
 ## Quick example
 
+More examples are available in the [documentation](https://what.tf/r2fa/).
+
 ```rust
 extern crate r2fa;
 use r2fa::otp::TOTPBuilder;
