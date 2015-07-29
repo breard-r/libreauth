@@ -1,4 +1,5 @@
 Cargo.lock
+Makefile
 target/
 *~
 \#*
