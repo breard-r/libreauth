@@ -1,6 +1,3 @@
-env:
-  global:
-    - secure: XKRX2S1RqI+FA+mbJv4qpO9Cu61f4PEe7RL1952/ZPyeNpQzeiAUGf/mCN9IuhaGx7UAnsOFleo4+EHWtgnbM0TriR88xTKpCk+/Nk/wMPTM9upxdWSGICXQ9FWGM0LBt2eh2iXpt262eUJLD0Ah8IkBF9r2q0oqFyMWIA0FsJme6H2h0njNGypHAk+EZftnaBGe1zIncfddtbXT9KC8xLp7k+BCn0pmoyAO421/cJx6jV9/72H//6EPdnCjqzhVh8baCGBloFH1L9opBrTJRNlj7O64zC2f/RBzZG37ra3d3Q5Ct1oMeopZMPnEiWNndg6asXtqegez3Hr1gZUNrPO4b/ng46pTRfZKnRffTQMtIuHbdd5D1MoX4NC9DlsAzlbZeFmQ1d9wVXHc8HIOlYdr9ff5XN8SwjikyJ2cFBYINwg+mHXAjqKmvntolpAhkz9/4auJxQ4Ncvk3V9f6zGzL/E5VdghgKjQ4SCtKb+6qYu0Ak/LEwURo4m4f6qxlSIdgtByzWZFaICUZ/ejJdpKuV78s4c3Yjnj1p0RRq07m6c05pI0AVuvWvEDt0uWx7fO12VLn4s8yGHQYtvPJMl1KW+FE0nq+zI+54BPeNyixliI1Xe5ohKldz2iDN+OrLndwkkiyzINxYOlA+7+r67MEyPOUKDmBkRjzgffbdRI=
 language: rust
 rust:
   - stable
@@ -9,9 +6,3 @@ rust:
 matrix:
   allow_failure:
     - rust: nightly
-script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo doc --no-deps
-after_script:
-  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
