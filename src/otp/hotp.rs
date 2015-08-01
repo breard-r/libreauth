@@ -106,6 +106,9 @@ impl HOTP {
     /// assert_eq!(valid, true);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
+        if code.len() != self.nb_digits as usize {
+            return false
+        }
         let ref_code = self.generate().into_bytes();
         let code = code.clone().into_bytes();
         let (code, ref_code) = match self.hash_function {
