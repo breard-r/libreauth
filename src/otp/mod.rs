@@ -53,12 +53,22 @@ macro_rules! builder_common {
             self
         }
 
-        /// Sets the number of digits for the code. The minimum is 6. Default is 6.
-        pub fn nb_digits(&mut self, nb_digits: usize) -> &mut $t {
-            if nb_digits < 6 {
-                self.runtime_error = Some("There must be at least 6 digits.");
+        /// Sets the number of characters for the code. The minimum is 6. Default is 6.
+        pub fn output_len(&mut self, output_len: usize) -> &mut $t {
+            if output_len < 6 {
+                self.runtime_error = Some("There must be at least 6 characters.");
             } else {
-                self.nb_digits = nb_digits;
+                self.output_len = output_len;
+            }
+            self
+        }
+
+        /// Sets the base used to represents the output code. Default is "0123456789".to_string().into_bytes().
+        pub fn output_base(&mut self, base: &Vec<u8>) -> &mut $t {
+            if base.len() < 2 {
+                self.runtime_error = Some("The output base must contain at least two characters.");
+            } else {
+                self.output_base = base.clone();
             }
             self
         }

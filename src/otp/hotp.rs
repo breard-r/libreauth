@@ -27,7 +27,8 @@ use base32;
 pub struct HOTP {
     key: Vec<u8>,
     counter: u64,
-    nb_digits: usize,
+    output_len: usize,
+    output_base: Vec<u8>,
     hash_function: HashFunction,
 }
 
@@ -46,8 +47,28 @@ impl HOTP {
             | ((hash[2] as u32 & 0xff) <<  8)
             | (hash[3] as u32 & 0xff);
 
-        let base: u32 = 10;
-        snum % base.pow(self.nb_digits as u32)
+        let base = self.output_base.len() as u32;
+        snum % base.pow(self.output_len as u32)
+    }
+
+    fn format_result(&self, nb: u32) -> String {
+        let mut code: Vec<u8> = vec![];
+        let mut nb = nb;
+        let base_len = self.output_base.len() as u32;
+
+        while nb > 0 {
+            code.push(self.output_base[(nb % base_len) as usize]);
+            nb = nb / base_len;
+        }
+        while code.len() != self.output_len {
+            code.push(self.output_base[0]);
+        }
+        code.reverse();
+
+        match String::from_utf8(code) {
+            Ok(s) => s,
+            Err(e) => panic!(e),
+        }
     }
 
     /// Generate the HOTP value.
@@ -83,7 +104,7 @@ impl HOTP {
         };
         let hs = result.code();
         let nb = self.reduce_result(&hs);
-        format!("{:01$}", nb, self.nb_digits)
+        self.format_result(nb)
     }
 
     /// Increments the internal counter.
@@ -106,7 +127,7 @@ impl HOTP {
     /// assert_eq!(valid, true);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
-        if code.len() != self.nb_digits {
+        if code.len() != self.output_len {
             return false
         }
         let ref_code = self.generate().into_bytes();
@@ -146,7 +167,7 @@ impl HOTP {
 /// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .counter(69)
-///     .nb_digits(8)
+///     .output_len(8)
 ///     .finalize();
 ///```
 ///
@@ -154,14 +175,15 @@ impl HOTP {
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 /// let mut hotp = r2fa::otp::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
-///     .nb_digits(8)
+///     .output_len(8)
 ///     .hash_function(r2fa::otp::HashFunction::Sha256)
 ///     .finalize();
 ///```
 pub struct HOTPBuilder {
     key: Option<Vec<u8>>,
     counter: u64,
-    nb_digits: usize,
+    output_len: usize,
+    output_base: Vec<u8>,
     hash_function: HashFunction,
     runtime_error: Option<&'static str>,
 }
@@ -172,7 +194,8 @@ impl HOTPBuilder {
         HOTPBuilder {
             key: None,
             counter: 0,
-            nb_digits: 6,
+            output_len: 6,
+            output_base: "0123456789".to_string().into_bytes(),
             hash_function: HashFunction::Sha1,
             runtime_error: None,
         }
@@ -196,7 +219,8 @@ impl HOTPBuilder {
             Some(ref k) => Ok(HOTP {
                 key: k.clone(),
                 counter: self.counter,
-                nb_digits: self.nb_digits,
+                output_len: self.output_len,
+                output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
             }),
             None => Err("No key provided."),
@@ -222,7 +246,7 @@ mod tests {
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
-        assert_eq!(hotp.nb_digits, 6);
+        assert_eq!(hotp.output_len, 6);
         match hotp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -240,14 +264,14 @@ mod tests {
         let hotp = HOTPBuilder::new()
             .key(&key)
             .counter(5)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 5);
-        assert_eq!(hotp.nb_digits, 8);
+        assert_eq!(hotp.output_len, 8);
         match hotp.hash_function {
             HashFunction::Sha256 => assert!(true),
             _ => assert!(false),
@@ -270,7 +294,7 @@ mod tests {
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
-        assert_eq!(hotp.nb_digits, 6);
+        assert_eq!(hotp.output_len, 6);
         match hotp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -289,14 +313,14 @@ mod tests {
         let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .counter(5)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 5);
-        assert_eq!(hotp.nb_digits, 8);
+        assert_eq!(hotp.output_len, 8);
         match hotp.hash_function {
             HashFunction::Sha256 => assert!(true),
             _ => assert!(false),
@@ -319,7 +343,7 @@ mod tests {
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
-        assert_eq!(hotp.nb_digits, 6);
+        assert_eq!(hotp.output_len, 6);
         match hotp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -338,14 +362,14 @@ mod tests {
         let hotp = HOTPBuilder::new()
             .hex_key(&key_hex)
             .counter(5)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha512)
             .finalize()
             .unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 5);
-        assert_eq!(hotp.nb_digits, 8);
+        assert_eq!(hotp.output_len, 8);
         match hotp.hash_function {
             HashFunction::Sha512 => assert!(true),
             _ => assert!(false),
@@ -368,7 +392,7 @@ mod tests {
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
-        assert_eq!(hotp.nb_digits, 6);
+        assert_eq!(hotp.output_len, 6);
         match hotp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -387,14 +411,14 @@ mod tests {
         let hotp = HOTPBuilder::new()
             .base32_key(&key_base32)
             .counter(5)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha512)
             .finalize()
             .unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 5);
-        assert_eq!(hotp.nb_digits, 8);
+        assert_eq!(hotp.output_len, 8);
         match hotp.hash_function {
             HashFunction::Sha512 => assert!(true),
             _ => assert!(false),
@@ -408,7 +432,7 @@ mod tests {
     #[test]
     fn test_hotp_digits() {
         let key_ascii = "12345678901234567890".to_string();
-        match HOTPBuilder::new().ascii_key(&key_ascii).nb_digits(5).finalize() {
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -441,21 +465,42 @@ mod tests {
     }
 
     #[test]
+    fn test_empty_output_base() {
+        let key_ascii = "12345678901234567890".to_string();
+        let output_base = vec![];
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&output_base).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_invalid_output_base() {
+        let key_ascii = "12345678901234567890".to_string();
+        let output_base = "1".to_string().into_bytes();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&output_base).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
     fn test_rfc4226_examples() {
         let key_ascii = "12345678901234567890".to_string();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let hex_base = "0123456789ABCDEF".to_string().into_bytes();
 
         let examples = [
-            "755224",
-            "287082",
-            "359152",
-            "969429",
-            "338314",
-            "254676",
-            "287922",
-            "162583",
-            "399871",
-            "520489",
+            ["755224", "93CF18"],
+            ["287082", "397EEA"],
+            ["359152", "2FEF30"],
+            ["969429", "EF7655"],
+            ["338314", "C5938A"],
+            ["254676", "C083D4"],
+            ["287922", "56C032"],
+            ["162583", "E5B397"],
+            ["399871", "23443F"],
+            ["520489", "79DC69"],
         ];
         let mut hotp1 = HOTPBuilder::new()
             .ascii_key(&key_ascii)
@@ -467,18 +512,28 @@ mod tests {
             .hash_function(HashFunction::Sha1)
             .finalize()
             .unwrap();
+        let mut hotp3 = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .output_base(&hex_base)
+            .finalize()
+            .unwrap();
         for count in 0..examples.len() {
             let counter = count as u64;
             assert_eq!(hotp1.counter, counter);
             assert_eq!(hotp2.counter, counter);
+            assert_eq!(hotp3.counter, counter);
             let code1 = hotp1.generate();
             let code2 = hotp2.generate();
-            assert_eq!(code1, examples[count]);
-            assert_eq!(code2, examples[count]);
+            let code3 = hotp3.generate();
+            assert_eq!(code1, examples[count][0]);
+            assert_eq!(code2, examples[count][0]);
+            assert_eq!(code3, examples[count][1]);
             hotp1.increment_counter();
             hotp2.increment_counter();
+            hotp3.increment_counter();
             assert_eq!(hotp1.counter, counter + 1);
             assert_eq!(hotp2.counter, counter + 1);
+            assert_eq!(hotp3.counter, counter + 1);
         }
     }
 

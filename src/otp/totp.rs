@@ -26,7 +26,8 @@ pub struct TOTP {
     timestamp_offset: i64,
     period: u32,
     initial_time: u64,
-    nb_digits: usize,
+    output_len: usize,
+    output_base: Vec<u8>,
     hash_function: HashFunction,
 }
 
@@ -58,7 +59,8 @@ impl TOTP {
         let hotp = HOTPBuilder::new()
             .key(&self.key.clone())
             .counter(counter)
-            .nb_digits(self.nb_digits)
+            .output_len(self.output_len)
+            .output_base(&self.output_base)
             .hash_function(self.hash_function)
             .finalize();
         match hotp {
@@ -84,7 +86,7 @@ impl TOTP {
         let hotp = HOTPBuilder::new()
             .key(&self.key.clone())
             .counter(counter)
-            .nb_digits(self.nb_digits)
+            .output_len(self.output_len)
             .hash_function(self.hash_function)
             .finalize();
         match hotp {
@@ -126,7 +128,7 @@ impl TOTP {
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 /// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
-///     .nb_digits(8)
+///     .output_len(8)
 ///     .hash_function(r2fa::otp::HashFunction::Sha256)
 ///     .finalize();
 ///```
@@ -135,7 +137,8 @@ pub struct TOTPBuilder {
     timestamp_offset: i64,
     period: u32,
     initial_time: u64,
-    nb_digits: usize,
+    output_len: usize,
+    output_base: Vec<u8>,
     hash_function: HashFunction,
     runtime_error: Option<&'static str>,
 }
@@ -148,7 +151,8 @@ impl TOTPBuilder {
             timestamp_offset: 0,
             period: 30,
             initial_time: 0,
-            nb_digits: 6,
+            output_len: 6,
+            output_base: "0123456789".to_string().into_bytes(),
             hash_function: HashFunction::Sha1,
             runtime_error: None,
         }
@@ -191,7 +195,8 @@ impl TOTPBuilder {
                 timestamp_offset: self.timestamp_offset,
                 initial_time: self.initial_time,
                 period: self.period,
-                nb_digits: self.nb_digits,
+                output_len: self.output_len,
+                output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
             }),
             None => Err("No key provided."),
@@ -214,7 +219,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(totp.key, key);
-        assert_eq!(totp.nb_digits, 6);
+        assert_eq!(totp.output_len, 6);
         match totp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -232,14 +237,14 @@ mod tests {
             .key(&key)
             .timestamp(1111111109)
             .period(70)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
-        assert_eq!(totp.nb_digits, 8);
+        assert_eq!(totp.output_len, 8);
 
         let code = totp.generate();
         assert_eq!(code.len(), 8);
@@ -257,7 +262,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(totp.key, key);
-        assert_eq!(totp.nb_digits, 6);
+        assert_eq!(totp.output_len, 6);
         match totp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -276,14 +281,14 @@ mod tests {
             .ascii_key(&key_ascii)
             .timestamp(1111111109)
             .period(70)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
-        assert_eq!(totp.nb_digits, 8);
+        assert_eq!(totp.output_len, 8);
 
         let code = totp.generate();
         assert_eq!(code.len(), 8);
@@ -301,7 +306,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(totp.key, key);
-        assert_eq!(totp.nb_digits, 6);
+        assert_eq!(totp.output_len, 6);
         match totp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -320,14 +325,14 @@ mod tests {
             .hex_key(&key_hex)
             .timestamp(1111111109)
             .period(70)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
-        assert_eq!(totp.nb_digits, 8);
+        assert_eq!(totp.output_len, 8);
 
         let code = totp.generate();
         assert_eq!(code.len(), 8);
@@ -345,7 +350,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(totp.key, key);
-        assert_eq!(totp.nb_digits, 6);
+        assert_eq!(totp.output_len, 6);
         match totp.hash_function {
             HashFunction::Sha1 => assert!(true),
             _ => assert!(false),
@@ -364,14 +369,14 @@ mod tests {
             .base32_key(&key_base32)
             .timestamp(1111111109)
             .period(70)
-            .nb_digits(8)
+            .output_len(8)
             .hash_function(HashFunction::Sha256)
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
-        assert_eq!(totp.nb_digits, 8);
+        assert_eq!(totp.output_len, 8);
 
         let code = totp.generate();
         assert_eq!(code.len(), 8);
@@ -381,7 +386,7 @@ mod tests {
     #[test]
     fn test_totp_digits() {
         let key_ascii = "12345678901234567890".to_string();
-        match TOTPBuilder::new().ascii_key(&key_ascii).nb_digits(5).finalize() {
+        match TOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -428,7 +433,7 @@ mod tests {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
                 .timestamp(timestamp)
-                .nb_digits(8)
+                .output_len(8)
                 .hash_function(hash_function)
                 .finalize()
                 .unwrap()
@@ -453,7 +458,7 @@ mod tests {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
                 .timestamp(timestamp)
-                .nb_digits(8)
+                .output_len(8)
                 .hash_function(hash_function)
                 .finalize()
                 .unwrap()
@@ -478,7 +483,7 @@ mod tests {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
                 .timestamp(timestamp)
-                .nb_digits(8)
+                .output_len(8)
                 .hash_function(hash_function)
                 .finalize()
                 .unwrap()
@@ -495,7 +500,7 @@ mod tests {
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
-            .nb_digits(8)
+            .output_len(8)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -509,7 +514,7 @@ mod tests {
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
-            .nb_digits(8)
+            .output_len(8)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -523,7 +528,7 @@ mod tests {
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
-            .nb_digits(8)
+            .output_len(8)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -537,7 +542,7 @@ mod tests {
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
-            .nb_digits(8)
+            .output_len(8)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
