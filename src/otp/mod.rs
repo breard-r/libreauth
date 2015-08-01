@@ -53,23 +53,20 @@ macro_rules! builder_common {
             self
         }
 
-        /// Sets the number of characters for the code. The minimum is 6. Default is 6.
+        fn code_length(&self) -> usize {
+            let base_len = self.output_base.len();
+            base_len.pow(self.output_len as u32)
+        }
+
+        /// Sets the number of characters for the code. The minimum and maximum values depends the base. Default is 6.
         pub fn output_len(&mut self, output_len: usize) -> &mut $t {
-            if output_len < 6 {
-                self.runtime_error = Some("There must be at least 6 characters.");
-            } else {
-                self.output_len = output_len;
-            }
+            self.output_len = output_len;
             self
         }
 
         /// Sets the base used to represents the output code. Default is "0123456789".to_string().into_bytes().
         pub fn output_base(&mut self, base: &Vec<u8>) -> &mut $t {
-            if base.len() < 2 {
-                self.runtime_error = Some("The output base must contain at least two characters.");
-            } else {
-                self.output_base = base.clone();
-            }
+            self.output_base = base.clone();
             self
         }
 

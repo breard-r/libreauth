@@ -215,6 +215,11 @@ impl HOTPBuilder {
             Some(e) => return Err(e),
             None => (),
         }
+        match self.code_length() {
+            n if n < 1000000 => return Err("The code length is too small."),
+            n if n > 2147483648 => return Err("The code length is too big."),
+            _ => (),
+        }
         match self.key {
             Some(ref k) => Ok(HOTP {
                 key: k.clone(),
@@ -430,15 +435,6 @@ mod tests {
     }
 
     #[test]
-    fn test_hotp_digits() {
-        let key_ascii = "12345678901234567890".to_string();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
-            Ok(_) => assert!(false),
-            Err(_) => assert!(true),
-        }
-    }
-
-    #[test]
     fn test_nokey() {
         match HOTPBuilder::new().finalize() {
             Ok(_) => assert!(false),
@@ -481,6 +477,71 @@ mod tests {
         match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&output_base).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_small_result_base10() {
+        let key_ascii = "12345678901234567890".to_string();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_big_result_base10() {
+        let key_ascii = "12345678901234567890".to_string();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(10).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_result_ok_base10() {
+        let key_ascii = "12345678901234567890".to_string();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(6).finalize() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        }
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(9).finalize() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn test_small_result_base64() {
+        let key_ascii = "12345678901234567890".to_string();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(3).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_big_result_base64() {
+        let key_ascii = "12345678901234567890".to_string();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(6).finalize() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_result_ok_base64() {
+        let key_ascii = "12345678901234567890".to_string();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(4).finalize() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        }
+        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(5).finalize() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
         }
     }
 
