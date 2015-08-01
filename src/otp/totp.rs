@@ -23,7 +23,7 @@ use time;
 
 pub struct TOTP {
     key: Vec<u8>,
-    timestamp: u64,
+    timestamp_offset: i64,
     period: u32,
     initial_time: u64,
     nb_digits: u8,
@@ -32,7 +32,12 @@ pub struct TOTP {
 
 impl TOTP {
     fn get_counter(&self) -> u64 {
-        (self.timestamp - self.initial_time) / self.period as u64
+        let timestamp = time::now().to_timespec().sec + self.timestamp_offset;
+        let timestamp = timestamp as u64;
+        if timestamp < self.initial_time {
+            panic!("The current Unix time is below the initial time.");
+        }
+        (timestamp - self.initial_time) / self.period as u64
     }
 
     /// Generate the current TOTP value.
@@ -127,7 +132,7 @@ impl TOTP {
 ///```
 pub struct TOTPBuilder {
     key: Option<Vec<u8>>,
-    timestamp: u64,
+    timestamp_offset: i64,
     period: u32,
     initial_time: u64,
     nb_digits: u8,
@@ -140,7 +145,7 @@ impl TOTPBuilder {
     pub fn new() -> TOTPBuilder {
         TOTPBuilder {
             key: None,
-            timestamp: time::now().to_timespec().sec as u64,
+            timestamp_offset: 0,
             period: 30,
             initial_time: 0,
             nb_digits: 6,
@@ -152,8 +157,9 @@ impl TOTPBuilder {
     builder_common!(TOTPBuilder);
 
     /// Sets a custom value for the current Unix time instead of the real one.
-    pub fn timestamp(&mut self, timestamp: u64) -> &mut TOTPBuilder {
-        self.timestamp = timestamp;
+    pub fn timestamp(&mut self, timestamp: i64) -> &mut TOTPBuilder {
+        let current_timestamp = time::now().to_timespec().sec;
+        self.timestamp_offset = timestamp - current_timestamp;
         self
     }
 
@@ -178,7 +184,7 @@ impl TOTPBuilder {
         match self.key {
             Some(ref k) => Ok(TOTP {
                 key: k.clone(),
-                timestamp: self.timestamp,
+                timestamp_offset: self.timestamp_offset,
                 initial_time: self.initial_time,
                 period: self.period,
                 nb_digits: self.nb_digits,
@@ -227,7 +233,6 @@ mod tests {
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
-        assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
         assert_eq!(totp.nb_digits, 8);
@@ -272,7 +277,6 @@ mod tests {
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
-        assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
         assert_eq!(totp.nb_digits, 8);
@@ -317,7 +321,6 @@ mod tests {
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
-        assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
         assert_eq!(totp.nb_digits, 8);
@@ -362,7 +365,6 @@ mod tests {
             .finalize()
             .unwrap();
         assert_eq!(totp.key, key);
-        assert_eq!(totp.timestamp, 1111111109);
         assert_eq!(totp.period, 70);
         assert_eq!(totp.initial_time, 0);
         assert_eq!(totp.nb_digits, 8);
