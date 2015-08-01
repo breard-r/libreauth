@@ -163,9 +163,13 @@ impl TOTPBuilder {
         self
     }
 
-    /// Sets the time step in seconds (X). Default is 30.
+    /// Sets the time step in seconds (X). May not be zero. Default is 30.
     pub fn period(&mut self, period: u32) -> &mut TOTPBuilder {
-        self.period = period;
+        if period == 0 {
+            self.runtime_error = Some("The period cannot be set to zero.");
+        } else {
+            self.period = period;
+        }
         self
     }
 
