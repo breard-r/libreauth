@@ -27,7 +27,7 @@ use base32;
 pub struct HOTP {
     key: Vec<u8>,
     counter: u64,
-    nb_digits: u8,
+    nb_digits: usize,
     hash_function: HashFunction,
 }
 
@@ -83,7 +83,7 @@ impl HOTP {
         };
         let hs = result.code();
         let nb = self.reduce_result(&hs);
-        format!("{:01$}", nb, self.nb_digits as usize)
+        format!("{:01$}", nb, self.nb_digits)
     }
 
     /// Increments the internal counter.
@@ -106,7 +106,7 @@ impl HOTP {
     /// assert_eq!(valid, true);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
-        if code.len() != self.nb_digits as usize {
+        if code.len() != self.nb_digits {
             return false
         }
         let ref_code = self.generate().into_bytes();
@@ -161,7 +161,7 @@ impl HOTP {
 pub struct HOTPBuilder {
     key: Option<Vec<u8>>,
     counter: u64,
-    nb_digits: u8,
+    nb_digits: usize,
     hash_function: HashFunction,
     runtime_error: Option<&'static str>,
 }

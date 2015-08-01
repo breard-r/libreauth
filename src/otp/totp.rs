@@ -26,7 +26,7 @@ pub struct TOTP {
     timestamp_offset: i64,
     period: u32,
     initial_time: u64,
-    nb_digits: u8,
+    nb_digits: usize,
     hash_function: HashFunction,
 }
 
@@ -135,7 +135,7 @@ pub struct TOTPBuilder {
     timestamp_offset: i64,
     period: u32,
     initial_time: u64,
-    nb_digits: u8,
+    nb_digits: usize,
     hash_function: HashFunction,
     runtime_error: Option<&'static str>,
 }

@@ -54,7 +54,7 @@ macro_rules! builder_common {
         }
 
         /// Sets the number of digits for the code. The minimum is 6. Default is 6.
-        pub fn nb_digits(&mut self, nb_digits: u8) -> &mut $t {
+        pub fn nb_digits(&mut self, nb_digits: usize) -> &mut $t {
             if nb_digits < 6 {
                 self.runtime_error = Some("There must be at least 6 digits.");
             } else {
