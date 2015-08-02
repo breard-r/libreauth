@@ -35,6 +35,11 @@ r2fa = "^0.1.0"
 ```
 
 
+## Using outside Rust
+
+R2FA has C-bindings available in the [r2fa-portable](https://github.com/breard-r/r2fa-portable) repository and therefore can be used by any language capable of interacting with standard dynamic libraries.
+
+
 ## Quick example
 
 More examples are available in the [documentation](https://what.tf/r2fa/).
