@@ -26,7 +26,7 @@ Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor au
 - [ ] U2F - Universal 2nd Factor ([FIDO Alliance](https://fidoalliance.org/specifications/download/))
 
 
-## Installation
+## Using within a Rust project
 
 You can find R2FA on [crates.io](https://crates.io/crates/r2fa) and include it in your `Cargo.toml`:
 
@@ -37,10 +37,20 @@ r2fa = "^0.1.0"
 
 ## Using outside Rust
 
-R2FA has C-bindings available in the [r2fa-portable](https://github.com/breard-r/r2fa-portable) repository and therefore can be used by any language capable of interacting with standard dynamic libraries.
+In order to build R2FA, you will need both the [rust compiler](https://github.com/rust-lang/rust) and [cargo](https://github.com/rust-lang/cargo).
+
+```ShellSession
+$ git clone https://github.com/breard-r/r2fa.git
+$ cd r2fa
+$ make
+$ make install prefix=/usr
+```
 
 
-## Quick example
+## Quick examples
+
+
+### Rust
 
 More examples are available in the [documentation](https://what.tf/r2fa/).
 
@@ -55,4 +65,74 @@ let code = TOTPBuilder::new()
     .unwrap()
     .generate();
 assert_eq!(code.len(), 6);
+```
+
+### C
+
+```C
+#include <stdio.h>
+#include <r2fa.h>
+
+int main(void) {
+  struct r2fa_totp_cfg cfg;
+  char   code[7], key[] = "12345678901234567890";
+
+  if (r2fa_totp_init(&cfg) != 0) {
+    return 1;
+  }
+  cfg.key = key;
+  cfg.key_len = sizeof(key);
+  if (r2fa_totp_generate(&cfg, code) != 0) {
+    return 2;
+  }
+
+  printf("%s\n", code);
+
+  return 0;
+}
+```
+
+```ShellSession
+$ cc -o totp totp.c -lr2fa
+$ ./totp
+848085
+```
+
+### Python
+
+```Python
+from ctypes.util import find_library
+from struct import Struct
+from ctypes import *
+
+class TOTPcfg(Structure):
+    _fields_ = [
+        ('key', c_char_p),
+        ('key_len', c_size_t),
+        ('timestamp', c_longlong),
+        ('period', c_uint),
+        ('initial_time', c_ulonglong),
+        ('output_len', c_size_t),
+        ('output_base', c_char_p),
+        ('output_base_len', c_size_t),
+        ('hash_function', c_int),
+    ]
+
+def get_totp():
+    key = b'12345678901234567890'
+    lib_path = find_library('r2fa') or 'target/release/libr2fa.so'
+    lib = cdll.LoadLibrary(lib_path)
+    cfg = TOTPcfg()
+    if lib.r2fa_totp_init(byref(cfg)) != 0:
+        return
+    cfg.key_len = len(key)
+    cfg.key = c_char_p(key)
+    code = create_string_buffer(b'\000' * cfg.output_len)
+    if lib.r2fa_totp_generate(byref(cfg), code) != 0:
+        return
+    return str(code.value, encoding="utf-8")
+
+if __name__ == '__main__':
+    code = get_totp()
+    print('{}'.format(code))
 ```

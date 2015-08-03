@@ -45,3 +45,6 @@ extern crate crypto;
 extern crate time;
 
 pub mod otp;
+
+#[cfg(feature = "cbindings")]
+extern crate libc;

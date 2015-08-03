@@ -6,3 +6,9 @@ rust:
 matrix:
   allow_failure:
     - rust: nightly
+sudo: true
+before_script:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y valgrind
+script:
+  - make test

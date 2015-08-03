@@ -14,11 +14,12 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
+#[repr(C)]
 #[derive(Clone, Copy)]
 pub enum HashFunction {
-    Sha1,
-    Sha256,
-    Sha512,
+    Sha1 = 1,
+    Sha256 = 2,
+    Sha512 = 3,
 }
 
 macro_rules! builder_common {
@@ -83,3 +84,6 @@ pub mod totp;
 
 pub type HOTPBuilder = hotp::HOTPBuilder;
 pub type TOTPBuilder = totp::TOTPBuilder;
+
+#[cfg(feature = "cbindings")]
+pub mod cbindings;
