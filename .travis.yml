@@ -9,6 +9,6 @@ matrix:
 sudo: true
 before_script:
   - sudo apt-get update -qq
-  - sudo apt-get install -y valgrind
+  - sudo apt-get install -y valgrind python3
 script:
   - make test
