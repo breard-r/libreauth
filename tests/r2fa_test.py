@@ -3,6 +3,7 @@ from struct import Struct
 from ctypes import *
 from unittest import TestCase
 from os import path
+import sys
 
 class TOTPcfg(Structure):
     _fields_ = [
@@ -23,7 +24,8 @@ class TestOTP(TestCase):
         self.sha256 = 2
         self.sha512 = 3
         channel = 'debug'
-        base_dir = path.dirname(path.dirname(__file__))
+        current_file = path.abspath(__file__)
+        base_dir = path.dirname(path.dirname(current_file))
         self.lib_path = path.join(base_dir, 'target', channel, 'libr2fa.so')
 
     def test_totp(self):
@@ -49,7 +51,10 @@ class TestOTP(TestCase):
         ret = lib.r2fa_totp_generate(byref(cfg), code)
         self.assertEqual(ret, 0)
 
-        code = str(code.value, encoding="utf-8")
+        try:
+            code = str(code.value, encoding="utf-8")
+        except TypeError:
+            code = str(code.value)
         self.assertEqual(len(code), 6)
 
 if __name__ == '__main__':
