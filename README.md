@@ -31,7 +31,7 @@ Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor au
 You can find R2FA on [crates.io](https://crates.io/crates/r2fa) and include it in your `Cargo.toml`:
 
 ```toml
-r2fa = "^0.1.0"
+r2fa = "*"
 ```
 
 
