@@ -8,6 +8,7 @@ repository = "https://github.com/breard-r/r2fa"
 readme = "README.md"
 keywords = ["2fa", "otp", "hotp", "totp"]
 license = "ISC"
+include = ["src/**/*", "Cargo.toml", "LICENSE.txt"]
 
 [lib]
 name = "r2fa"
