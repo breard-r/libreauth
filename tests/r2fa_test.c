@@ -17,7 +17,6 @@
 #include <strings.h>
 #include <string.h>
 #include <assert.h>
-#include <stdio.h>
 #include <r2fa.h>
 
 
