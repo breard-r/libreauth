@@ -209,6 +209,50 @@ impl TOTPBuilder {
     }
 }
 
+
+#[cfg(feature = "cbindings")]
+pub mod cbindings {
+    use super::TOTPBuilder;
+    use otp::HashFunction;
+    use libc;
+    use time;
+    use std;
+
+    #[repr(C)]
+    pub struct TOTPcfg {
+        key: *const u8,
+        key_len: libc::size_t,
+        timestamp: libc::int64_t,
+        period: libc::uint32_t,
+        initial_time: libc::uint64_t,
+        output_len: libc::size_t,
+        output_base: *const u8,
+        output_base_len: libc::size_t,
+        hash_function: HashFunction,
+    }
+
+    #[no_mangle]
+    pub extern fn r2fa_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
+        otp_init!(TOTPcfg, cfg,
+            timestamp, time::now().to_timespec().sec,
+            period, 30,
+            initial_time, 0
+        )
+    }
+
+    #[no_mangle]
+    pub extern fn r2fa_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> libc::int32_t {
+        let mut builder = TOTPBuilder::new();
+        otp_generate!(TOTPcfg, builder, cfg, code,
+            timestamp,
+            period,
+            initial_time
+        );
+        0
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::TOTPBuilder;

@@ -235,6 +235,42 @@ impl HOTPBuilder {
 }
 
 
+#[cfg(feature = "cbindings")]
+pub mod cbindings {
+    use super::HOTPBuilder;
+    use otp::HashFunction;
+    use libc;
+    use std;
+
+    #[repr(C)]
+    pub struct HOTPcfg {
+        key: *const u8,
+        key_len: libc::size_t,
+        counter: libc::uint64_t,
+        output_len: libc::size_t,
+        output_base: *const u8,
+        output_base_len: libc::size_t,
+        hash_function: HashFunction,
+    }
+
+    #[no_mangle]
+    pub extern fn r2fa_hotp_init(cfg: *mut HOTPcfg) -> libc::int32_t {
+        otp_init!(HOTPcfg, cfg,
+            counter, 0
+        )
+    }
+
+    #[no_mangle]
+    pub extern fn r2fa_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> libc::int32_t {
+        let mut builder = HOTPBuilder::new();
+        otp_generate!(HOTPcfg, builder, cfg, code,
+            counter
+        );
+        0
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::HOTPBuilder;
