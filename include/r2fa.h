@@ -32,7 +32,7 @@ typedef enum {
 } r2fa_otp_hash_function;
 
 typedef enum {
-  R2FA_OTP_NO_ERROR          = 0,
+  R2FA_OTP_SUCCESS           = 0,
   R2FA_OTP_CFG_NULL_PTR      = 1,
   R2FA_OTP_CODE_NULL_PTR     = 2,
   R2FA_OTP_KEY_NULL_PTR      = 3,

@@ -31,7 +31,7 @@ void test_hotp(void) {
   assert(cfg.counter == 42);
 
   ret = r2fa_hotp_init(&cfg);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
   assert(cfg.key == NULL);
   assert(cfg.key_len == 0);
   assert(cfg.counter == 0);
@@ -44,7 +44,7 @@ void test_hotp(void) {
   cfg.key_len = sizeof(key);
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
   assert(strlen(code) == 6);
   assert(strncmp(code, "755224", 7) == 0);
 
@@ -68,7 +68,7 @@ void test_totp(void) {
   assert(cfg.period == 42);
 
   ret = r2fa_totp_init(&cfg);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
   assert(cfg.key == NULL);
   assert(cfg.key_len == 0);
   assert(cfg.timestamp != 0);
@@ -83,7 +83,7 @@ void test_totp(void) {
   cfg.key_len = sizeof(key);
 
   ret = r2fa_totp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
   assert(strlen(code) == 6);
 }
 
@@ -93,7 +93,7 @@ void test_advanced_totp(void) {
   int ret;
 
   ret = r2fa_totp_init(&cfg);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
 
   cfg.key = key;
   cfg.key_len = sizeof(key);
@@ -102,7 +102,7 @@ void test_advanced_totp(void) {
   cfg.hash_function = R2FA_OTP_SHA_256;
 
   ret = r2fa_totp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_NO_ERROR);
+  assert(ret == R2FA_OTP_SUCCESS);
   assert(strlen(code) == 8);
   assert(strncmp(code, "68084774", 9) == 0);
 

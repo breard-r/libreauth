@@ -77,12 +77,12 @@ int main(void) {
   struct r2fa_totp_cfg cfg;
   char   code[7], key[] = "12345678901234567890";
 
-  if (r2fa_totp_init(&cfg) != 0) {
+  if (r2fa_totp_init(&cfg) != R2FA_OTP_SUCCESS) {
     return 1;
   }
   cfg.key = key;
   cfg.key_len = sizeof(key);
-  if (r2fa_totp_generate(&cfg, code) != 0) {
+  if (r2fa_totp_generate(&cfg, code) != R2FA_OTP_SUCCESS) {
     return 2;
   }
 
