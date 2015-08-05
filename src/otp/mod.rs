@@ -81,10 +81,10 @@ macro_rules! builder_common {
 
 #[cfg(feature = "cbindings")]
 macro_rules! otp_init {
-    ($t:ty, $cfg:ident, $($field:ident, $value:expr), *) => {
+    ($cfg_type:ty, $cfg:ident, $($field:ident, $value:expr), *) => {
         match $cfg.is_null() {
             false => {
-                let c: &mut $t = unsafe { &mut *$cfg };
+                let c: &mut $cfg_type = unsafe { &mut *$cfg };
                 c.key = std::ptr::null();
                 c.key_len = 0;
                 c.output_len = 6;
@@ -94,52 +94,98 @@ macro_rules! otp_init {
                 $(
                     c.$field = $value;
                 )*
-                0
+                Ok(c)
             }
-            true => 1,
+            true => Err(1),
         }
     }
 }
 
 #[cfg(feature = "cbindings")]
-macro_rules! otp_generate {
-    ($t:ty, $builder:ident, $cfg:ident, $code:ident, $($field:ident), *) => {{
-        if $cfg.is_null() || $code.is_null() {
-            return 1
+macro_rules! get_value_or_errno {
+    ($val:expr) => {{
+        match $val {
+            Ok(v) => v,
+            Err(errno) => return errno,
         }
-        let cfg: &$t = unsafe { &*$cfg };
-        if cfg.key.is_null() || cfg.key_len == 0 {
-            return 2
-        }
-        let output_base: Vec<u8> = match cfg.output_base.is_null() {
-            true => "0123456789".to_string().into_bytes(),
-            false => unsafe { std::slice::from_raw_parts(cfg.output_base, cfg.output_base_len as usize).to_owned() },
-        };
-        let mut code = unsafe { std::slice::from_raw_parts_mut($code, cfg.output_len as usize + 1) } ;
-        let key: Vec<u8> = unsafe { std::slice::from_raw_parts(cfg.key, cfg.key_len as usize).to_owned() };
-
-        let otp = $builder
-            .key(&key)
-            .output_len(cfg.output_len as usize)
-            .output_base(&output_base)
-            .hash_function(cfg.hash_function)
-            $(
-                .$field(cfg.$field)
-             )*
-            .finalize();
-        match otp {
-            Ok(otp) => {
-                let raw_code = otp.generate().into_bytes();
-                let len: usize = cfg.output_len as usize;
-                for i in 0..len {
-                    code[i] = raw_code[i];
-                }
-                code[len] = 0;
-            },
-            Err(_) => return 3,
-        };
     }}
 }
+
+#[cfg(feature = "cbindings")]
+macro_rules! get_value_or_false {
+    ($val:expr) => {{
+        match $val {
+            Ok(v) => v,
+            Err(_) => return 0,
+        }
+    }}
+}
+
+
+#[cfg(feature = "cbindings")]
+pub mod c {
+    use libc;
+    use std;
+
+    pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
+        let len = code.len();
+        for i in 0..len {
+            dest[i] = code[i];
+        };
+        dest[len] = 0;
+    }
+
+    pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, libc::int32_t> {
+        if cfg.is_null() {
+            return Err(1)
+        }
+        let cfg: &T = unsafe { &*cfg };
+        Ok(cfg)
+    }
+
+    pub fn get_code(code: *const u8, code_len: usize) -> Result<String, libc::int32_t> {
+        if code.is_null() {
+            return Err(3)
+        }
+        let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
+        match String::from_utf8(code) {
+            Ok(code) => Ok(code),
+            Err(_) => Err(4),
+        }
+    }
+
+    pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], libc::int32_t> {
+        if code.is_null() {
+            return Err(3)
+        }
+        Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
+    }
+
+    pub fn get_output_base(output_base: *const u8, output_base_len: usize) -> Result<Vec<u8>, libc::int32_t> {
+        match output_base.is_null() {
+            false => {
+                match output_base_len {
+                    0 => Err(4),
+                    l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() })
+                }
+            },
+            true => Ok("0123456789".to_string().into_bytes()),
+        }
+    }
+
+    pub fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, libc::int32_t> {
+        match key.is_null() {
+            false => {
+                match key_len {
+                    0 => Err(5),
+                    l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
+                }
+            },
+            true => Err(6),
+        }
+    }
+}
+
 
 pub mod hotp;
 pub mod totp;

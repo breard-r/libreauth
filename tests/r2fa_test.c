@@ -26,6 +26,11 @@ void test_hotp(void) {
   char code[7], key[] = "12345678901234567890";
   int ret;
 
+  cfg.counter = 42;
+  ret = r2fa_hotp_init(NULL);
+  assert(ret != 0);
+  assert(cfg.counter == 42);
+
   ret = r2fa_hotp_init(&cfg);
   assert(ret == 0);
   assert(cfg.key == NULL);
@@ -43,12 +48,25 @@ void test_hotp(void) {
   assert(ret == 0);
   assert(strlen(code) == 6);
   assert(strncmp(code, "755224", 7) == 0);
+
+  assert(r2fa_hotp_is_valid(&cfg, "755224"));
+  assert(!r2fa_hotp_is_valid(NULL, "755224"));
+  assert(!r2fa_hotp_is_valid(&cfg, "755225"));
+  assert(!r2fa_hotp_is_valid(&cfg, "4755224"));
+  assert(!r2fa_hotp_is_valid(&cfg, "!@#$%^"));
+  assert(!r2fa_hotp_is_valid(&cfg, ""));
+  assert(!r2fa_hotp_is_valid(&cfg, NULL));
 }
 
 void test_totp(void) {
   struct r2fa_totp_cfg cfg;
   char code[7], key[] = "12345678901234567890";
   int ret;
+
+  cfg.period = 42;
+  ret = r2fa_totp_init(NULL);
+  assert(ret != 0);
+  assert(cfg.period == 42);
 
   ret = r2fa_totp_init(&cfg);
   assert(ret == 0);
@@ -88,6 +106,14 @@ void test_advanced_totp(void) {
   assert(ret == 0);
   assert(strlen(code) == 8);
   assert(strncmp(code, "68084774", 9) == 0);
+
+  assert(r2fa_totp_is_valid(&cfg, "68084774"));
+  assert(!r2fa_totp_is_valid(NULL, "68084774"));
+  assert(!r2fa_totp_is_valid(&cfg, "68084775"));
+  assert(!r2fa_totp_is_valid(&cfg, "46808477"));
+  assert(!r2fa_totp_is_valid(&cfg, "!@#$%^&*"));
+  assert(!r2fa_totp_is_valid(&cfg, ""));
+  assert(!r2fa_totp_is_valid(&cfg, NULL));
 }
 
 int main(void) {

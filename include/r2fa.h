@@ -31,6 +31,8 @@ typedef enum {
   R2FA_OTP_SHA_512 = 3
 } r2fa_otp_hash_function;
 
+/* HOTP */
+
 struct r2fa_hotp_cfg {
   const void            *key;
   size_t                 key_len;
@@ -40,6 +42,12 @@ struct r2fa_hotp_cfg {
   size_t                 output_base_len;
   r2fa_otp_hash_function hash_function;
 };
+
+int32_t r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
+int32_t r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
+int32_t r2fa_hotp_is_valid(const struct r2fa_hotp_cfg *cfg, const char *code);
+
+/* TOTP */
 
 struct r2fa_totp_cfg {
   const void            *key;
@@ -53,10 +61,8 @@ struct r2fa_totp_cfg {
   r2fa_otp_hash_function hash_function;
 };
 
-
-int32_t r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
-int32_t r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
 int32_t r2fa_totp_init(struct r2fa_totp_cfg *cfg);
 int32_t r2fa_totp_generate(const struct r2fa_totp_cfg *cfg, char *code);
+int32_t r2fa_totp_is_valid(const struct r2fa_totp_cfg *cfg, const char *code);
 
 #endif /* R2FA_20150802_H */

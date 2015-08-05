@@ -238,7 +238,7 @@ impl HOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::HOTPBuilder;
-    use otp::HashFunction;
+    use otp::{HashFunction, c};
     use libc;
     use std;
 
@@ -255,18 +255,56 @@ pub mod cbindings {
 
     #[no_mangle]
     pub extern fn r2fa_hotp_init(cfg: *mut HOTPcfg) -> libc::int32_t {
-        otp_init!(HOTPcfg, cfg,
-            counter, 0
-        )
+        let res: Result<&mut HOTPcfg, libc::int32_t> = otp_init!(HOTPcfg, cfg, counter, 0);
+        match res {
+            Ok(_) => 0,
+            Err(errno) => errno,
+        }
     }
 
     #[no_mangle]
     pub extern fn r2fa_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> libc::int32_t {
-        let mut builder = HOTPBuilder::new();
-        otp_generate!(HOTPcfg, builder, cfg, code,
-            counter
-        );
-        0
+        let cfg = get_value_or_errno!(c::get_cfg(cfg));
+        let mut code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
+        match HOTPBuilder::new()
+            .key(&key)
+            .output_len(cfg.output_len as usize)
+            .output_base(&output_base)
+            .hash_function(cfg.hash_function)
+            .counter(cfg.counter)
+            .finalize() {
+                Ok(hotp) => {
+                    let ref_code = hotp.generate().into_bytes();
+                    c::write_code(&ref_code, code);
+                    0
+                },
+                Err(_) => 10,
+        }
+    }
+
+    #[no_mangle]
+    pub extern fn r2fa_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) -> libc::int32_t {
+        let cfg = get_value_or_false!(c::get_cfg(cfg));
+        let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
+        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let key = get_value_or_false!(c::get_key(cfg.key, cfg.key_len as usize));
+        match HOTPBuilder::new()
+            .key(&key)
+            .output_len(cfg.output_len as usize)
+            .output_base(&output_base)
+            .hash_function(cfg.hash_function)
+            .counter(cfg.counter)
+            .finalize() {
+                Ok(hotp) => {
+                    match hotp.is_valid(&code) {
+                        true => 1,
+                        false => 0,
+                    }
+                },
+                Err(_) => 0,
+        }
     }
 }
 

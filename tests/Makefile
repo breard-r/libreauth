@@ -21,6 +21,8 @@ test: $(NAME)
 	@(hash python2 2>/dev/null && python2 --version && python2 -m unittest $(PYSRC)) || echo "Unable to locate python2."
 	@(hash python3 2>/dev/null && python3 --version && python3 -m unittest $(PYSRC)) || echo "Unable to locate python3."
 
+tests: test
+
 clean:
 	@rm -rf $(NAME) $(OBJ) $(R2FALIB) '__pycache__' *.pyc
 
