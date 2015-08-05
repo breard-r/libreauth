@@ -31,6 +31,17 @@ typedef enum {
   R2FA_OTP_SHA_512 = 3
 } r2fa_otp_hash_function;
 
+typedef enum {
+  R2FA_OTP_NO_ERROR          = 0,
+  R2FA_OTP_CFG_NULL_PTR      = 1,
+  R2FA_OTP_CODE_NULL_PTR     = 2,
+  R2FA_OTP_KEY_NULL_PTR      = 3,
+  R2FA_OTP_INVALID_BASE_LEN  = 10,
+  R2FA_OTP_INVALID_KEY_LEN   = 11,
+  R2FA_OTP_CODE_INVALID_UTF8 = 20,
+  R2FA_OTP_UNKNOWN_ERROR     = 42
+} r2fa_otp_errno;
+
 /* HOTP */
 
 struct r2fa_hotp_cfg {
@@ -43,9 +54,9 @@ struct r2fa_hotp_cfg {
   r2fa_otp_hash_function hash_function;
 };
 
-int32_t r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
-int32_t r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
-int32_t r2fa_hotp_is_valid(const struct r2fa_hotp_cfg *cfg, const char *code);
+r2fa_otp_errno r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
+r2fa_otp_errno r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
+int32_t        r2fa_hotp_is_valid(const struct r2fa_hotp_cfg *cfg, const char *code);
 
 /* TOTP */
 
@@ -61,8 +72,8 @@ struct r2fa_totp_cfg {
   r2fa_otp_hash_function hash_function;
 };
 
-int32_t r2fa_totp_init(struct r2fa_totp_cfg *cfg);
-int32_t r2fa_totp_generate(const struct r2fa_totp_cfg *cfg, char *code);
-int32_t r2fa_totp_is_valid(const struct r2fa_totp_cfg *cfg, const char *code);
+r2fa_otp_errno r2fa_totp_init(struct r2fa_totp_cfg *cfg);
+r2fa_otp_errno r2fa_totp_generate(const struct r2fa_totp_cfg *cfg, char *code);
+int32_t        r2fa_totp_is_valid(const struct r2fa_totp_cfg *cfg, const char *code);
 
 #endif /* R2FA_20150802_H */

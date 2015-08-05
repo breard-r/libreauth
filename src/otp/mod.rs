@@ -80,6 +80,81 @@ macro_rules! builder_common {
 }
 
 #[cfg(feature = "cbindings")]
+pub mod c {
+    use std;
+
+    pub enum ErrorCode {
+        CfgNullPtr = 1,
+        CodeNullPtr = 2,
+        KeyNullPtr = 3,
+
+        InvalidBaseLen = 10,
+        InvalidKeyLen = 11,
+
+        CodeInvalidUTF8 = 20,
+        UnknownError = 42,
+    }
+
+    pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
+        let len = code.len();
+        for i in 0..len {
+            dest[i] = code[i];
+        };
+        dest[len] = 0;
+    }
+
+    pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
+        if cfg.is_null() {
+            return Err(ErrorCode::CfgNullPtr)
+        }
+        let cfg: &T = unsafe { &*cfg };
+        Ok(cfg)
+    }
+
+    pub fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
+        if code.is_null() {
+            return Err(ErrorCode::CodeNullPtr)
+        }
+        let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
+        match String::from_utf8(code) {
+            Ok(code) => Ok(code),
+            Err(_) => Err(ErrorCode::CodeInvalidUTF8),
+        }
+    }
+
+    pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
+        if code.is_null() {
+            return Err(ErrorCode::CodeNullPtr)
+        }
+        Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
+    }
+
+    pub fn get_output_base(output_base: *const u8, output_base_len: usize) -> Result<Vec<u8>, ErrorCode> {
+        match output_base.is_null() {
+            false => {
+                match output_base_len {
+                    0 | 1 => Err(ErrorCode::InvalidBaseLen),
+                    l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() })
+                }
+            },
+            true => Ok("0123456789".to_string().into_bytes()),
+        }
+    }
+
+    pub fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
+        match key.is_null() {
+            false => {
+                match key_len {
+                    0 => Err(ErrorCode::InvalidKeyLen),
+                    l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
+                }
+            },
+            true => Err(ErrorCode::KeyNullPtr),
+        }
+    }
+}
+
+#[cfg(feature = "cbindings")]
 macro_rules! otp_init {
     ($cfg_type:ty, $cfg:ident, $($field:ident, $value:expr), *) => {
         match $cfg.is_null() {
@@ -96,7 +171,7 @@ macro_rules! otp_init {
                 )*
                 Ok(c)
             }
-            true => Err(1),
+            true => Err(c::ErrorCode::CfgNullPtr),
         }
     }
 }
@@ -106,7 +181,7 @@ macro_rules! get_value_or_errno {
     ($val:expr) => {{
         match $val {
             Ok(v) => v,
-            Err(errno) => return errno,
+            Err(errno) => return errno as libc::int32_t,
         }
     }}
 }
@@ -119,71 +194,6 @@ macro_rules! get_value_or_false {
             Err(_) => return 0,
         }
     }}
-}
-
-
-#[cfg(feature = "cbindings")]
-pub mod c {
-    use libc;
-    use std;
-
-    pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
-        let len = code.len();
-        for i in 0..len {
-            dest[i] = code[i];
-        };
-        dest[len] = 0;
-    }
-
-    pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, libc::int32_t> {
-        if cfg.is_null() {
-            return Err(1)
-        }
-        let cfg: &T = unsafe { &*cfg };
-        Ok(cfg)
-    }
-
-    pub fn get_code(code: *const u8, code_len: usize) -> Result<String, libc::int32_t> {
-        if code.is_null() {
-            return Err(3)
-        }
-        let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
-        match String::from_utf8(code) {
-            Ok(code) => Ok(code),
-            Err(_) => Err(4),
-        }
-    }
-
-    pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], libc::int32_t> {
-        if code.is_null() {
-            return Err(3)
-        }
-        Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
-    }
-
-    pub fn get_output_base(output_base: *const u8, output_base_len: usize) -> Result<Vec<u8>, libc::int32_t> {
-        match output_base.is_null() {
-            false => {
-                match output_base_len {
-                    0 => Err(4),
-                    l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() })
-                }
-            },
-            true => Ok("0123456789".to_string().into_bytes()),
-        }
-    }
-
-    pub fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, libc::int32_t> {
-        match key.is_null() {
-            false => {
-                match key_len {
-                    0 => Err(5),
-                    l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
-                }
-            },
-            true => Err(6),
-        }
-    }
 }
 
 

@@ -255,10 +255,10 @@ pub mod cbindings {
 
     #[no_mangle]
     pub extern fn r2fa_hotp_init(cfg: *mut HOTPcfg) -> libc::int32_t {
-        let res: Result<&mut HOTPcfg, libc::int32_t> = otp_init!(HOTPcfg, cfg, counter, 0);
+        let res: Result<&mut HOTPcfg, c::ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
         match res {
             Ok(_) => 0,
-            Err(errno) => errno,
+            Err(errno) => errno as libc::int32_t,
         }
     }
 
@@ -280,7 +280,7 @@ pub mod cbindings {
                     c::write_code(&ref_code, code);
                     0
                 },
-                Err(_) => 10,
+                Err(_) => c::ErrorCode::UnknownError as libc::int32_t,
         }
     }
 

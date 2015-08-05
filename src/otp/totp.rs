@@ -233,14 +233,14 @@ pub mod cbindings {
 
     #[no_mangle]
     pub extern fn r2fa_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
-        let res: Result<&mut TOTPcfg, libc::int32_t> = otp_init!(TOTPcfg, cfg,
+        let res: Result<&mut TOTPcfg, c::ErrorCode> = otp_init!(TOTPcfg, cfg,
                                                                  timestamp, time::now().to_timespec().sec,
                                                                  period, 30,
                                                                  initial_time, 0
                                                                  );
         match res {
             Ok(_) => 0,
-            Err(errno) => errno,
+            Err(errno) => errno as libc::int32_t,
         }
     }
 
@@ -264,7 +264,7 @@ pub mod cbindings {
                     c::write_code(&ref_code, code);
                     0
                 },
-                Err(_) => 10,
+                Err(_) => c::ErrorCode::UnknownError as libc::int32_t,
         }
     }
 
