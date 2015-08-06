@@ -1,6 +1,6 @@
 [package]
 name = "r2fa"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
 description = "Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication."
 documentation = "https://what.tf/r2fa/"
