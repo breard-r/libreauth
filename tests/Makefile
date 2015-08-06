@@ -2,10 +2,12 @@ NAME    = r2fa-test.bin
 CHANNEL = debug
 LIBDIR  = ../target/$(CHANNEL)/
 INCDIR  = ../include/
-SRC     = r2fa_test.c
+SRC     = test_r2fa.c \
+		test_hotp.c \
+		test_totp.c
 OBJ     = $(SRC:.c=.o)
 CC      = cc
-CFLAGS  = -g -Wall -Wextra -ansi -pedantic -I$(INCDIR)
+CFLAGS  = -g -Werror -Wall -Wextra -ansi -pedantic -I$(INCDIR)
 LDFLAGS = -L$(LIBDIR) -lr2fa
 PYSRC   = r2fa_test
 
