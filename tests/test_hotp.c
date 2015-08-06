@@ -115,6 +115,95 @@ static int test_invalid_base(void) {
   return 1;
 }
 
+static int test_invalid_code(void) {
+  struct r2fa_hotp_cfg cfg;
+  char code[] = "qwerty",
+    key[] = "12345678901234567890",
+    base10[] = "0123456789",
+    base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+    base64[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
+  int ret;
+
+  r2fa_hotp_init(&cfg);
+
+  cfg.key = key;
+  cfg.key_len = strlen(key);
+
+  /* Base 10 */
+  cfg.output_base = base10;
+  cfg.output_base_len = strlen(base10);
+
+  cfg.output_len = 5;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+
+  cfg.output_len = 6;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 9;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 10;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  cfg.output_len = 0xffffff;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  /* Base 32 */
+  cfg.output_base = base32;
+  cfg.output_base_len = strlen(base32);
+
+  cfg.output_len = 3;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+
+  cfg.output_len = 4;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 6;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 7;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  cfg.output_len = 0xffffff;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  /* Base 64 */
+  cfg.output_base = base64;
+  cfg.output_base_len = strlen(base64);
+
+  cfg.output_len = 3;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+
+  cfg.output_len = 4;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 5;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_SUCCESS);
+
+  cfg.output_len = 6;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  cfg.output_len = 0xffffff;
+  ret = r2fa_hotp_generate(&cfg, code);
+  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+
+  return 1;
+}
+
 int test_hotp(void) {
   int nb_tests = 0;
 
@@ -122,6 +211,7 @@ int test_hotp(void) {
   nb_tests += test_init_null_ptr();
   nb_tests += test_generate_null_ptr();
   nb_tests += test_invalid_base();
+  nb_tests += test_invalid_code();
 
   return nb_tests;
 }

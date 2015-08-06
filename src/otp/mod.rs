@@ -75,7 +75,14 @@ macro_rules! builder_common {
 
         fn code_length(&self) -> usize {
             let base_len = self.output_base.len();
-            base_len.pow(self.output_len as u32)
+            let mut nb_bits = base_len;
+            for _ in 1..self.output_len {
+                nb_bits = match nb_bits.checked_mul(base_len) {
+                    Some(nb_bits) => nb_bits,
+                    None => return ::std::usize::MAX,
+                };
+            }
+            nb_bits
         }
 
         /// Sets the number of characters for the code. The minimum and maximum values depends the base. Default is 6.

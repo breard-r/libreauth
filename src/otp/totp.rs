@@ -511,9 +511,11 @@ mod tests {
     #[test]
     fn test_big_result_base10() {
         let key_ascii = "12345678901234567890".to_string();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_len(10).finalize() {
-            Ok(_) => assert!(false),
-            Err(_) => assert!(true),
+        for nb in vec![10, 42, 69, 1024, 0xffffff] {
+            match TOTPBuilder::new().ascii_key(&key_ascii).output_len(nb).finalize() {
+                Ok(_) => assert!(false),
+                Err(_) => assert!(true),
+            }
         }
     }
 
