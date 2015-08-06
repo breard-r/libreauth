@@ -18,12 +18,15 @@
 #include <string.h>
 #include <assert.h>
 #include <r2fa.h>
+#include "r2fa_tests.h"
 
 
 static int test_basic_hotp(void) {
   struct r2fa_hotp_cfg cfg;
   char code[] = "qwerty", key[] = "12345678901234567890";
   int ret;
+
+  test_name("hotp: test_basic_hotp");
 
   ret = r2fa_hotp_init(&cfg);
   assert(ret == R2FA_OTP_SUCCESS);
@@ -56,6 +59,7 @@ static int test_basic_hotp(void) {
 
 static int test_init_null_ptr(void) {
   int ret = r2fa_hotp_init(NULL);
+  test_name("hotp: test_init_null_ptr");
   assert(ret == R2FA_OTP_CFG_NULL_PTR);
   return 1;
 }
@@ -65,6 +69,7 @@ static int test_generate_null_ptr(void) {
   char code[] = "qwerty", key[] = "12345678901234567890";
   int ret;
 
+  test_name("hotp: test_generate_null_ptr");
   r2fa_hotp_init(&cfg);
 
   ret = r2fa_hotp_generate(NULL, code);
@@ -95,6 +100,7 @@ static int test_invalid_base(void) {
   char code[] = "qwerty", key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
   int ret;
 
+  test_name("hotp: test_invalid_base");
   r2fa_hotp_init(&cfg);
 
   cfg.key = key;
@@ -124,6 +130,7 @@ static int test_invalid_code(void) {
     base64[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
   int ret;
 
+  test_name("hotp: test_invalid_code");
   r2fa_hotp_init(&cfg);
 
   cfg.key = key;

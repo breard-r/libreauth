@@ -17,7 +17,8 @@
 #ifndef R2FA_TESTS_H_20150806
 #define R2FA_TESTS_H_20150806
 
-int test_hotp(void);
-int test_totp(void);
+void test_name(const char *name);
+int  test_hotp(void);
+int  test_totp(void);
 
 #endif /* R2FA_TESTS_H_20150806 */

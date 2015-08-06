@@ -18,12 +18,15 @@
 #include <string.h>
 #include <assert.h>
 #include <r2fa.h>
+#include "r2fa_tests.h"
 
 
 static int test_basic_totp(void) {
   struct r2fa_totp_cfg cfg;
   char code[] = "qwerty", key[] = "12345678901234567890";
   int ret;
+
+  test_name("totp: test_basic_totp");
 
   ret = r2fa_totp_init(&cfg);
   assert(ret == R2FA_OTP_SUCCESS);
@@ -57,6 +60,7 @@ static int test_advanced_totp(void) {
   char code[9], key[] = "12345678901234567890123456789012";
   int ret;
 
+  test_name("totp: test_advanced_totp");
   ret = r2fa_totp_init(&cfg);
   assert(ret == R2FA_OTP_SUCCESS);
 
@@ -84,6 +88,7 @@ static int test_advanced_totp(void) {
 
 static int test_init_null_ptr(void) {
   int ret = r2fa_totp_init(NULL);
+  test_name("totp: test_init_null_ptr");
   assert(ret == R2FA_OTP_CFG_NULL_PTR);
   return 1;
 }
@@ -93,6 +98,7 @@ static int test_generate_null_ptr(void) {
   char code[] = "qwerty", key[] = "12345678901234567890";
   int ret;
 
+  test_name("totp: test_generate_null_ptr");
   r2fa_totp_init(&cfg);
 
   ret = r2fa_totp_generate(NULL, code);
@@ -123,6 +129,7 @@ static int test_invalid_base(void) {
   char code[] = "qwerty", key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
   int ret;
 
+  test_name("totp: test_invalid_base");
   r2fa_totp_init(&cfg);
 
   cfg.key = key;

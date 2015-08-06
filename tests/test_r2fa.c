@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include "r2fa_tests.h"
 
+void test_name(const char *name) {
+  printf("Running test: %s\n", name);
+}
+
 int main(void) {
   int nb_tests = 0;
 
