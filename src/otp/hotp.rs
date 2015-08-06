@@ -14,13 +14,13 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
+use super::{HashFunction, ErrorCode};
 use rustc_serialize::hex::FromHex;
 use crypto::sha2::{Sha256, Sha512};
 use crypto::mac::{Mac, MacResult};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::sha1::Sha1;
-use super::HashFunction;
 use base32;
 
 
@@ -185,7 +185,7 @@ pub struct HOTPBuilder {
     output_len: usize,
     output_base: Vec<u8>,
     hash_function: HashFunction,
-    runtime_error: Option<&'static str>,
+    runtime_error: Option<ErrorCode>,
 }
 
 impl HOTPBuilder {
@@ -210,14 +210,14 @@ impl HOTPBuilder {
     }
 
     /// Returns the finalized HOTP object.
-    pub fn finalize(&self) -> Result<HOTP, &'static str> {
+    pub fn finalize(&self) -> Result<HOTP, ErrorCode> {
         match self.runtime_error {
             Some(e) => return Err(e),
             None => (),
         }
         match self.code_length() {
-            n if n < 1000000 => return Err("The code length is too small."),
-            n if n > 2147483648 => return Err("The code length is too big."),
+            n if n < 1000000 => return Err(ErrorCode::CodeTooSmall),
+            n if n > 2147483648 => return Err(ErrorCode::CodeTooBig),
             _ => (),
         }
         match self.key {
@@ -228,7 +228,7 @@ impl HOTPBuilder {
                 output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
             }),
-            None => Err("No key provided."),
+            None => Err(ErrorCode::InvalidKey),
         }
 
     }
@@ -238,7 +238,7 @@ impl HOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::HOTPBuilder;
-    use otp::{HashFunction, c};
+    use otp::{HashFunction, ErrorCode, c};
     use libc;
     use std;
 
@@ -255,7 +255,7 @@ pub mod cbindings {
 
     #[no_mangle]
     pub extern fn r2fa_hotp_init(cfg: *mut HOTPcfg) -> libc::int32_t {
-        let res: Result<&mut HOTPcfg, c::ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
+        let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
         match res {
             Ok(_) => 0,
             Err(errno) => errno as libc::int32_t,
@@ -280,7 +280,7 @@ pub mod cbindings {
                     c::write_code(&ref_code, code);
                     0
                 },
-                Err(_) => c::ErrorCode::UnknownError as libc::int32_t,
+                Err(errno) => errno as libc::int32_t,
         }
     }
 

@@ -22,6 +22,25 @@ pub enum HashFunction {
     Sha512 = 3,
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub enum ErrorCode {
+    CfgNullPtr      = 1,
+    CodeNullPtr     = 2,
+    KeyNullPtr      = 3,
+
+    InvalidBaseLen  = 10,
+    InvalidKeyLen   = 11,
+    CodeTooSmall    = 12,
+    CodeTooBig      = 13,
+
+    InvalidKey      = 20,
+    InvalidPeriod   = 21,
+
+    CodeInvalidUTF8 = 30,
+}
+
+
 macro_rules! builder_common {
     ($t:ty) => {
         /// Sets the shared secret.
@@ -40,7 +59,7 @@ macro_rules! builder_common {
         pub fn hex_key(&mut self, key: &String) -> &mut $t {
             match key.from_hex() {
                 Ok(k) => { self.key = Some(k); }
-                Err(_) => { self.runtime_error = Some("Invalid key."); }
+                Err(_) => { self.runtime_error = Some(ErrorCode::InvalidKey); }
             }
             self
         }
@@ -49,7 +68,7 @@ macro_rules! builder_common {
         pub fn base32_key(&mut self, key: &String) -> &mut $t {
             match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
                 Some(k) => { self.key = Some(k); }
-                None => { self.runtime_error = Some("Invalid key."); }
+                None => { self.runtime_error = Some(ErrorCode::InvalidKey); }
             }
             self
         }
@@ -81,19 +100,8 @@ macro_rules! builder_common {
 
 #[cfg(feature = "cbindings")]
 pub mod c {
+    use super::ErrorCode;
     use std;
-
-    pub enum ErrorCode {
-        CfgNullPtr = 1,
-        CodeNullPtr = 2,
-        KeyNullPtr = 3,
-
-        InvalidBaseLen = 10,
-        InvalidKeyLen = 11,
-
-        CodeInvalidUTF8 = 20,
-        UnknownError = 42,
-    }
 
     pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
         let len = code.len();
@@ -171,7 +179,7 @@ macro_rules! otp_init {
                 )*
                 Ok(c)
             }
-            true => Err(c::ErrorCode::CfgNullPtr),
+            true => Err(ErrorCode::CfgNullPtr),
         }
     }
 }

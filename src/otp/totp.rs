@@ -14,9 +14,8 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
+use super::{HashFunction, ErrorCode, HOTPBuilder};
 use rustc_serialize::hex::FromHex;
-use super::HashFunction;
-use super::HOTPBuilder;
 use base32;
 use time;
 
@@ -140,7 +139,7 @@ pub struct TOTPBuilder {
     output_len: usize,
     output_base: Vec<u8>,
     hash_function: HashFunction,
-    runtime_error: Option<&'static str>,
+    runtime_error: Option<ErrorCode>,
 }
 
 impl TOTPBuilder {
@@ -170,7 +169,7 @@ impl TOTPBuilder {
     /// Sets the time step in seconds (X). May not be zero. Default is 30.
     pub fn period(&mut self, period: u32) -> &mut TOTPBuilder {
         if period == 0 {
-            self.runtime_error = Some("The period cannot be set to zero.");
+            self.runtime_error = Some(ErrorCode::InvalidPeriod);
         } else {
             self.period = period;
         }
@@ -184,14 +183,14 @@ impl TOTPBuilder {
     }
 
     /// Returns the finalized TOTP object.
-    pub fn finalize(&self) -> Result<TOTP, &'static str> {
+    pub fn finalize(&self) -> Result<TOTP, ErrorCode> {
         match self.runtime_error {
             Some(e) => return Err(e),
             None => (),
         }
         match self.code_length() {
-            n if n < 1000000 => return Err("The code length is too small."),
-            n if n > 2147483648 => return Err("The code length is too big."),
+            n if n < 1000000 => return Err(ErrorCode::CodeTooSmall),
+            n if n > 2147483648 => return Err(ErrorCode::CodeTooBig),
             _ => (),
         }
         match self.key {
@@ -204,7 +203,7 @@ impl TOTPBuilder {
                 output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
             }),
-            None => Err("No key provided."),
+            None => Err(ErrorCode::InvalidKey),
         }
     }
 }
@@ -213,7 +212,7 @@ impl TOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::TOTPBuilder;
-    use otp::{HashFunction, c};
+    use otp::{HashFunction, ErrorCode, c};
     use libc;
     use time;
     use std;
@@ -233,7 +232,7 @@ pub mod cbindings {
 
     #[no_mangle]
     pub extern fn r2fa_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
-        let res: Result<&mut TOTPcfg, c::ErrorCode> = otp_init!(TOTPcfg, cfg,
+        let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
                                                                  timestamp, time::now().to_timespec().sec,
                                                                  period, 30,
                                                                  initial_time, 0
@@ -264,7 +263,7 @@ pub mod cbindings {
                     c::write_code(&ref_code, code);
                     0
                 },
-                Err(_) => c::ErrorCode::UnknownError as libc::int32_t,
+                Err(errno) => errno as libc::int32_t,
         }
     }
 

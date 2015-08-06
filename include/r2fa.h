@@ -33,13 +33,20 @@ typedef enum {
 
 typedef enum {
   R2FA_OTP_SUCCESS           = 0,
+
   R2FA_OTP_CFG_NULL_PTR      = 1,
   R2FA_OTP_CODE_NULL_PTR     = 2,
   R2FA_OTP_KEY_NULL_PTR      = 3,
+
   R2FA_OTP_INVALID_BASE_LEN  = 10,
   R2FA_OTP_INVALID_KEY_LEN   = 11,
-  R2FA_OTP_CODE_INVALID_UTF8 = 20,
-  R2FA_OTP_UNKNOWN_ERROR     = 42
+  R2FA_OTP_CODE_TOO_SMALL    = 12,
+  R2FA_OTP_CODE_TOO_BIG      = 13,
+
+  R2FA_OTP_INVALID_KEY       = 20,
+  R2FA_OTP_INVALID_PERIOD    = 21,
+
+  R2FA_OTP_CODE_INVALID_UTF8 = 30
 } r2fa_otp_errno;
 
 /* HOTP */
