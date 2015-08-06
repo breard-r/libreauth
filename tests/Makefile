@@ -18,10 +18,10 @@ $(NAME): $(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS)
 
 test: $(NAME)
-	@(hash valgrind 2>/dev/null && LD_LIBRARY_PATH=$(LIBDIR) valgrind -v ./$(NAME)) || echo "Unable to locate valgrind."
+	@(hash valgrind 2>/dev/null && LD_LIBRARY_PATH=$(LIBDIR) valgrind ./$(NAME))
 	@LD_LIBRARY_PATH=$(LIBDIR) ./$(NAME)
-	@(hash python2 2>/dev/null && python2 --version && python2 -m unittest $(PYSRC)) || echo "Unable to locate python2."
-	@(hash python3 2>/dev/null && python3 --version && python3 -m unittest $(PYSRC)) || echo "Unable to locate python3."
+	@(hash python2 2>/dev/null && python2 --version && python2 -m unittest $(PYSRC))
+	@(hash python3 2>/dev/null && python3 --version && python3 -m unittest $(PYSRC))
 
 tests: test
 
