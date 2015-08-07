@@ -123,7 +123,7 @@ static int test_invalid_base(void) {
 
 static int test_invalid_code(void) {
   struct r2fa_hotp_cfg cfg;
-  char code[] = "qwerty",
+  char code[21],
     key[] = "12345678901234567890",
     base10[] = "0123456789",
     base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
@@ -147,10 +147,12 @@ static int test_invalid_code(void) {
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 6);
 
   cfg.output_len = 9;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 9);
 
   cfg.output_len = 10;
   ret = r2fa_hotp_generate(&cfg, code);
@@ -171,10 +173,12 @@ static int test_invalid_code(void) {
   cfg.output_len = 4;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 4);
 
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 6);
 
   cfg.output_len = 7;
   ret = r2fa_hotp_generate(&cfg, code);
@@ -195,10 +199,12 @@ static int test_invalid_code(void) {
   cfg.output_len = 4;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 4);
 
   cfg.output_len = 5;
   ret = r2fa_hotp_generate(&cfg, code);
   assert(ret == R2FA_OTP_SUCCESS);
+  assert(strlen(code) == 5);
 
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
