@@ -44,7 +44,7 @@ impl TOTP {
     ///
     /// # Examples
     /// ```
-    /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+    /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
     /// let mut totp = r2fa::otp::TOTPBuilder::new()
     ///     .base32_key(&key_base32)
     ///     .finalize()
@@ -72,8 +72,8 @@ impl TOTP {
     ///
     /// # Examples
     /// ```
-    /// let key_ascii = "12345678901234567890".to_string();
-    /// let user_code = "755224".to_string();
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let user_code = "755224".to_owned();
     /// let valid = r2fa::otp::TOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
@@ -108,7 +108,7 @@ impl TOTP {
 ///```
 ///
 ///```
-/// let key_ascii = "12345678901234567890".to_string();
+/// let key_ascii = "12345678901234567890".to_owned();
 /// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .period(42)
@@ -116,7 +116,7 @@ impl TOTP {
 ///```
 ///
 ///```
-/// let key_hex = "3132333435363738393031323334353637383930".to_string();
+/// let key_hex = "3132333435363738393031323334353637383930".to_owned();
 /// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .timestamp(1234567890)
@@ -124,7 +124,7 @@ impl TOTP {
 ///```
 ///
 ///```
-/// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+/// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 /// let mut totp = r2fa::otp::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
@@ -151,7 +151,7 @@ impl TOTPBuilder {
             period: 30,
             initial_time: 0,
             output_len: 6,
-            output_base: "0123456789".to_string().into_bytes(),
+            output_base: "0123456789".to_owned().into_bytes(),
             hash_function: HashFunction::Sha1,
             runtime_error: None,
         }
@@ -343,7 +343,7 @@ mod tests {
 
         #[test]
     fn test_totp_asciikey_simple() {
-        let key_ascii = "12345678901234567890".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
         let totp = TOTPBuilder::new()
@@ -364,7 +364,7 @@ mod tests {
 
     #[test]
     fn test_totp_asciikeu_full() {
-        let key_ascii = "12345678901234567890".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
         let totp = TOTPBuilder::new()
@@ -387,7 +387,7 @@ mod tests {
 
     #[test]
     fn test_totp_kexkey_simple() {
-        let key_hex = "3132333435363738393031323334353637383930".to_string();
+        let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
         let totp = TOTPBuilder::new()
@@ -408,7 +408,7 @@ mod tests {
 
     #[test]
     fn test_totp_hexkey_full() {
-        let key_hex = "3132333435363738393031323334353637383930".to_string();
+        let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 
         let totp = TOTPBuilder::new()
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn test_totp_base32key_simple() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-        let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+        let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let totp = TOTPBuilder::new()
             .base32_key(&key_base32)
@@ -453,7 +453,7 @@ mod tests {
     #[test]
     fn test_totp_base32key_full() {
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-        let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+        let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let totp = TOTPBuilder::new()
             .base32_key(&key_base32)
@@ -483,7 +483,7 @@ mod tests {
 
     #[test]
     fn test_invalid_hexkey() {
-        let key = "!@#$%^&".to_string();
+        let key = "!@#$%^&".to_owned();
         match TOTPBuilder::new().hex_key(&key).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn test_invalid_base32key() {
-        let key = "!@#$%^&".to_string();
+        let key = "!@#$%^&".to_owned();
         match TOTPBuilder::new().base32_key(&key).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     fn test_small_result_base10() {
-        let key_ascii = "12345678901234567890".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
         match TOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
@@ -510,7 +510,7 @@ mod tests {
 
     #[test]
     fn test_big_result_base10() {
-        let key_ascii = "12345678901234567890".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
         for nb in vec![10, 42, 69, 1024, 0xffffff] {
             match TOTPBuilder::new().ascii_key(&key_ascii).output_len(nb).finalize() {
                 Ok(_) => assert!(false),
@@ -521,7 +521,7 @@ mod tests {
 
     #[test]
     fn test_result_ok_base10() {
-        let key_ascii = "12345678901234567890".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
         match TOTPBuilder::new().ascii_key(&key_ascii).output_len(6).finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
@@ -534,8 +534,8 @@ mod tests {
 
     #[test]
     fn test_small_result_base64() {
-        let key_ascii = "12345678901234567890".to_string();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        let key_ascii = "12345678901234567890".to_owned();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
         match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(3).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
@@ -544,8 +544,8 @@ mod tests {
 
     #[test]
     fn test_big_result_base64() {
-        let key_ascii = "12345678901234567890".to_string();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        let key_ascii = "12345678901234567890".to_owned();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
         match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(6).finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
@@ -554,8 +554,8 @@ mod tests {
 
     #[test]
     fn test_result_ok_base64() {
-        let key_ascii = "12345678901234567890".to_string();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_string().into_bytes();
+        let key_ascii = "12345678901234567890".to_owned();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
         match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(4).finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
@@ -568,7 +568,7 @@ mod tests {
 
     #[test]
     fn test_rfc6238_examples_sha1() {
-        let key_hex = "3132333435363738393031323334353637383930".to_string();
+        let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let examples = [
             (59,          HashFunction::Sha1,   "94287082"),
             (1111111109,  HashFunction::Sha1,   "07081804"),
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_rfc6238_examples_sha256() {
-        let key_hex = "3132333435363738393031323334353637383930313233343536373839303132".to_string();
+        let key_hex = "3132333435363738393031323334353637383930313233343536373839303132".to_owned();
         let examples = [
             (59,          HashFunction::Sha256, "46119246"),
             (1111111109,  HashFunction::Sha256, "68084774"),
@@ -618,7 +618,7 @@ mod tests {
 
     #[test]
     fn test_rfc6238_examples_sha512() {
-        let key_hex = "31323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334".to_string();
+        let key_hex = "31323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334".to_owned();
         let examples = [
             (59,          HashFunction::Sha512, "90693936"),
             (1111111109,  HashFunction::Sha512, "25091201"),
@@ -643,8 +643,8 @@ mod tests {
 
     #[test]
     fn test_valid_code() {
-        let key_ascii = "12345678901234567890".to_string();
-        let user_code = "94287082".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "94287082".to_owned();
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
@@ -657,8 +657,8 @@ mod tests {
 
     #[test]
     fn test_invalid_code() {
-        let key_ascii = "12345678901234567890".to_string();
-        let user_code = "12345678".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "12345678".to_owned();
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
@@ -671,8 +671,8 @@ mod tests {
 
     #[test]
     fn test_bad_code() {
-        let key_ascii = "12345678901234567890".to_string();
-        let user_code = "!@#$%^&*".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "!@#$%^&*".to_owned();
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)
@@ -685,8 +685,8 @@ mod tests {
 
     #[test]
     fn test_empty_code() {
-        let key_ascii = "12345678901234567890".to_string();
-        let user_code = "".to_string();
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "".to_owned();
         let valid = TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .timestamp(59)

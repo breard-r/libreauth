@@ -91,7 +91,7 @@ macro_rules! builder_common {
             self
         }
 
-        /// Sets the base used to represents the output code. Default is "0123456789".to_string().into_bytes().
+        /// Sets the base used to represents the output code. Default is "0123456789".to_owned().into_bytes().
         pub fn output_base(&mut self, base: &Vec<u8>) -> &mut $t {
             self.output_base = base.clone();
             self
@@ -152,7 +152,7 @@ pub mod c {
                     l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() })
                 }
             },
-            true => Ok("0123456789".to_string().into_bytes()),
+            true => Ok("0123456789".to_owned().into_bytes()),
         }
     }
 
