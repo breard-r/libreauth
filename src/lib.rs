@@ -44,7 +44,7 @@ extern crate base32;
 extern crate crypto;
 extern crate time;
 
-pub mod otp;
+pub mod oath;
 
 #[cfg(feature = "cbindings")]
 extern crate libc;

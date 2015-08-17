@@ -29,20 +29,20 @@ static int test_basic_hotp(void) {
   test_name("hotp: test_basic_hotp");
 
   ret = r2fa_hotp_init(&cfg);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(cfg.key == NULL);
   assert(cfg.key_len == 0);
   assert(cfg.counter == 0);
   assert(cfg.output_len == 6);
   assert(cfg.output_base == NULL);
   assert(cfg.output_base_len == 0);
-  assert(cfg.hash_function == R2FA_OTP_SHA_1);
+  assert(cfg.hash_function == R2FA_OATH_SHA_1);
 
   cfg.key = key;
   cfg.key_len = sizeof(key);
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 6);
   assert(strncmp(code, "755224", 7) == 0);
 
@@ -60,7 +60,7 @@ static int test_basic_hotp(void) {
 static int test_init_null_ptr(void) {
   int ret = r2fa_hotp_init(NULL);
   test_name("hotp: test_init_null_ptr");
-  assert(ret == R2FA_OTP_CFG_NULL_PTR);
+  assert(ret == R2FA_OATH_CFG_NULL_PTR);
   return 1;
 }
 
@@ -73,24 +73,24 @@ static int test_generate_null_ptr(void) {
   r2fa_hotp_init(&cfg);
 
   ret = r2fa_hotp_generate(NULL, code);
-  assert(ret == R2FA_OTP_CFG_NULL_PTR);
+  assert(ret == R2FA_OATH_CFG_NULL_PTR);
   assert(strcmp(code, "qwerty") == 0);
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_KEY_NULL_PTR);
+  assert(ret == R2FA_OATH_KEY_NULL_PTR);
 
   cfg.key = key;
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_INVALID_KEY_LEN);
+  assert(ret == R2FA_OATH_INVALID_KEY_LEN);
 
   cfg.key_len = sizeof(key);
 
   ret = r2fa_hotp_generate(&cfg, NULL);
-  assert(ret == R2FA_OTP_CODE_NULL_PTR);
+  assert(ret == R2FA_OATH_CODE_NULL_PTR);
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
 
   return 1;
 }
@@ -108,15 +108,15 @@ static int test_invalid_base(void) {
   cfg.output_base = base;
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_INVALID_BASE_LEN);
+  assert(ret == R2FA_OATH_INVALID_BASE_LEN);
   cfg.output_base_len = 1;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_INVALID_BASE_LEN);
+  assert(ret == R2FA_OATH_INVALID_BASE_LEN);
 
   cfg.output_base_len = sizeof(base);
 
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
 
   return 1;
 }
@@ -142,25 +142,25 @@ static int test_invalid_code(void) {
 
   cfg.output_len = 5;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+  assert(ret == R2FA_OATH_CODE_TOO_SMALL);
 
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 6);
 
   cfg.output_len = 9;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 9);
 
   cfg.output_len = 10;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   cfg.output_len = 0xffffff;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   /* Base 32 */
   cfg.output_base = base32;
@@ -168,25 +168,25 @@ static int test_invalid_code(void) {
 
   cfg.output_len = 3;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+  assert(ret == R2FA_OATH_CODE_TOO_SMALL);
 
   cfg.output_len = 4;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 4);
 
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 6);
 
   cfg.output_len = 7;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   cfg.output_len = 0xffffff;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   /* Base 64 */
   cfg.output_base = base64;
@@ -194,25 +194,25 @@ static int test_invalid_code(void) {
 
   cfg.output_len = 3;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_SMALL);
+  assert(ret == R2FA_OATH_CODE_TOO_SMALL);
 
   cfg.output_len = 4;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 4);
 
   cfg.output_len = 5;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_SUCCESS);
+  assert(ret == R2FA_OATH_SUCCESS);
   assert(strlen(code) == 5);
 
   cfg.output_len = 6;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   cfg.output_len = 0xffffff;
   ret = r2fa_hotp_generate(&cfg, code);
-  assert(ret == R2FA_OTP_CODE_TOO_BIG);
+  assert(ret == R2FA_OATH_CODE_TOO_BIG);
 
   return 1;
 }

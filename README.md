@@ -63,7 +63,7 @@ More examples are available in the [documentation](https://what.tf/r2fa/).
 
 ```rust
 extern crate r2fa;
-use r2fa::otp::TOTPBuilder;
+use r2fa::oath::TOTPBuilder;
 
 let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 let code = TOTPBuilder::new()

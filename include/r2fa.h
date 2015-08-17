@@ -22,65 +22,65 @@
 
 
 /*
- * OTP module
+ * OATH module
  */
 
 typedef enum {
-  R2FA_OTP_SHA_1   = 1,
-  R2FA_OTP_SHA_256 = 2,
-  R2FA_OTP_SHA_512 = 3
-} r2fa_otp_hash_function;
+  R2FA_OATH_SHA_1   = 1,
+  R2FA_OATH_SHA_256 = 2,
+  R2FA_OATH_SHA_512 = 3
+} r2fa_oath_hash_function;
 
 typedef enum {
-  R2FA_OTP_SUCCESS           = 0,
+  R2FA_OATH_SUCCESS           = 0,
 
-  R2FA_OTP_CFG_NULL_PTR      = 1,
-  R2FA_OTP_CODE_NULL_PTR     = 2,
-  R2FA_OTP_KEY_NULL_PTR      = 3,
+  R2FA_OATH_CFG_NULL_PTR      = 1,
+  R2FA_OATH_CODE_NULL_PTR     = 2,
+  R2FA_OATH_KEY_NULL_PTR      = 3,
 
-  R2FA_OTP_INVALID_BASE_LEN  = 10,
-  R2FA_OTP_INVALID_KEY_LEN   = 11,
-  R2FA_OTP_CODE_TOO_SMALL    = 12,
-  R2FA_OTP_CODE_TOO_BIG      = 13,
+  R2FA_OATH_INVALID_BASE_LEN  = 10,
+  R2FA_OATH_INVALID_KEY_LEN   = 11,
+  R2FA_OATH_CODE_TOO_SMALL    = 12,
+  R2FA_OATH_CODE_TOO_BIG      = 13,
 
-  R2FA_OTP_INVALID_KEY       = 20,
-  R2FA_OTP_INVALID_PERIOD    = 21,
+  R2FA_OATH_INVALID_KEY       = 20,
+  R2FA_OATH_INVALID_PERIOD    = 21,
 
-  R2FA_OTP_CODE_INVALID_UTF8 = 30
-} r2fa_otp_errno;
+  R2FA_OATH_CODE_INVALID_UTF8 = 30
+} r2fa_oath_errno;
 
 /* HOTP */
 
 struct r2fa_hotp_cfg {
-  const void            *key;
-  size_t                 key_len;
-  uint64_t               counter;
-  size_t                 output_len;
-  const char            *output_base;
-  size_t                 output_base_len;
-  r2fa_otp_hash_function hash_function;
+  const void             *key;
+  size_t                  key_len;
+  uint64_t                counter;
+  size_t                  output_len;
+  const char             *output_base;
+  size_t                  output_base_len;
+  r2fa_oath_hash_function hash_function;
 };
 
-r2fa_otp_errno r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
-r2fa_otp_errno r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
-int32_t        r2fa_hotp_is_valid(const struct r2fa_hotp_cfg *cfg, const char *code);
+r2fa_oath_errno r2fa_hotp_init(struct r2fa_hotp_cfg *cfg);
+r2fa_oath_errno r2fa_hotp_generate(const struct r2fa_hotp_cfg *cfg, char *code);
+int32_t         r2fa_hotp_is_valid(const struct r2fa_hotp_cfg *cfg, const char *code);
 
 /* TOTP */
 
 struct r2fa_totp_cfg {
-  const void            *key;
-  size_t                 key_len;
-  int64_t                timestamp;
-  uint32_t               period;
-  uint64_t               initial_time;
-  size_t                 output_len;
-  const char            *output_base;
-  size_t                 output_base_len;
-  r2fa_otp_hash_function hash_function;
+  const void             *key;
+  size_t                  key_len;
+  int64_t                 timestamp;
+  uint32_t                period;
+  uint64_t                initial_time;
+  size_t                  output_len;
+  const char             *output_base;
+  size_t                  output_base_len;
+  r2fa_oath_hash_function hash_function;
 };
 
-r2fa_otp_errno r2fa_totp_init(struct r2fa_totp_cfg *cfg);
-r2fa_otp_errno r2fa_totp_generate(const struct r2fa_totp_cfg *cfg, char *code);
-int32_t        r2fa_totp_is_valid(const struct r2fa_totp_cfg *cfg, const char *code);
+r2fa_oath_errno r2fa_totp_init(struct r2fa_totp_cfg *cfg);
+r2fa_oath_errno r2fa_totp_generate(const struct r2fa_totp_cfg *cfg, char *code);
+int32_t         r2fa_totp_is_valid(const struct r2fa_totp_cfg *cfg, const char *code);
 
 #endif /* R2FA_20150802_H */

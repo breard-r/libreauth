@@ -76,7 +76,7 @@ impl HOTP {
     /// # Examples
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
-    /// let mut hotp = r2fa::otp::HOTPBuilder::new()
+    /// let mut hotp = r2fa::oath::HOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap();
@@ -119,7 +119,7 @@ impl HOTP {
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
     /// let user_code = "755224".to_owned();
-    /// let valid = r2fa::otp::HOTPBuilder::new()
+    /// let valid = r2fa::oath::HOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap()
@@ -147,7 +147,7 @@ impl HOTP {
 ///
 ///```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-/// let mut hotp = r2fa::otp::HOTPBuilder::new()
+/// let mut hotp = r2fa::oath::HOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize()
 ///     .unwrap();
@@ -155,7 +155,7 @@ impl HOTP {
 ///
 ///```
 /// let key_ascii = "12345678901234567890".to_owned();
-/// let mut hotp = r2fa::otp::HOTPBuilder::new()
+/// let mut hotp = r2fa::oath::HOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .counter(42)
 ///     .finalize()
@@ -164,7 +164,7 @@ impl HOTP {
 ///
 ///```
 /// let key_hex = "3132333435363738393031323334353637383930".to_owned();
-/// let mut hotp = r2fa::otp::HOTPBuilder::new()
+/// let mut hotp = r2fa::oath::HOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .counter(69)
 ///     .output_len(8)
@@ -173,10 +173,10 @@ impl HOTP {
 ///
 ///```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
-/// let mut hotp = r2fa::otp::HOTPBuilder::new()
+/// let mut hotp = r2fa::oath::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
-///     .hash_function(r2fa::otp::HashFunction::Sha256)
+///     .hash_function(r2fa::oath::HashFunction::Sha256)
 ///     .finalize();
 ///```
 pub struct HOTPBuilder {
@@ -238,7 +238,7 @@ impl HOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::HOTPBuilder;
-    use otp::{HashFunction, ErrorCode, c};
+    use oath::{HashFunction, ErrorCode, c};
     use libc;
     use std;
 
@@ -312,7 +312,7 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::HOTPBuilder;
-    use otp::HashFunction;
+    use oath::HashFunction;
 
     #[test]
     fn test_hotp_key_simple() {

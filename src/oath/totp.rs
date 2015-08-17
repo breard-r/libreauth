@@ -45,7 +45,7 @@ impl TOTP {
     /// # Examples
     /// ```
     /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
-    /// let mut totp = r2fa::otp::TOTPBuilder::new()
+    /// let mut totp = r2fa::oath::TOTPBuilder::new()
     ///     .base32_key(&key_base32)
     ///     .finalize()
     ///     .unwrap();
@@ -74,7 +74,7 @@ impl TOTP {
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
     /// let user_code = "755224".to_owned();
-    /// let valid = r2fa::otp::TOTPBuilder::new()
+    /// let valid = r2fa::oath::TOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap()
@@ -101,7 +101,7 @@ impl TOTP {
 ///
 ///```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-/// let mut totp = r2fa::otp::TOTPBuilder::new()
+/// let mut totp = r2fa::oath::TOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize()
 ///     .unwrap();
@@ -109,7 +109,7 @@ impl TOTP {
 ///
 ///```
 /// let key_ascii = "12345678901234567890".to_owned();
-/// let mut totp = r2fa::otp::TOTPBuilder::new()
+/// let mut totp = r2fa::oath::TOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .period(42)
 ///     .finalize();
@@ -117,7 +117,7 @@ impl TOTP {
 ///
 ///```
 /// let key_hex = "3132333435363738393031323334353637383930".to_owned();
-/// let mut totp = r2fa::otp::TOTPBuilder::new()
+/// let mut totp = r2fa::oath::TOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .timestamp(1234567890)
 ///     .finalize();
@@ -125,10 +125,10 @@ impl TOTP {
 ///
 ///```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
-/// let mut totp = r2fa::otp::TOTPBuilder::new()
+/// let mut totp = r2fa::oath::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
-///     .hash_function(r2fa::otp::HashFunction::Sha256)
+///     .hash_function(r2fa::oath::HashFunction::Sha256)
 ///     .finalize();
 ///```
 pub struct TOTPBuilder {
@@ -212,7 +212,7 @@ impl TOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::TOTPBuilder;
-    use otp::{HashFunction, ErrorCode, c};
+    use oath::{HashFunction, ErrorCode, c};
     use libc;
     use time;
     use std;
@@ -297,7 +297,7 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::TOTPBuilder;
-    use otp::HashFunction;
+    use oath::HashFunction;
 
     #[test]
     fn test_totp_key_simple() {
