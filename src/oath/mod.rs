@@ -106,7 +106,7 @@ macro_rules! builder_common {
 }
 
 #[cfg(feature = "cbindings")]
-pub mod c {
+mod c {
     use super::ErrorCode;
     use std;
 
