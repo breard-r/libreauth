@@ -24,11 +24,11 @@ Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor au
   - [x] customizable output length
   - [x] customizable output alphabet
 - YubiKey OTP ([Yubico](https://developers.yubico.com/OTP/))
-  - [ ] (virtual) device API
+  - [ ] virtual device API
   - [ ] client API
   - [ ] server API
 - U2F - Universal 2nd Factor ([FIDO Alliance](https://fidoalliance.org/specifications/download/))
-  - [ ] (virtual) device API
+  - [ ] virtual device API
   - [ ] client API
   - [ ] server API
 
