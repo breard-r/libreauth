@@ -9,13 +9,13 @@ Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor au
 
 ## Features
 
-- HOTP - HMAC-based One-time Password Algorithm ([RFC 4226](https://tools.ietf.org/html/rfc4226))
+- HOTP - HMAC-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 4226](https://tools.ietf.org/html/rfc4226))
   - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
   - [x] customizable counter
   - [x] customizable hash function (sha1, sha256, sha512)
   - [x] customizable output length
   - [x] customizable output alphabet
-- TOTP - Time-based One-time Password Algorithm ([RFC 6238](https://tools.ietf.org/html/rfc6238))
+- TOTP - Time-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 6238](https://tools.ietf.org/html/rfc6238))
   - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
   - [x] customizable timestamp
   - [x] customizable period
