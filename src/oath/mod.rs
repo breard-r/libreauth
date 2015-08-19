@@ -25,17 +25,17 @@ pub enum HashFunction {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
-    CfgNullPtr      = 1,
-    CodeNullPtr     = 2,
-    KeyNullPtr      = 3,
+    CfgNullPtr = 1,
+    CodeNullPtr = 2,
+    KeyNullPtr = 3,
 
-    InvalidBaseLen  = 10,
-    InvalidKeyLen   = 11,
-    CodeTooSmall    = 12,
-    CodeTooBig      = 13,
+    InvalidBaseLen = 10,
+    InvalidKeyLen = 11,
+    CodeTooSmall = 12,
+    CodeTooBig = 13,
 
-    InvalidKey      = 20,
-    InvalidPeriod   = 21,
+    InvalidKey = 20,
+    InvalidPeriod = 21,
 
     CodeInvalidUTF8 = 30,
 }

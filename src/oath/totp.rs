@@ -233,10 +233,10 @@ pub mod cbindings {
     #[no_mangle]
     pub extern fn r2fa_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
         let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
-                                                                 timestamp, time::now().to_timespec().sec,
-                                                                 period, 30,
-                                                                 initial_time, 0
-                                                                 );
+                                                             timestamp, time::now().to_timespec().sec,
+                                                             period, 30,
+                                                             initial_time, 0
+                                                             );
         match res {
             Ok(_) => 0,
             Err(errno) => errno as libc::int32_t,
