@@ -6,7 +6,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 
 ### Changed
-- The otp module has been renamed oath.
+- The license has been changed to the CeCILL Free Software License Agreement v2.1;
+- the otp module has been renamed oath.
 
 ### Removed
 - The otp::c (oath::c) module is not public anymore.
@@ -22,7 +23,7 @@ This release fixed a buffer overflow in the C-bindings tests. Because this issue
 - C-bindings for OTP validation.
 
 ### Changed
-- Errors are now represented by an enumeration instead of strings ;
+- Errors are now represented by an enumeration instead of strings;
 - the C unit test suite has been rewritten.
 
 ### Fixed
