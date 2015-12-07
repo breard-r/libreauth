@@ -33,37 +33,20 @@
  */
 
 
-//!
-//! [![Build Status](https://api.travis-ci.org/breard-r/libreauth.svg?branch=master)](https://travis-ci.org/breard-r/libreauth)
-//! [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
-//! [![LibreAuth on GitHub](https://img.shields.io/github/license/breard-r/libreauth.svg)](https://github.com/breard-r/libreauth)
-//!
-//! LibreAuth is a collection of tools for user authentication.
-//!
-//!
-//! ## Features
-//! - HOTP - HMAC-based One-time Password Algorithm ([RFC 4226](https://tools.ietf.org/html/rfc4226))
-//!   - the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
-//!   - customizable counter
-//!   - customizable hash function (sha1, sha256, sha512)
-//!   - customizable output length
-//!   - customizable output alphabet
-//! - TOTP - Time-based One-time Password Algorithm ([RFC 6238](https://tools.ietf.org/html/rfc6238))
-//!   - the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
-//!   - customizable timestamp
-//!   - customizable period
-//!   - customizable initial time (T0)
-//!   - customizable hash function (sha1, sha256, sha512)
-//!   - customizable output length
-//!   - customizable output alphabet
-//!
+#include <stdio.h>
+#include "libreauth_tests.h"
 
-extern crate rustc_serialize;
-extern crate base32;
-extern crate crypto;
-extern crate time;
+void test_name(const char *name) {
+  printf("Running test: %s\n", name);
+}
 
-pub mod oath;
+int main(void) {
+  int nb_tests = 0;
 
-#[cfg(feature = "cbindings")]
-extern crate libc;
+  nb_tests += test_hotp();
+  nb_tests += test_totp();
+
+  printf("Ran %d tests.\n", nb_tests);
+
+  return 0;
+}

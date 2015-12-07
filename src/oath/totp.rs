@@ -1,18 +1,37 @@
-//
-// Copyright (c) 2015 Rodolphe Breard
-// 
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-//
+/*
+ * Copyright Rodolphe Breard (2015)
+ * Author: Rodolphe Breard (2015)
+ *
+ * This software is a computer program whose purpose is to [describe
+ * functionalities and technical features of your software].
+ *
+ * This software is governed by the CeCILL  license under French law and
+ * abiding by the rules of distribution of free software.  You can  use,
+ * modify and/ or redistribute the software under the terms of the CeCILL
+ * license as circulated by CEA, CNRS and INRIA at the following URL
+ * "http://www.cecill.info".
+ *
+ * As a counterpart to the access to the source code and  rights to copy,
+ * modify and redistribute granted by the license, users are provided only
+ * with a limited warranty  and the software's author,  the holder of the
+ * economic rights,  and the successive licensors  have only  limited
+ * liability.
+ *
+ * In this respect, the user's attention is drawn to the risks associated
+ * with loading,  using,  modifying and/or developing or reproducing the
+ * software by the user in light of its specific status of free software,
+ * that may mean  that it is complicated to manipulate,  and  that  also
+ * therefore means  that it is reserved for developers  and  experienced
+ * professionals having in-depth computer knowledge. Users are therefore
+ * encouraged to load and test the software's suitability as regards their
+ * requirements in conditions enabling the security of their systems and/or
+ * data to be ensured and,  more generally, to use and operate it in the
+ * same conditions as regards security.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL license and that you accept its terms.
+ */
+
 
 use super::{HashFunction, ErrorCode, HOTPBuilder};
 use rustc_serialize::hex::FromHex;
@@ -45,7 +64,7 @@ impl TOTP {
     /// # Examples
     /// ```
     /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
-    /// let mut totp = r2fa::oath::TOTPBuilder::new()
+    /// let mut totp = libreauth::oath::TOTPBuilder::new()
     ///     .base32_key(&key_base32)
     ///     .finalize()
     ///     .unwrap();
@@ -74,7 +93,7 @@ impl TOTP {
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
     /// let user_code = "755224".to_owned();
-    /// let valid = r2fa::oath::TOTPBuilder::new()
+    /// let valid = libreauth::oath::TOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap()
@@ -101,7 +120,7 @@ impl TOTP {
 ///
 ///```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
-/// let mut totp = r2fa::oath::TOTPBuilder::new()
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize()
 ///     .unwrap();
@@ -109,7 +128,7 @@ impl TOTP {
 ///
 ///```
 /// let key_ascii = "12345678901234567890".to_owned();
-/// let mut totp = r2fa::oath::TOTPBuilder::new()
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .period(42)
 ///     .finalize();
@@ -117,7 +136,7 @@ impl TOTP {
 ///
 ///```
 /// let key_hex = "3132333435363738393031323334353637383930".to_owned();
-/// let mut totp = r2fa::oath::TOTPBuilder::new()
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .timestamp(1234567890)
 ///     .finalize();
@@ -125,10 +144,10 @@ impl TOTP {
 ///
 ///```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
-/// let mut totp = r2fa::oath::TOTPBuilder::new()
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
-///     .hash_function(r2fa::oath::HashFunction::Sha256)
+///     .hash_function(libreauth::oath::HashFunction::Sha256)
 ///     .finalize();
 ///```
 pub struct TOTPBuilder {
@@ -231,7 +250,7 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn r2fa_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
+    pub extern fn libreauth_totp_init(cfg: *mut TOTPcfg) -> libc::int32_t {
         let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
                                                              timestamp, time::now().to_timespec().sec,
                                                              period, 30,
@@ -244,7 +263,7 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn r2fa_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> libc::int32_t {
+    pub extern fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> libc::int32_t {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let mut code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
         let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
@@ -268,7 +287,7 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn r2fa_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> libc::int32_t {
+    pub extern fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> libc::int32_t {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
         let output_base = get_value_or_false!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));

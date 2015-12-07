@@ -1,10 +1,9 @@
-# R2FA
+# LibreAuth
 
-[![Build Status](https://api.travis-ci.org/breard-r/r2fa.svg?branch=master)](https://travis-ci.org/breard-r/r2fa)
-[![R2FA on crates.io](https://img.shields.io/crates/v/r2fa.svg)](https://crates.io/crates/r2fa)
-[![R2FA on GitHub](https://img.shields.io/github/license/breard-r/r2fa.svg)](https://github.com/breard-r/r2fa)
+[![Build Status](https://api.travis-ci.org/breard-r/libreauth.svg?branch=master)](https://travis-ci.org/breard-r/libreauth)
+[![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
 
-Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication.
+LibreAuth is a collection of tools for user authentication.
 
 
 ## Features
@@ -35,20 +34,20 @@ Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor au
 
 ## Using within a Rust project
 
-You can find R2FA on [crates.io](https://crates.io/crates/r2fa) and include it in your `Cargo.toml`:
+You can find LibreAuth on [crates.io](https://crates.io/crates/libreauth) and include it in your `Cargo.toml`:
 
 ```toml
-r2fa = "*"
+libreauth = "*"
 ```
 
 
 ## Using outside Rust
 
-In order to build R2FA, you will need both the [rust compiler](https://github.com/rust-lang/rust) and [cargo](https://github.com/rust-lang/cargo).
+In order to build LibreAuth, you will need both the [rust compiler](https://github.com/rust-lang/rust) and [cargo](https://github.com/rust-lang/cargo).
 
 ```ShellSession
-$ git clone https://github.com/breard-r/r2fa.git
-$ cd r2fa
+$ git clone https://github.com/breard-r/libreauth.git
+$ cd libreauth
 $ make
 $ make install prefix=/usr
 ```
@@ -59,11 +58,11 @@ $ make install prefix=/usr
 
 ### Rust
 
-More examples are available in the [documentation](https://what.tf/r2fa/).
+More examples are available in the [documentation](https://what.tf/libreauth/).
 
 ```rust
-extern crate r2fa;
-use r2fa::oath::TOTPBuilder;
+extern crate libreauth;
+use libreauth::oath::TOTPBuilder;
 
 let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
 let code = TOTPBuilder::new()
@@ -78,18 +77,18 @@ assert_eq!(code.len(), 6);
 
 ```C
 #include <stdio.h>
-#include <r2fa.h>
+#include <libreauth.h>
 
 int main(void) {
-  struct r2fa_totp_cfg cfg;
+  struct libreauth_totp_cfg cfg;
   char   code[7], key[] = "12345678901234567890";
 
-  if (r2fa_totp_init(&cfg) != R2FA_OTP_SUCCESS) {
+  if (libreauth_totp_init(&cfg) != LIBREAUTH_OTP_SUCCESS) {
     return 1;
   }
   cfg.key = key;
   cfg.key_len = sizeof(key);
-  if (r2fa_totp_generate(&cfg, code) != R2FA_OTP_SUCCESS) {
+  if (libreauth_totp_generate(&cfg, code) != LIBREAUTH_OTP_SUCCESS) {
     return 2;
   }
 
@@ -100,7 +99,7 @@ int main(void) {
 ```
 
 ```ShellSession
-$ cc -o totp totp.c -lr2fa
+$ cc -o totp totp.c -llibreauth
 $ ./totp
 848085
 ```
@@ -127,15 +126,15 @@ class TOTPcfg(Structure):
 
 def get_totp():
     key = b'12345678901234567890'
-    lib_path = find_library('r2fa') or 'target/release/libr2fa.so'
+    lib_path = find_library('libreauth') or 'target/release/liblibreauth.so'
     lib = cdll.LoadLibrary(lib_path)
     cfg = TOTPcfg()
-    if lib.r2fa_totp_init(byref(cfg)) != 0:
+    if lib.libreauth_totp_init(byref(cfg)) != 0:
         return
     cfg.key_len = len(key)
     cfg.key = c_char_p(key)
     code = create_string_buffer(b'\000' * cfg.output_len)
-    if lib.r2fa_totp_generate(byref(cfg), code) != 0:
+    if lib.libreauth_totp_generate(byref(cfg), code) != 0:
         return
     return str(code.value, encoding="utf-8")
 

@@ -3,7 +3,7 @@
 
 ## Reporting bugs
 
-If you find a bug in this project, please [open an issue](https://github.com/breard-r/r2fa/issues) and describe the problem. When reporting a bug, please follow the generic [bug reporting recommendations](http://www.chiark.greenend.org.uk/~sgtatham/bugs.html).
+If you find a bug in this project, please [open an issue](https://github.com/breard-r/libreauth/issues) and describe the problem. When reporting a bug, please follow the generic [bug reporting recommendations](http://www.chiark.greenend.org.uk/~sgtatham/bugs.html).
 
 
 ## Pull requests

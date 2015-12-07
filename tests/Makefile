@@ -1,15 +1,15 @@
-NAME    = r2fa-test.bin
+NAME    = libreauth-test.bin
 CHANNEL = debug
 LIBDIR  = ../target/$(CHANNEL)/
 INCDIR  = ../include/
-SRC     = test_r2fa.c \
+SRC     = test_libreauth.c \
 		test_hotp.c \
 		test_totp.c
 OBJ     = $(SRC:.c=.o)
 CC      = cc
 CFLAGS  = -g -Werror -Wall -Wextra -ansi -pedantic -I$(INCDIR)
-LDFLAGS = -L$(LIBDIR) -lr2fa
-PYSRC   = r2fa_test
+LDFLAGS = -L$(LIBDIR) -llibreauth
+PYSRC   = libreauth_test
 
 
 all: $(NAME)
@@ -26,6 +26,6 @@ test: $(NAME)
 tests: test
 
 clean:
-	@rm -rf $(NAME) $(OBJ) $(R2FALIB) '__pycache__' *.pyc
+	@rm -rf $(NAME) $(OBJ) '__pycache__' *.pyc
 
 re: clean all

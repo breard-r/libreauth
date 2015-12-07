@@ -1,17 +1,17 @@
 [package]
-name = "r2fa"
+name = "libreauth"
 version = "0.5.1"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
-description = "Rust Two-Factor Authentication (R2FA) is a collection of tools for two-factor authentication."
-documentation = "https://what.tf/r2fa/"
-repository = "https://github.com/breard-r/r2fa"
+description = "Collection of tools for user authentication."
+documentation = "https://what.tf/libreauth/"
+repository = "https://github.com/breard-r/libreauth"
 readme = "README.md"
-keywords = ["2fa", "otp", "hotp", "totp"]
-license = "ISC"
+keywords = ["authentication", "2fa", "otp", "hotp", "totp"]
+license = "CeCILL"
 include = ["src/**/*", "Cargo.toml", "LICENSE.txt"]
 
 [lib]
-name = "r2fa"
+name = "libreauth"
 crate-type = ["rlib", "dylib"]
 
 [features]

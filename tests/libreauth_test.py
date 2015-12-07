@@ -26,14 +26,14 @@ class TestOTP(TestCase):
         channel = 'debug'
         current_file = path.abspath(__file__)
         base_dir = path.dirname(path.dirname(current_file))
-        self.lib_path = path.join(base_dir, 'target', channel, 'libr2fa.so')
+        self.lib_path = path.join(base_dir, 'target', channel, 'liblibreauth.so')
 
     def test_totp(self):
         key = b'12345678901234567890'
         lib = cdll.LoadLibrary(self.lib_path)
         cfg = TOTPcfg()
 
-        ret = lib.r2fa_totp_init(byref(cfg))
+        ret = lib.libreauth_totp_init(byref(cfg))
         self.assertEqual(ret, 0)
         self.assertIsNone(cfg.key)
         self.assertEqual(cfg.key_len, 0)
@@ -48,7 +48,7 @@ class TestOTP(TestCase):
         cfg.key_len = len(key)
         cfg.key = c_char_p(key)
         code = create_string_buffer(b'\000' * cfg.output_len)
-        ret = lib.r2fa_totp_generate(byref(cfg), code)
+        ret = lib.libreauth_totp_generate(byref(cfg), code)
         self.assertEqual(ret, 0)
 
         try:
