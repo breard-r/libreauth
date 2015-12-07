@@ -7,7 +7,7 @@ documentation = "https://what.tf/libreauth/"
 repository = "https://github.com/breard-r/libreauth"
 readme = "README.md"
 keywords = ["authentication", "2fa", "otp", "hotp", "totp"]
-license = "CeCILL"
+license = "CECILL-2.1"
 include = ["src/**/*", "Cargo.toml", "LICENSE.txt"]
 
 [lib]
