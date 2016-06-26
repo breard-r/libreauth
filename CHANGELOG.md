@@ -6,7 +6,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 
 ### Changed
-- The license has been changed to the CeCILL Free Software License Agreement v2.1;
+- The project has been renamed LibreAuth (previous name: R2FA);
+- the license has been changed to the CeCILL Free Software License Agreement v2.1;
 - the otp module has been renamed oath.
 
 ### Removed
