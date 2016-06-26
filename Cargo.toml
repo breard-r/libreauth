@@ -1,6 +1,6 @@
 [package]
 name = "libreauth"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
 description = "Collection of tools for user authentication."
 documentation = "https://what.tf/libreauth/"

@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased][unreleased]
+## [0.5.2] - 2016-06-26
 
 ### Changed
 - The project has been renamed LibreAuth (previous name: R2FA);
