@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased][unreleased]
+
+### Changed
+- The oath module does not not expose sub-modules anymore.
+
+
 ## [0.5.2] - 2016-06-26
 
 ### Changed
