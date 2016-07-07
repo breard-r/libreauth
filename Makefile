@@ -15,8 +15,8 @@ $(NAME):
 
 install:
 	@install -d $(prefix)/include $(prefix)/lib
-	@install $(INCDIR)$(NAME).h $(prefix)/include
-	@install $(LIBDIR)lib$(NAME).so $(prefix)/lib
+	@install --mode=0644 $(INCDIR)$(NAME).h $(prefix)/include
+	@install --mode=0755 $(LIBDIR)lib$(NAME).so $(prefix)/lib
 
 uninstall:
 	@rm -f $(prefix)/include/$(NAME).h $(prefix)/lib/lib$(NAME).so
