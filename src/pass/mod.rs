@@ -65,10 +65,10 @@ fn generate_salt(nb_bytes: usize) -> Vec<u8> {
 /// # Examples
 /// ```
 /// let password = "1234567890";
-/// let stored_password = libreauth::pass::derivate_password(password).unwrap();
+/// let stored_password = libreauth::pass::derive_password(password).unwrap();
 /// ```
-pub fn derivate_password(password: &str) -> Result<String, ErrorCode> {
-    derivation::ALGORITHMS[0].derivate(password)
+pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
+    derivation::ALGORITHMS[0].derive(password)
 }
 
 /// Check whether or not the password is valid.
@@ -76,7 +76,7 @@ pub fn derivate_password(password: &str) -> Result<String, ErrorCode> {
 /// # Examples
 /// ```
 /// let password = "correct horse battery staple";
-/// let stored_password = libreauth::pass::derivate_password(password).unwrap();
+/// let stored_password = libreauth::pass::derive_password(password).unwrap();
 /// assert!(! libreauth::pass::is_valid("bad password", &stored_password));
 /// assert!(libreauth::pass::is_valid(&password, &stored_password));
 /// ```
@@ -98,7 +98,7 @@ pub fn is_valid(password: &str, reference: &str) -> bool {
                 Ok(some) => some,
                 Err(_) => return false,
             };
-            let derived_pass = match alg.derivate_with_salt(password, &ref_salt) {
+            let derived_pass = match alg.derive_with_salt(password, &ref_salt) {
                 Ok(some) => some,
                 Err(_) => return false,
             };
@@ -113,18 +113,18 @@ pub fn is_valid(password: &str, reference: &str) -> bool {
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{ErrorCode,derivate_password,is_valid};
+    use super::{ErrorCode,derive_password,is_valid};
     use libc;
     use std;
 
     #[no_mangle]
-    pub extern fn libreauth_pass_derivate_password(password: *const libc::c_char, storage: &mut [u8], storage_len: libc::size_t) -> libc::int32_t {
+    pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: &mut [u8], storage_len: libc::size_t) -> libc::int32_t {
         let c_password = unsafe {
             assert!(!password.is_null());
             std::ffi::CStr::from_ptr(password)
         };
         let r_password = c_password.to_str().unwrap();
-        let r_derived_password = match derivate_password(r_password){
+        let r_derived_password = match derive_password(r_password){
             Ok(some) => some,
             Err(errno) => return errno as libc::int32_t,
         };
@@ -157,39 +157,39 @@ mod cbindings {
 }
 
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_pass_derivate_password;
+pub use self::cbindings::libreauth_pass_derive_password;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{derivate_password,is_valid};
+    use super::{derive_password,is_valid};
 
     #[test]
     fn test_default_derivation() {
         let password = "123456";
-        let stored_password = derivate_password(password).unwrap();
+        let stored_password = derive_password(password).unwrap();
         assert!(stored_password.starts_with("$pbkdf2-sha512$"));
     }
 
     #[test]
     fn test_random_salt() {
         let password = "derp";
-        let stored_password_1 = derivate_password(password).unwrap();
-        let stored_password_2 = derivate_password(password).unwrap();
+        let stored_password_1 = derive_password(password).unwrap();
+        let stored_password_2 = derive_password(password).unwrap();
         assert!(stored_password_1 != stored_password_2);
     }
 
     #[test]
     #[should_panic]
     fn test_empty_password_deriv() {
-        derivate_password("").unwrap();
+        derive_password("").unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_short_password_deriv() {
-        derivate_password("abc").unwrap();
+        derive_password("abc").unwrap();
     }
 
     #[test]

@@ -55,7 +55,7 @@ typedef enum {
     LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20
 } libreauth_pass_errno;
 
-libreauth_pass_errno    libreauth_pass_derivate_password(const char *password, char *storage, size_t storage_len);
+libreauth_pass_errno    libreauth_pass_derive_password(const char *password, char *storage, size_t storage_len);
 int32_t                 libreauth_pass_is_valid(const char *password, const char *reference);
 
 

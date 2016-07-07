@@ -91,22 +91,22 @@ impl DerivationAlgorithmModel {
         password.starts_with(begin_str.as_str())
     }
 
-    pub fn derivate_with_salt(&self, password: &str, salt: &Vec<u8>) -> Result<String, ErrorCode> {
+    pub fn derive_with_salt(&self, password: &str, salt: &Vec<u8>) -> Result<String, ErrorCode> {
         if password.len() < PASSWORD_MIN_LEN {
             return Err(ErrorCode::PasswordTooShort);
         }
         if password.len() > PASSWORD_MAX_LEN {
             return Err(ErrorCode::PasswordTooLong);
         }
-        let derivated_pass = match (self.derivation_func)(password, salt) {
+        let derived_pass = match (self.derivation_func)(password, salt) {
             Ok(some) => some.to_hex(),
             Err(err) => return Err(err),
         };
-        let out = format!("${}${}${}${}$", self.algo, "0", &salt.to_hex(), derivated_pass);
+        let out = format!("${}${}${}${}$", self.algo, "0", &salt.to_hex(), derived_pass);
         Ok(out)
     }
 
-    pub fn derivate(&self, password: &str) -> Result<String, ErrorCode> {
+    pub fn derive(&self, password: &str) -> Result<String, ErrorCode> {
         if password.len() < PASSWORD_MIN_LEN {
             return Err(ErrorCode::PasswordTooShort);
         }
@@ -114,7 +114,7 @@ impl DerivationAlgorithmModel {
             return Err(ErrorCode::PasswordTooLong);
         }
         let salt: Vec<u8> = generate_salt(self.salt_len);
-        let ret = self.derivate_with_salt(password, &salt);
+        let ret = self.derive_with_salt(password, &salt);
         ret
     }
 }
@@ -144,11 +144,11 @@ mod tests {
         ];
         let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
         for tpl in password_list.iter() {
-            let derivated_pass = match pbkdf2_sha512_fn(tpl.0, &salt) {
+            let derived_pass = match pbkdf2_sha512_fn(tpl.0, &salt) {
                 Ok(some) => some.to_hex(),
                 Err(_) => "".to_owned(),
             };
-            assert_eq!(derivated_pass, tpl.1);
+            assert_eq!(derived_pass, tpl.1);
         };
     }
 
@@ -161,11 +161,11 @@ mod tests {
         ];
         let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
         for tpl in password_list.iter() {
-            let derivated_pass = match pbkdf2_sha256_fn(tpl.0, &salt) {
+            let derived_pass = match pbkdf2_sha256_fn(tpl.0, &salt) {
                 Ok(some) => some.to_hex(),
                 Err(_) => "".to_owned(),
             };
-            assert_eq!(derivated_pass, tpl.1);
+            assert_eq!(derived_pass, tpl.1);
         };
     }
 
@@ -178,11 +178,11 @@ mod tests {
         ];
         let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
         for tpl in password_list.iter() {
-            let derivated_pass = match pbkdf2_fn(tpl.0, &salt) {
+            let derived_pass = match pbkdf2_fn(tpl.0, &salt) {
                 Ok(some) => some.to_hex(),
                 Err(_) => "".to_owned(),
             };
-            assert_eq!(derivated_pass, tpl.1);
+            assert_eq!(derived_pass, tpl.1);
         };
     }
 

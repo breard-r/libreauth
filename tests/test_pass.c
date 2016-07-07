@@ -46,7 +46,7 @@ static int test_valid_pass(void) {
 
     test_name("pass: test_valid_pass");
 
-    ret = libreauth_pass_derivate_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
+    ret = libreauth_pass_derive_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
     assert(ret == LIBREAUTH_PASS_SUCCESS);
     assert(libreauth_pass_is_valid(password, storage));
     assert(!libreauth_pass_is_valid(invalid_pass, storage));
