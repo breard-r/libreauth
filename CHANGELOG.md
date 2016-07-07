@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Added
+- Password authentication.
+
 ### Changed
 - The oath module does not not expose sub-modules anymore.
 

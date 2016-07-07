@@ -8,6 +8,10 @@ LibreAuth is a collection of tools for user authentication.
 
 ## Features
 
+- Password / passphrase authentication
+  - [ ] no character-set limitation
+  - [ ] reasonable lenth limit ([security vs. DOS](http://arstechnica.com/security/2013/09/long-passwords-are-good-but-too-much-length-can-be-bad-for-security/))
+  - [ ] strong, evolutive and retro-compatible password derivation functions
 - HOTP - HMAC-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 4226](https://tools.ietf.org/html/rfc4226))
   - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
   - [x] customizable counter

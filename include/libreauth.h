@@ -40,6 +40,26 @@
 
 
 /*
+ * PASS module
+ */
+
+#define LIBREAUTH_PASS_PASSWORD_MIN_LEN 4
+#define LIBREAUTH_PASS_PASSWORD_MAX_LEN 128
+#define LIBREAUTH_PASS_STORAGE_LEN      1024
+
+typedef enum {
+    LIBREAUTH_PASS_SUCCESS                  = 0,
+    LIBREAUTH_PASS_PASSWORD_TOO_SHORT       = 1,
+    LIBREAUTH_PASS_PASSWORD_TOO_LONG        = 2,
+    LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT  = 10,
+    LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20
+} libreauth_pass_errno;
+
+libreauth_pass_errno    libreauth_pass_derivate_password(const char *password, char *storage, size_t storage_len);
+int32_t                 libreauth_pass_is_valid(const char *password, const char *reference);
+
+
+/*
  * OATH module
  */
 

@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015)
- * Author: Rodolphe Breard (2015)
+ * Copyright Rodolphe Breard (2016)
+ * Author: Rodolphe Breard (<year>)
  *
  * This software is a computer program whose purpose is to [describe
  * functionalities and technical features of your software].
@@ -33,12 +33,42 @@
  */
 
 
-#ifndef LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D
-#define LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D
+#include <assert.h>
+#include <libreauth.h>
+#include "libreauth_tests.h"
 
-void    test_name(const char *name);
-int     test_hotp(void);
-int     test_totp(void);
-int     test_pass(void);
 
-#endif /* LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D */
+static int test_valid_pass(void) {
+    char password[] = "correct horse battery staple",
+         invalid_pass[] = "123456",
+         storage[LIBREAUTH_PASS_STORAGE_LEN];
+    int ret;
+
+    test_name("pass: test_valid_pass");
+
+    ret = libreauth_pass_derivate_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    assert(libreauth_pass_is_valid(password, storage));
+    assert(!libreauth_pass_is_valid(invalid_pass, storage));
+
+    return 1;
+}
+
+static int test_invalid_pass(void) {
+    char password[] = "invalid password",
+         reference[] = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$";
+
+    test_name("pass: test_invalid_pass");
+    assert(!libreauth_pass_is_valid(password, reference));
+
+    return 1;
+}
+
+int test_pass(void) {
+    int nb_tests = 0;
+
+    nb_tests += test_valid_pass();
+    nb_tests += test_invalid_pass();
+
+    return nb_tests;
+}
