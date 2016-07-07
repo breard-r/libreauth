@@ -118,7 +118,11 @@ mod cbindings {
     use std;
 
     #[no_mangle]
-    pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: &mut [u8], storage_len: libc::size_t) -> libc::int32_t {
+    pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t) -> libc::int32_t {
+        let mut r_storage = unsafe {
+            assert!(!storage.is_null());
+            std::slice::from_raw_parts_mut(storage, storage_len as usize)
+        };
         let c_password = unsafe {
             assert!(!password.is_null());
             std::ffi::CStr::from_ptr(password)
@@ -134,9 +138,9 @@ mod cbindings {
             return ErrorCode::NotEnoughSpace as libc::int32_t;
         }
         for i in 0..out_len {
-            storage[i] = pass_b[i];
+            r_storage[i] = pass_b[i];
         };
-        storage[out_len] = 0;
+        r_storage[out_len] = 0;
         0
     }
 
