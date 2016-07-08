@@ -56,7 +56,7 @@ static int test_valid_pass(void) {
 
 static int test_invalid_pass(void) {
     char password[] = "invalid password",
-         reference[] = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$";
+         reference[] = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9";
 
     test_name("pass: test_invalid_pass");
     assert(!libreauth_pass_is_valid(password, reference));

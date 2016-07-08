@@ -74,7 +74,7 @@ macro_rules! process_pbkdf2 {
         let mut mac = Hmac::new($hash, $pass.as_bytes());
         let mut derived_pass: Vec<u8> = vec![0; $len];
         pbkdf2(&mut mac, &$obj.salt, $obj.nb_iter, &mut derived_pass);
-        let out = format!("${}$i={}${}${}$", $id, $obj.nb_iter, $obj.salt.to_hex(), derived_pass.to_hex());
+        let out = format!("${}$i={}${}${}", $id, $obj.nb_iter, $obj.salt.to_hex(), derived_pass.to_hex());
         Ok(out)
     }}
 }
@@ -130,7 +130,7 @@ impl PasswordDerivationFunctionBuilder {
 
     pub fn set_reference_hash(&mut self, hash: &str) -> &mut PasswordDerivationFunctionBuilder {
         let splited: Vec<&str> = hash.split("$").collect();
-        if splited.len() != 6 {
+        if splited.len() != 5 {
             self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
             return self;
         }
