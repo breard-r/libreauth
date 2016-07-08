@@ -225,4 +225,18 @@ mod tests {
             assert!(is_valid(&password, &stored_password));
         }
     }
+
+    #[test]
+    fn test_password_with_null_byte() {
+        let password_list = [
+            // (password, invalid_password),
+            ("123456\x00789", "123456"),
+            ("a\x00cd", "a"),
+        ];
+        for pass in password_list.iter() {
+            let stored_password = derive_password(pass.0).unwrap();
+            assert!(! is_valid(pass.1, &stored_password));
+            assert!(is_valid(pass.0, &stored_password));
+        }
+    }
 }
