@@ -68,7 +68,10 @@ fn generate_salt(nb_bytes: usize) -> Vec<u8> {
 /// let stored_password = libreauth::pass::derive_password(password).unwrap();
 /// ```
 pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
-    derivation::ALGORITHMS[0].derive(password)
+    match derivation::PasswordDerivationFunctionBuilder::new().finalize() {
+        Ok(some) => some.derive(password),
+        Err(err) => Err(err),
+    }
 }
 
 /// Check whether or not the password is valid.
@@ -82,33 +85,28 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
 /// ```
 ///
 /// ```
-/// let stored_reference = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$";
+/// let stored_reference = "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$";
 /// assert!(! libreauth::pass::is_valid("bad password", stored_reference));
 /// assert!(libreauth::pass::is_valid("password123", stored_reference));
 /// ```
 pub fn is_valid(password: &str, reference: &str) -> bool {
-    for alg in derivation::ALGORITHMS.iter() {
-        if alg.check_type(reference) {
-            let salt = generate_salt(32);
+    match derivation::PasswordDerivationFunctionBuilder::new().set_reference_hash(reference).finalize() {
+        Ok(algo) => match algo.derive(password) {
+            Ok(derived_pass) => {
+                let salt = generate_salt(32);
 
-            let mut ref_hmac = Hmac::new(Sha512::new(), &salt);
-            ref_hmac.input(&reference.as_bytes());
+                let mut ref_hmac = Hmac::new(Sha512::new(), &salt);
+                ref_hmac.input(&reference.as_bytes());
 
-            let ref_salt = match derivation::get_salt(reference) {
-                Ok(some) => some,
-                Err(_) => return false,
-            };
-            let derived_pass = match alg.derive_with_salt(password, &ref_salt) {
-                Ok(some) => some,
-                Err(_) => return false,
-            };
-            let mut pass_hmac = Hmac::new(Sha512::new(), &salt);
-            pass_hmac.input(&derived_pass.into_bytes());
+                let mut pass_hmac = Hmac::new(Sha512::new(), &salt);
+                pass_hmac.input(&derived_pass.into_bytes());
 
-            return ref_hmac.result() == pass_hmac.result();
-        }
+                ref_hmac.result() == pass_hmac.result()
+            },
+            Err(_) => false,
+        },
+        Err(_) => false,
     }
-    false
 }
 
 #[cfg(feature = "cbindings")]
@@ -168,12 +166,13 @@ pub use self::cbindings::libreauth_pass_is_valid;
 #[cfg(test)]
 mod tests {
     use super::{derive_password,is_valid};
+    use super::derivation::PasswordDerivationFunctionBuilder;
 
     #[test]
     fn test_default_derivation() {
         let password = "123456";
         let stored_password = derive_password(password).unwrap();
-        assert!(stored_password.starts_with("$pbkdf2-sha512$"));
+        assert!(stored_password.starts_with("$pbkdf2_sha512$"));
     }
 
     #[test]
@@ -237,6 +236,37 @@ mod tests {
             let stored_password = derive_password(pass.0).unwrap();
             assert!(! is_valid(pass.1, &stored_password));
             assert!(is_valid(pass.0, &stored_password));
+        }
+    }
+
+    #[test]
+    fn test_algos() {
+        let password_list = [
+            // (password, stored_hash),
+            ("password123", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7$"),
+            ("correct horse battery staple", "$pbkdf2$i=1000$45217803$c539eccc9b94eb12241b7f616be34b0048742f7c$"),
+            ("password123", "$pbkdf2$i=12345$45217803$a5e3182b5d2522558735cdad971dc5ca789401e7$"),
+            ("correct horse battery staple", "$pbkdf2$i=12345$45217803$fa38129f680d57e17a46fcc5a358450b380c4e8d$"),
+            ("password123", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477$"),
+            ("correct horse battery staple", "$pbkdf2$i=21000$45217803$5cf0e9fefb516a0bab783ecda3b9919c13013a9b$"),
+            ("password123", "$pbkdf2_sha256$i=1000$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5$"),
+            ("correct horse battery staple", "$pbkdf2_sha256$i=1000$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc$"),
+            ("password123", "$pbkdf2_sha256$i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8$"),
+            ("correct horse battery staple", "$pbkdf2_sha256$i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce$"),
+            ("password123", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$"),
+            ("correct horse battery staple", "$pbkdf2_sha256$i=21000$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447$"),
+            ("password123", "$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba$"),
+            ("correct horse battery staple", "$pbkdf2_sha512$i=1000$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783$"),
+            ("password123", "$pbkdf2_sha512$i=12345$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c$"),
+            ("correct horse battery staple", "$pbkdf2_sha512$i=12345$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866$"),
+            ("password123", "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b$"),
+            ("correct horse battery staple", "$pbkdf2_sha512$i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a$"),
+        ];
+        for p in password_list.iter() {
+            let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            assert_eq!(p.1, deriv);
+            assert!(! is_valid("bad password", p.1));
+            assert!(is_valid(p.0, p.1));
         }
     }
 }

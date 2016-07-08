@@ -35,6 +35,7 @@
 
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,generate_salt};
+use std::collections::HashMap;
 use rustc_serialize::hex::{FromHex,ToHex};
 use crypto::sha2::{Sha512,Sha256};
 use crypto::sha1::Sha1;
@@ -42,171 +43,158 @@ use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 
 
-
-fn pbkdf2_sha512_fn(password: &str, salt: &Vec<u8>) -> Result<Vec<u8>, ErrorCode> {
-    let nb_iter = 21000;
-    let mut mac = Hmac::new(Sha512::new(), password.as_bytes());
-    let mut out: Vec<u8> = vec![0; 64];
-    pbkdf2(&mut mac, &salt, nb_iter, &mut out);
-    Ok(out)
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub enum HashFunction {
+    Sha1 = 1,
+    Sha256 = 2,
+    Sha512 = 3,
 }
 
-fn pbkdf2_sha256_fn(password: &str, salt: &Vec<u8>) -> Result<Vec<u8>, ErrorCode> {
-    let nb_iter = 21000;
-    let mut mac = Hmac::new(Sha256::new(), password.as_bytes());
-    let mut out: Vec<u8> = vec![0; 32];
-    pbkdf2(&mut mac, &salt, nb_iter, &mut out);
-    Ok(out)
-}
-
-pub fn pbkdf2_fn(password: &str, salt: &Vec<u8>) -> Result<Vec<u8>, ErrorCode> {
-    let nb_iter = 21000;
-    let mut mac = Hmac::new(Sha1::new(), password.as_bytes());
-    let mut out: Vec<u8> = vec![0; 20];
-    pbkdf2(&mut mac, &salt, nb_iter, &mut out);
-    Ok(out)
-}
-
-pub fn get_salt(password: &str) -> Result<Vec<u8>, ErrorCode> {
-    let splited: Vec<&str> = password.split("$").collect();
-    if splited.len() != 6 {
-        return Err(ErrorCode::InvalidPasswordFormat);
-    }
-    match splited[3].from_hex() {
-        Ok(some) => Ok(some),
-        Err(_) => Err(ErrorCode::InvalidPasswordFormat),
-    }
-}
-
-
-pub struct DerivationAlgorithmModel {
-    algo: &'static str,
-    salt_len: usize,
-    derivation_func: fn(&str, &Vec<u8>) -> Result<Vec<u8>, ErrorCode>,
-}
-
-impl DerivationAlgorithmModel {
-    pub fn check_type(&self, password: &str) -> bool {
-        let begin_str = format!("${}$", self.algo);
-        password.starts_with(begin_str.as_str())
-    }
-
-    pub fn derive_with_salt(&self, password: &str, salt: &Vec<u8>) -> Result<String, ErrorCode> {
+pub trait PasswordDerivationFunction {
+    fn derive(&self, password: &str) -> Result<String, ErrorCode>;
+    fn check_password(&self, password: &str) -> Result<bool, ErrorCode> {
         if password.len() < PASSWORD_MIN_LEN {
             return Err(ErrorCode::PasswordTooShort);
-        }
-        if password.len() > PASSWORD_MAX_LEN {
+        } else if password.len() > PASSWORD_MAX_LEN {
             return Err(ErrorCode::PasswordTooLong);
         }
-        let derived_pass = match (self.derivation_func)(password, salt) {
-            Ok(some) => some.to_hex(),
-            Err(err) => return Err(err),
-        };
-        let out = format!("${}${}${}${}$", self.algo, "0", &salt.to_hex(), derived_pass);
+        Ok(true)
+    }
+}
+
+pub struct Pbkdf2 {
+    hash_function: HashFunction,
+    nb_iter: u32,
+    salt: Vec<u8>,
+}
+
+macro_rules! process_pbkdf2 {
+    ($obj:ident, $pass:ident, $hash:expr, $len:expr, $id:expr) => {{
+        let mut mac = Hmac::new($hash, $pass.as_bytes());
+        let mut derived_pass: Vec<u8> = vec![0; $len];
+        pbkdf2(&mut mac, &$obj.salt, $obj.nb_iter, &mut derived_pass);
+        let out = format!("${}$i={}${}${}$", $id, $obj.nb_iter, $obj.salt.to_hex(), derived_pass.to_hex());
         Ok(out)
-    }
+    }}
+}
 
-    pub fn derive(&self, password: &str) -> Result<String, ErrorCode> {
-        if password.len() < PASSWORD_MIN_LEN {
-            return Err(ErrorCode::PasswordTooShort);
+impl PasswordDerivationFunction for Pbkdf2 {
+    fn derive(&self, password: &str) -> Result<String, ErrorCode> {
+        match self.check_password(password) {
+            Ok(_) => match self.hash_function {
+                HashFunction::Sha1 => process_pbkdf2!(self, password, Sha1::new(), 20, "pbkdf2"),
+                HashFunction::Sha256 => process_pbkdf2!(self, password, Sha256::new(), 32, "pbkdf2_sha256"),
+                HashFunction::Sha512 => process_pbkdf2!(self, password, Sha512::new(), 64, "pbkdf2_sha512"),
+            },
+            Err(e) => Err(e),
         }
-        if password.len() > PASSWORD_MAX_LEN {
-            return Err(ErrorCode::PasswordTooLong);
-        }
-        let salt: Vec<u8> = generate_salt(self.salt_len);
-        let ret = self.derive_with_salt(password, &salt);
-        ret
     }
 }
 
-pub const ALGORITHMS: [DerivationAlgorithmModel; 3] = [
-    //DerivationAlgorithmModel {algo: "argon2i", salt_len: 8, derivation_func: argon2i_fn},
-    //DerivationAlgorithmModel {algo: "scrypt", salt_len: 8, derivation_func: scrypt_fn},
-    //DerivationAlgorithmModel {algo: "bcrypt", salt_len: 8, derivation_func: bcrypt_fn},
-    DerivationAlgorithmModel {algo: "pbkdf2-sha512", salt_len: 8, derivation_func: pbkdf2_sha512_fn},
-    DerivationAlgorithmModel {algo: "pbkdf2-sha256", salt_len: 8, derivation_func: pbkdf2_sha256_fn},
-    DerivationAlgorithmModel {algo: "pbkdf2", salt_len: 8, derivation_func: pbkdf2_fn},
-];
+pub struct PasswordDerivationFunctionBuilder {
+    algo: Option<String>,
+    salt: Option<Vec<u8>>,
+    parameters: HashMap<String, String>,
+    runtime_error: Option<ErrorCode>,
+}
 
-#[cfg(test)]
-mod tests {
-    use super::{pbkdf2_sha512_fn,pbkdf2_sha256_fn,pbkdf2_fn};
-    use super::{get_salt,ALGORITHMS};
-    use rustc_serialize::hex::ToHex;
+macro_rules! get_salt {
+    ($salt:expr) => {{
+        match $salt.to_owned() {
+            Some(s) => s,
+            None => generate_salt(8),
+        }
+    }}
+}
 
-    #[test]
-    fn test_pbkdf2_sha512() {
-        let password_list = [
-            ("123456", "584a53b5f4e1f4dda9375e3a7cd4f01acff74870b78f8bb9a23befcc31768df3d1906ce51d0d04d2a90081dc88e43bfe0402ab513c72a6286adb12c0933ee7fa"),
-            ("password", "20725ad1d811c2cbdd8bf4eecabb5967321459eb1c3c24554a474dcdf61b445e9f07832ed61de02962f35ea7ff46178f2718081861caf4097c394f096d01eb58"),
-            ("password123", "c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
-            ("correct horse battery staple", "2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a"),
-        ];
-        let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
-        for tpl in password_list.iter() {
-            let derived_pass = match pbkdf2_sha512_fn(tpl.0, &salt) {
-                Ok(some) => some.to_hex(),
-                Err(_) => "".to_owned(),
-            };
-            assert_eq!(derived_pass, tpl.1);
-        };
+macro_rules! get_param {
+    ($h:expr, $k:expr, $t:ty, $default:expr) => {{
+        if $h.contains_key($k) {
+            $h.get($k).unwrap().parse::<$t>().unwrap_or($default)
+        } else {
+            $default
+        }
+    }}
+}
+
+impl PasswordDerivationFunctionBuilder {
+    pub fn new() -> PasswordDerivationFunctionBuilder {
+        PasswordDerivationFunctionBuilder {
+            algo: None,
+            salt: None,
+            parameters: HashMap::new(),
+            runtime_error: None,
+        }
     }
 
-    #[test]
-    fn test_pbkdf2_sha256() {
-        let password_list = [
-            ("123456", "195fa9514d87912819296880d769bcfb69a0b2384f817fc3b7390763a29a6e79"),
-            ("password", "fb06696ab762cd18c9583cf94411ed98233b27a623c950727e258407139f770c"),
-            ("password123", "a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-        ];
-        let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
-        for tpl in password_list.iter() {
-            let derived_pass = match pbkdf2_sha256_fn(tpl.0, &salt) {
-                Ok(some) => some.to_hex(),
-                Err(_) => "".to_owned(),
-            };
-            assert_eq!(derived_pass, tpl.1);
-        };
-    }
+    pub fn set_reference_hash(&mut self, hash: &str) -> &mut PasswordDerivationFunctionBuilder {
+        let splited: Vec<&str> = hash.split("$").collect();
+        if splited.len() != 6 {
+            self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
+            return self;
+        }
 
-    #[test]
-    fn test_pbkdf2() {
-        let password_list = [
-            ("123456", "bcaff7fa9e1ad924eddc33c13407894ddf82baba"),
-            ("password", "17722502224e6e1b5c3e004f19895184ea8102a6"),
-            ("password123", "2f009b19e42805922b698a0367c39efcfc5d2477"),
-        ];
-        let salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
-        for tpl in password_list.iter() {
-            let derived_pass = match pbkdf2_fn(tpl.0, &salt) {
-                Ok(some) => some.to_hex(),
-                Err(_) => "".to_owned(),
-            };
-            assert_eq!(derived_pass, tpl.1);
-        };
-    }
+        // Extracting the algorithm
+        self.algo = Some(splited[1].to_string());
 
-    #[test]
-    fn test_get_salt() {
-        let stored_hash = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$";
-        let ref_salt: Vec<u8> = vec![0x45, 0x21, 0x78, 0x03];
-        let salt = get_salt(stored_hash).unwrap();
-        assert_eq!(salt, ref_salt);
-    }
-
-    #[test]
-    fn test_check_type() {
-        let password_list = [
-            ("pbkdf2-sha256", "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$"),
-            ("pbkdf2", "$pbkdf2$0$45217803$bcaff7fa9e1ad924eddc33c13407894ddf82baba$"),
-            ("nothing", "$derp$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9$"),
-        ];
-        for tpl in password_list.iter() {
-            for algo in ALGORITHMS.iter() {
-                let is_type = algo.check_type(tpl.1);
-                let ref_type = algo.algo == tpl.0;
-                assert_eq!(is_type, ref_type);
+        // Extracting the parameters
+        let splited_params: Vec<&str> = splited[2].split(",").collect();
+        for param_couple in splited_params.iter() {
+            let couple: Vec<&str> = param_couple.split("=").collect();
+            if couple.len() == 2 {
+                self.parameters.insert(couple[0].to_string(), couple[1].to_string());
             }
+        }
+
+        // Extracting the salt
+        match splited[3].from_hex() {
+            Ok(some) => self.salt = Some(some),
+            Err(_) => {
+                self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
+                return self;
+            },
+        }
+        self
+    }
+
+    pub fn finalize(&self) -> Result<Box<PasswordDerivationFunction>, ErrorCode> {
+        match self.runtime_error {
+            Some(e) => Err(e),
+            None => match self.algo.to_owned() {
+                Some(algo) => match algo.as_ref() {
+                    "pbkdf2_sha512" => {
+                        let h = Pbkdf2 {
+                            hash_function: HashFunction::Sha512,
+                            salt: get_salt!(self.salt),
+                            nb_iter: get_param!(self.parameters, "i", u32, 21000),
+                        };
+                        Ok(Box::new(h))
+                    },
+                    "pbkdf2_sha256" => {
+                        let h = Pbkdf2 {
+                            hash_function: HashFunction::Sha256,
+                            salt: get_salt!(self.salt),
+                            nb_iter: get_param!(self.parameters, "i", u32, 21000),
+                        };
+                        Ok(Box::new(h))
+                    },
+                    "pbkdf2" => {
+                        let h = Pbkdf2 {
+                            hash_function: HashFunction::Sha1,
+                            salt: get_salt!(self.salt),
+                            nb_iter: get_param!(self.parameters, "i", u32, 21000),
+                        };
+                        Ok(Box::new(h))
+                    },
+                    _ => Err(ErrorCode::InvalidPasswordFormat)
+                },
+                None => Ok(Box::new(Pbkdf2 {
+                    hash_function: HashFunction::Sha512,
+                    nb_iter: 21000,
+                    salt: generate_salt(8),
+                })),
+            },
         }
     }
 }
