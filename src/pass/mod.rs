@@ -207,4 +207,22 @@ mod tests {
         let stored_password = "$pbkdf2$0$45217803$ce035bbb80414de3de01dc54a9ee204b27ad1ae5$";
         assert!(! is_valid("abc", stored_password));
     }
+
+    #[test]
+    fn test_utf8_passwords() {
+        let password_list = [
+            "è_é ÖÀ",
+            "пароль",
+            "密码",
+            "密碼",
+            "كلمه السر",
+            "ль\n\n\n密à\r\n$",
+            "😁😊😣😺✅✨❕➡🚀🚧Ⓜ🇪🇸⏳🌎",
+        ];
+        for password in password_list.iter() {
+            let stored_password = derive_password(password).unwrap();
+            assert!(! is_valid("bad password", &stored_password));
+            assert!(is_valid(&password, &stored_password));
+        }
+    }
 }
