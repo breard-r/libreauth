@@ -109,6 +109,7 @@ pub enum ErrorCode {
 }
 
 mod derivation;
+mod pbkdf2;
 
 fn generate_salt(nb_bytes: usize) -> Vec<u8> {
     let mut salt: Vec<u8> = vec![0; nb_bytes];

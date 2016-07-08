@@ -36,11 +36,8 @@
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,generate_salt};
 use std::collections::HashMap;
-use rustc_serialize::hex::{FromHex,ToHex};
-use crypto::sha2::{Sha512,Sha256};
-use crypto::sha1::Sha1;
-use crypto::hmac::Hmac;
-use crypto::pbkdf2::pbkdf2;
+use rustc_serialize::hex::FromHex;
+use pass::pbkdf2::Pbkdf2;
 
 
 #[repr(C)]
@@ -60,35 +57,6 @@ pub trait PasswordDerivationFunction {
             return Err(ErrorCode::PasswordTooLong);
         }
         Ok(true)
-    }
-}
-
-pub struct Pbkdf2 {
-    hash_function: HashFunction,
-    nb_iter: u32,
-    salt: Vec<u8>,
-}
-
-macro_rules! process_pbkdf2 {
-    ($obj:ident, $pass:ident, $hash:expr, $len:expr, $id:expr) => {{
-        let mut mac = Hmac::new($hash, $pass.as_bytes());
-        let mut derived_pass: Vec<u8> = vec![0; $len];
-        pbkdf2(&mut mac, &$obj.salt, $obj.nb_iter, &mut derived_pass);
-        let out = format!("${}$i={}${}${}", $id, $obj.nb_iter, $obj.salt.to_hex(), derived_pass.to_hex());
-        Ok(out)
-    }}
-}
-
-impl PasswordDerivationFunction for Pbkdf2 {
-    fn derive(&self, password: &str) -> Result<String, ErrorCode> {
-        match self.check_password(password) {
-            Ok(_) => match self.hash_function {
-                HashFunction::Sha1 => process_pbkdf2!(self, password, Sha1::new(), 20, "pbkdf2"),
-                HashFunction::Sha256 => process_pbkdf2!(self, password, Sha256::new(), 32, "pbkdf2_sha256"),
-                HashFunction::Sha512 => process_pbkdf2!(self, password, Sha512::new(), 64, "pbkdf2_sha512"),
-            },
-            Err(e) => Err(e),
-        }
     }
 }
 
