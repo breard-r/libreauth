@@ -92,7 +92,7 @@ impl HOTP {
 
     /// Generate the HOTP value.
     ///
-    /// # Examples
+    /// ## Examples
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
     /// let mut hotp = libreauth::oath::HOTPBuilder::new()
@@ -134,7 +134,7 @@ impl HOTP {
 
     /// Checks if the given code is valid. This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
     ///
-    /// # Examples
+    /// ## Examples
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
     /// let user_code = "755224".to_owned();
@@ -160,7 +160,7 @@ impl HOTP {
     }
 }
 
-/// # Examples
+/// ## Examples
 ///
 /// The following examples uses the same shared secret passed in various forms.
 ///

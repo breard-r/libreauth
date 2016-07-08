@@ -33,6 +33,57 @@
  */
 
 
+//! The password authentication module allows you to:
+//!
+//! - generate a fingerprint of the password that could be stored;
+//! - check a password against the stored fingerprint.
+//!
+//!
+//! ## Modular Crypt Format
+//!
+//! The password fingerprint is stored in the modular crypt format (cf. [[1]](https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt) and [[2]](https://pythonhosted.org/passlib/modular_crypt_format.html)). This format is defined as follows:
+//!
+//! `$algorithm$[parameter=value, …]$salt$hash`
+//!
+//! <table>
+//!     <thead>
+//!         <tr>
+//!             <th style="text-align: center;">algorithm</th>
+//!             <th style="text-align: center;">parameter name</th>
+//!             <th style="text-align: center;">parameter type</th>
+//!             <th style="text-align: center;">parameter description</th>
+//!         </tr>
+//!     </thead>
+//!     <tbody>
+//!         <tr>
+//!             <td>pbkdf2_sha512</td>
+//!             <td>i</td>
+//!             <td>integer</td>
+//!             <td>number of iterations</td>
+//!         </tr>
+//!         <tr>
+//!             <td>pbkdf2_sha256</td>
+//!             <td>i</td>
+//!             <td>integer</td>
+//!             <td>number of iterations</td>
+//!         </tr>
+//!         <tr>
+//!             <td>pbkdf2</td>
+//!             <td>i</td>
+//!             <td>integer</td>
+//!             <td>number of iterations</td>
+//!         </tr>
+//!     </tbody>
+//! </table>
+//!
+//! ## Examples
+//! ```
+//! let password = "correct horse battery staple";
+//! let stored_password = libreauth::pass::derive_password(password).unwrap();
+//! assert!(! libreauth::pass::is_valid("bad password", &stored_password));
+//! assert!(libreauth::pass::is_valid(&password, &stored_password));
+//! ```
+
 use rand::{Rng,thread_rng};
 use crypto::mac::Mac;
 use crypto::hmac::Hmac;
@@ -62,7 +113,7 @@ fn generate_salt(nb_bytes: usize) -> Vec<u8> {
 
 /// Derivate a password so it can be stored.
 ///
-/// # Examples
+/// ## Examples
 /// ```
 /// let password = "1234567890";
 /// let stored_password = libreauth::pass::derive_password(password).unwrap();
@@ -76,7 +127,7 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
 
 /// Check whether or not the password is valid.
 ///
-/// # Examples
+/// ## Examples
 /// ```
 /// let password = "correct horse battery staple";
 /// let stored_password = libreauth::pass::derive_password(password).unwrap();
