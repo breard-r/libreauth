@@ -181,7 +181,14 @@ impl PasswordDerivationFunctionBuilder {
                     },
                     "pbkdf2" => {
                         let h = Pbkdf2 {
-                            hash_function: HashFunction::Sha1,
+                            hash_function: match self.parameters.get("h") {
+                                Some(h) => match h.as_ref() {
+                                    "sha512" => HashFunction::Sha512,
+                                    "sha256" => HashFunction::Sha256,
+                                    _ => HashFunction::Sha1,
+                                },
+                                None => HashFunction::Sha1,
+                            },
                             salt: get_salt!(self.salt),
                             nb_iter: get_param!(self.parameters, "i", u32, 21000),
                         };
