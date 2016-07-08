@@ -71,3 +71,5 @@ help:
 	@echo
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
+
+.PHONY: all install uninstall debug test tests clean doc release sync_doc help

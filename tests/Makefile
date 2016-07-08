@@ -30,3 +30,5 @@ clean:
 	@rm -rf $(NAME) $(OBJ) '__pycache__' *.pyc
 
 re: clean all
+
+.PHONY: all test tests clean re
