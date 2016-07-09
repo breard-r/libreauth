@@ -97,26 +97,47 @@ impl PasswordDerivationFunctionBuilder {
     }
 
     pub fn set_reference_hash(&mut self, hash: &str) -> &mut PasswordDerivationFunctionBuilder {
-        let splited: Vec<&str> = hash.split("$").collect();
-        if splited.len() != 5 {
+        let mut splited: Vec<&str> = hash.split("$").collect();
+        if splited.len() < 2 || splited.len() > 5 {
             self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
             return self;
         }
 
-        // Extracting the algorithm
-        self.algo = Some(splited[1].to_string());
+        splited.reverse();
+        splited.pop(); // Remove the first empty element.
 
-        // Extracting the parameters
-        let splited_params: Vec<&str> = splited[2].split(",").collect();
-        for param_couple in splited_params.iter() {
-            let couple: Vec<&str> = param_couple.split("=").collect();
-            if couple.len() == 2 {
-                self.parameters.insert(couple[0].to_string(), couple[1].to_string());
+        // Scheme id.
+        self.algo = Some(splited.pop().unwrap().to_string());
+
+        let mut elem = match splited.pop() {
+            Some(some) => some,
+            None => return self, // Format: $id
+        };
+
+        // Next element is the param element.
+        if elem.contains("=") {
+            let splited_params: Vec<&str> = elem.split(",").collect();
+            for param_couple in splited_params.iter() {
+                let couple: Vec<&str> = param_couple.split("=").collect();
+                if couple.len() == 2 {
+                    self.parameters.insert(couple[0].to_string(), couple[1].to_string());
+                }
             }
+            elem = match splited.pop() {
+                Some(some) => some,
+                None => return self,
+            };
+        }
+        // Empty param variant.
+        if elem.len() == 0 {
+            elem = match splited.pop() {
+                Some(some) => some,
+                None => return self,
+            };
         }
 
-        // Extracting the salt
-        match splited[3].from_hex() {
+        // Next element is the salt.
+        match elem.from_hex() {
             Ok(some) => self.salt = Some(some),
             Err(_) => {
                 self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);

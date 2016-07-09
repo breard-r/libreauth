@@ -33,7 +33,9 @@
  */
 
 
-//! The password authentication module allows you to:
+//! Password authentication module.
+//!
+//! It allows you to:
 //!
 //! - generate a fingerprint of the password that could be stored;
 //! - check a password against the stored fingerprint.
@@ -43,40 +45,49 @@
 //!
 //! The password fingerprint is stored in the modular crypt format (cf. [[1]](https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt) and [[2]](https://pythonhosted.org/passlib/modular_crypt_format.html)). This format is defined as follows:
 //!
-//! `$algorithm$[parameter=value, …]$salt$hash`
+//! `$<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]`
 //!
-//! <table>
+//! <style>
+//! .vcentered_table th, .vcentered_table td {vertical-align: middle;}
+//! .vcentered_table > thead > tr > th {text-align: center;}
+//! </style>
+//! <table class="vcentered_table">
 //!     <thead>
 //!         <tr>
-//!             <th style="text-align: center;">Algorithm</th>
-//!             <th style="text-align: center;">Parameter name</th>
-//!             <th style="text-align: center;">Parameter type</th>
-//!             <th style="text-align: center;">Parameter description</th>
+//!             <th>Algorithm</th>
+//!             <th>Parameter name</th>
+//!             <th>Parameter type</th>
+//!             <th>Parameter description</th>
+//!             <th>Example</th>
 //!         </tr>
 //!     </thead>
 //!     <tbody>
 //!         <tr>
 //!             <td style="vertical-align: middle;">pbkdf2_sha512</td>
 //!             <td>i</td>
-//!             <td>integer</td>
+//!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
+//!             <td>$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba</td>
 //!         </tr>
 //!         <tr>
 //!             <td style="vertical-align: middle;">pbkdf2_sha256</td>
 //!             <td>i</td>
-//!             <td>integer</td>
+//!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
+//!             <td>$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9</td>
 //!         </tr>
 //!         <tr>
 //!             <td rowspan="2" style="vertical-align: middle;">pbkdf2</td>
 //!             <td>i</td>
-//!             <td>integer</td>
+//!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
+//!             <td>$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7</td>
 //!         </tr>
 //!         <tr>
 //!             <td>h</td>
 //!             <td>string: sha1|sha256|sha512<br>Default: sha1</td>
 //!             <td>The hash function.</td>
+//!             <td>$pbkdf2$h=sha256$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9</td>
 //!         </tr>
 //!     </tbody>
 //! </table>
@@ -293,6 +304,40 @@ mod tests {
             let stored_password = derive_password(pass.0).unwrap();
             assert!(! is_valid(pass.1, &stored_password));
             assert!(is_valid(pass.0, &stored_password));
+        }
+    }
+
+    #[test]
+    fn test_format_with_salt() {
+        let list = [
+            // (password, storage, expected_output),
+            ("password123", "$pbkdf2$i=1000,h=sha1$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
+            ("password123", "$pbkdf2$i=1000$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
+            ("password123", "$pbkdf2$$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
+            ("password123", "$pbkdf2$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
+            ("password123", "$pbkdf2_sha256$$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+            ("password123", "$pbkdf2_sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+            ("password123", "$pbkdf2$h=sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+        ];
+        for p in list.iter() {
+            let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            assert_eq!(p.2, deriv);
+            assert!(! is_valid(p.0, p.1));
+            assert!(is_valid(p.0, p.2));
+        }
+    }
+
+    #[test]
+    fn test_format_without_salt() {
+        let list = [
+            // (password, storage, expected_output_start),
+            ("password123", "$pbkdf2$i=1000,h=sha1", "$pbkdf2$i=1000$"),
+            ("password123", "$pbkdf2$i=1000,h=sha512", "$pbkdf2_sha512$i=1000$"),
+            ("password123", "$pbkdf2_sha512", "$pbkdf2_sha512$i=21000$"),
+        ];
+        for p in list.iter() {
+            let deriv: String = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            assert!(deriv.starts_with(p.2));
         }
     }
 
