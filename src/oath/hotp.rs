@@ -273,16 +273,16 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> libc::int32_t {
+    pub extern fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
         let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
         match res {
-            Ok(_) => 0,
-            Err(errno) => errno as libc::int32_t,
+            Ok(_) => ErrorCode::Success,
+            Err(errno) => errno,
         }
     }
 
     #[no_mangle]
-    pub extern fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut libc::uint8_t) -> libc::int32_t {
+    pub extern fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut libc::uint8_t) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let mut code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
         let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
@@ -297,9 +297,9 @@ pub mod cbindings {
                 Ok(hotp) => {
                     let ref_code = hotp.generate().into_bytes();
                     c::write_code(&ref_code, code);
-                    0
+                    ErrorCode::Success
                 },
-                Err(errno) => errno as libc::int32_t,
+                Err(errno) => errno,
         }
     }
 

@@ -113,6 +113,7 @@ pub const PASSWORD_MAX_LEN: usize = 128;
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
+    Success = 0,
     PasswordTooShort = 1,
     PasswordTooLong = 2,
     InvalidPasswordFormat = 10,
@@ -184,7 +185,7 @@ mod cbindings {
     use std;
 
     #[no_mangle]
-    pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t) -> libc::int32_t {
+    pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t) -> ErrorCode {
         let mut r_storage = unsafe {
             assert!(!storage.is_null());
             std::slice::from_raw_parts_mut(storage, storage_len as usize)
@@ -196,18 +197,18 @@ mod cbindings {
         let r_password = c_password.to_str().unwrap();
         let r_derived_password = match derive_password(r_password){
             Ok(some) => some,
-            Err(errno) => return errno as libc::int32_t,
+            Err(errno) => return errno,
         };
         let out_len = r_derived_password.len();
         let pass_b = r_derived_password.into_bytes();
         if out_len >= storage_len as usize {
-            return ErrorCode::NotEnoughSpace as libc::int32_t;
+            return ErrorCode::NotEnoughSpace;
         }
         for i in 0..out_len {
             r_storage[i] = pass_b[i];
         };
         r_storage[out_len] = 0;
-        0
+        ErrorCode::Success
     }
 
     #[no_mangle]

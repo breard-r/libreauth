@@ -44,6 +44,8 @@ pub enum HashFunction {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
+    Success = 0,
+
     CfgNullPtr = 1,
     CodeNullPtr = 2,
     KeyNullPtr = 3,
@@ -215,7 +217,7 @@ macro_rules! get_value_or_errno {
     ($val:expr) => {{
         match $val {
             Ok(v) => v,
-            Err(errno) => return errno as libc::int32_t,
+            Err(errno) => return errno,
         }
     }}
 }
