@@ -7,7 +7,7 @@ SRC     = test_libreauth.c \
 		test_pass.c \
 		test_totp.c
 OBJ     = $(SRC:.c=.o)
-CC      = cc
+CC      = clang
 CFLAGS  = -std=c11 -g -Wall -Wextra -Wpedantic -Wshadow -Werror -Wstrict-overflow -fno-strict-aliasing -I$(INCDIR)
 LDFLAGS = -L$(LIBDIR) -llibreauth
 PYSRC   = libreauth_test
