@@ -32,8 +32,7 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-#ifndef LIBREAUTH_9FA652EB_6732_426F_BB33_DBACB88CE022
-#define LIBREAUTH_9FA652EB_6732_426F_BB33_DBACB88CE022
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -120,5 +119,3 @@ struct libreauth_totp_cfg {
 libreauth_oath_errno libreauth_totp_init(struct libreauth_totp_cfg *cfg);
 libreauth_oath_errno libreauth_totp_generate(const struct libreauth_totp_cfg *cfg, char *code);
 int32_t              libreauth_totp_is_valid(const struct libreauth_totp_cfg *cfg, const char *code);
-
-#endif /* LIBREAUTH_9FA652EB_6732_426F_BB33_DBACB88CE022 */

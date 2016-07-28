@@ -33,12 +33,9 @@
  */
 
 
-#ifndef LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D
-#define LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D
+#pragma once
 
 void    test_name(const char *name);
 int     test_hotp(void);
 int     test_totp(void);
 int     test_pass(void);
-
-#endif /* LIBREAUTH_TESTS_87BEE129_B983_439C_8DB5_FB7B8AB7FF1D */
