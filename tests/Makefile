@@ -18,7 +18,7 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS)
 
-test: $(NAME)
+test: cc_version $(NAME)
 	@(hash valgrind 2>/dev/null && LD_LIBRARY_PATH=$(LIBDIR) valgrind ./$(NAME))
 	@LD_LIBRARY_PATH=$(LIBDIR) ./$(NAME)
 	@(hash python2 2>/dev/null && python2 --version && python2 -m unittest $(PYSRC))
@@ -29,6 +29,9 @@ tests: test
 clean:
 	@rm -rf $(NAME) $(OBJ) '__pycache__' *.pyc
 
+cc_version:
+	$(CC) --version
+
 re: clean all
 
-.PHONY: all test tests clean re
+.PHONY: all test tests clean cc_version re
