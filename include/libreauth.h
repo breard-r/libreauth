@@ -54,8 +54,8 @@ typedef enum {
     LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20
 } libreauth_pass_errno;
 
-libreauth_pass_errno    libreauth_pass_derive_password(const char *password, char *storage, size_t storage_len);
-int32_t                 libreauth_pass_is_valid(const char *password, const char *reference);
+libreauth_pass_errno    libreauth_pass_derive_password(const void *password, void *storage, size_t storage_len);
+int32_t                 libreauth_pass_is_valid(const void *password, const void *reference);
 
 
 /*
@@ -111,11 +111,11 @@ struct libreauth_totp_cfg {
     uint32_t                      period;
     uint64_t                      initial_time;
     size_t                        output_len;
-    const char                   *output_base;
+    const void                   *output_base;
     size_t                        output_base_len;
     libreauth_oath_hash_function  hash_function;
 };
 
 libreauth_oath_errno libreauth_totp_init(struct libreauth_totp_cfg *cfg);
-libreauth_oath_errno libreauth_totp_generate(const struct libreauth_totp_cfg *cfg, char *code);
-int32_t              libreauth_totp_is_valid(const struct libreauth_totp_cfg *cfg, const char *code);
+libreauth_oath_errno libreauth_totp_generate(const struct libreauth_totp_cfg *cfg, void *code);
+int32_t              libreauth_totp_is_valid(const struct libreauth_totp_cfg *cfg, const void *code);

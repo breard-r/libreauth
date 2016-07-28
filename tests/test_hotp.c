@@ -39,211 +39,218 @@
 #include <libreauth.h>
 #include "libreauth_tests.h"
 
+#define DEFAULT_BUFF_LEN  6
 
-static int test_basic_hotp(void) {
-  struct libreauth_hotp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890";
-  int ret;
 
-  test_name("hotp: test_basic_hotp");
+static uint32_t test_basic_hotp(void) {
+    test_name("hotp: test_basic_hotp");
 
-  ret = libreauth_hotp_init(&cfg);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(cfg.key == NULL);
-  assert(cfg.key_len == 0);
-  assert(cfg.counter == 0);
-  assert(cfg.output_len == 6);
-  assert(cfg.output_base == NULL);
-  assert(cfg.output_base_len == 0);
-  assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char code[DEFAULT_BUFF_LEN + 1];
 
-  cfg.key = key;
-  cfg.key_len = sizeof(key);
+    uint32_t ret = libreauth_hotp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(cfg.key == NULL);
+    assert(cfg.key_len == 0);
+    assert(cfg.counter == 0);
+    assert(cfg.output_len == DEFAULT_BUFF_LEN);
+    assert(cfg.output_base == NULL);
+    assert(cfg.output_base_len == 0);
+    assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 6);
-  assert(strncmp(code, "755224", 7) == 0);
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
 
-  assert(libreauth_hotp_is_valid(&cfg, "755224"));
-  assert(!libreauth_hotp_is_valid(NULL, "755224"));
-  assert(!libreauth_hotp_is_valid(&cfg, "755225"));
-  assert(!libreauth_hotp_is_valid(&cfg, "4755224"));
-  assert(!libreauth_hotp_is_valid(&cfg, "!@#$%^"));
-  assert(!libreauth_hotp_is_valid(&cfg, ""));
-  assert(!libreauth_hotp_is_valid(&cfg, NULL));
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == DEFAULT_BUFF_LEN);
+    assert(strncmp(code, "755224", DEFAULT_BUFF_LEN + 1) == 0);
 
-  return 1;
+    assert(libreauth_hotp_is_valid(&cfg, "755224"));
+    assert(!libreauth_hotp_is_valid(NULL, "755224"));
+    assert(!libreauth_hotp_is_valid(&cfg, "755225"));
+    assert(!libreauth_hotp_is_valid(&cfg, "4755224"));
+    assert(!libreauth_hotp_is_valid(&cfg, "!@#$%^"));
+    assert(!libreauth_hotp_is_valid(&cfg, ""));
+    assert(!libreauth_hotp_is_valid(&cfg, NULL));
+
+    return 1;
 }
 
-static int test_init_null_ptr(void) {
-  int ret = libreauth_hotp_init(NULL);
-  test_name("hotp: test_init_null_ptr");
-  assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
-  return 1;
+static uint32_t test_init_null_ptr(void) {
+    test_name("hotp: test_init_null_ptr");
+
+    uint32_t ret = libreauth_hotp_init(NULL);
+    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+
+    return 1;
 }
 
-static int test_generate_null_ptr(void) {
-  struct libreauth_hotp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890";
-  int ret;
+static uint32_t test_generate_null_ptr(void) {
+    test_name("hotp: test_generate_null_ptr");
 
-  test_name("hotp: test_generate_null_ptr");
-  libreauth_hotp_init(&cfg);
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char code[] = "qwerty";
+    uint32_t ret;
 
-  ret = libreauth_hotp_generate(NULL, code);
-  assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
-  assert(strcmp(code, "qwerty") == 0);
+    libreauth_hotp_init(&cfg);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
+    ret = libreauth_hotp_generate(NULL, code);
+    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(strcmp(code, "qwerty") == 0);
 
-  cfg.key = key;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_KEY_LEN);
+    cfg.key = key;
 
-  cfg.key_len = sizeof(key);
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_KEY_LEN);
 
-  ret = libreauth_hotp_generate(&cfg, NULL);
-  assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
+    cfg.key_len = sizeof(key);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
+    ret = libreauth_hotp_generate(&cfg, NULL);
+    assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
 
-  return 1;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+
+    return 1;
 }
 
-static int test_invalid_base(void) {
-  struct libreauth_hotp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
-  int ret;
+static uint32_t test_invalid_base(void) {
+    test_name("hotp: test_invalid_base");
 
-  test_name("hotp: test_invalid_base");
-  libreauth_hotp_init(&cfg);
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
+    char code[DEFAULT_BUFF_LEN + 1];
 
-  cfg.key = key;
-  cfg.key_len = sizeof(key);
-  cfg.output_base = base;
+    libreauth_hotp_init(&cfg);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
-  cfg.output_base_len = 1;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
+    cfg.output_base = base;
 
-  cfg.output_base_len = sizeof(base);
+    uint32_t ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
+    cfg.output_base_len = 1;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
 
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
+    cfg.output_base_len = sizeof(base);
 
-  return 1;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+
+    return 1;
 }
 
-static int test_invalid_code(void) {
-  struct libreauth_hotp_cfg cfg;
-  char code[21],
-    key[] = "12345678901234567890",
-    base10[] = "0123456789",
-    base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
-    base64[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
-  int ret;
+static uint32_t test_invalid_code(void) {
+    test_name("hotp: test_invalid_code");
 
-  test_name("hotp: test_invalid_code");
-  libreauth_hotp_init(&cfg);
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890",
+          base10[] = "0123456789",
+          base32[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+          base64[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
+    char code[21]; /* Must be strictly superior than the highest code lentgh tested. */
 
-  cfg.key = key;
-  cfg.key_len = strlen(key);
+    libreauth_hotp_init(&cfg);
 
-  /* Base 10 */
-  cfg.output_base = base10;
-  cfg.output_base_len = strlen(base10);
+    cfg.key = key;
+    cfg.key_len = strlen(key);
 
-  cfg.output_len = 5;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
+    /* Base 10 */
+    cfg.output_base = base10;
+    cfg.output_base_len = strlen(base10);
 
-  cfg.output_len = 6;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 6);
+    cfg.output_len = 5;
+    uint32_t ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
 
-  cfg.output_len = 9;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 9);
+    cfg.output_len = 6;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 6);
 
-  cfg.output_len = 10;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 9;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 9);
 
-  cfg.output_len = 0xffffff;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 10;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
 
-  /* Base 32 */
-  cfg.output_base = base32;
-  cfg.output_base_len = strlen(base32);
+    cfg.output_len = 0xffffff;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
 
-  cfg.output_len = 3;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
+    /* Base 32 */
+    cfg.output_base = base32;
+    cfg.output_base_len = strlen(base32);
 
-  cfg.output_len = 4;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 4);
+    cfg.output_len = 3;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
 
-  cfg.output_len = 6;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 6);
+    cfg.output_len = 4;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 4);
 
-  cfg.output_len = 7;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 6;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 6);
 
-  cfg.output_len = 0xffffff;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 7;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
 
-  /* Base 64 */
-  cfg.output_base = base64;
-  cfg.output_base_len = strlen(base64);
+    cfg.output_len = 0xffffff;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
 
-  cfg.output_len = 3;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
+    /* Base 64 */
+    cfg.output_base = base64;
+    cfg.output_base_len = strlen(base64);
 
-  cfg.output_len = 4;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 4);
+    cfg.output_len = 3;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_SMALL);
 
-  cfg.output_len = 5;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 5);
+    cfg.output_len = 4;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 4);
 
-  cfg.output_len = 6;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 5;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == 5);
 
-  cfg.output_len = 0xffffff;
-  ret = libreauth_hotp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+    cfg.output_len = 6;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
 
-  return 1;
+    cfg.output_len = 0xffffff;
+    ret = libreauth_hotp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_CODE_TOO_BIG);
+
+    return 1;
 }
 
-int test_hotp(void) {
-  int nb_tests = 0;
+uint32_t test_hotp(void) {
+    uint32_t nb_tests = 0;
 
-  nb_tests += test_basic_hotp();
-  nb_tests += test_init_null_ptr();
-  nb_tests += test_generate_null_ptr();
-  nb_tests += test_invalid_base();
-  nb_tests += test_invalid_code();
+    nb_tests += test_basic_hotp();
+    nb_tests += test_init_null_ptr();
+    nb_tests += test_generate_null_ptr();
+    nb_tests += test_invalid_base();
+    nb_tests += test_invalid_code();
 
-  return nb_tests;
+    return nb_tests;
 }

@@ -39,144 +39,153 @@
 #include <libreauth.h>
 #include "libreauth_tests.h"
 
+#define DEFAULT_BUFF_LEN 6
+#define BIGGER_BUFF_LEN  8
 
-static int test_basic_totp(void) {
-  struct libreauth_totp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890";
-  int ret;
 
-  test_name("totp: test_basic_totp");
+static uint32_t test_basic_totp(void) {
+    test_name("totp: test_basic_totp");
 
-  ret = libreauth_totp_init(&cfg);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(cfg.key == NULL);
-  assert(cfg.key_len == 0);
-  assert(cfg.timestamp != 0);
-  assert(cfg.period == 30);
-  assert(cfg.initial_time == 0);
-  assert(cfg.output_len == 6);
-  assert(cfg.output_base == NULL);
-  assert(cfg.output_base_len == 0);
-  assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char code[DEFAULT_BUFF_LEN + 1] = {0};
 
-  cfg.key = key;
-  cfg.key_len = sizeof(key);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 6);
-  assert(!libreauth_totp_is_valid(NULL, "755224"));
-  assert(!libreauth_totp_is_valid(&cfg, "4755224"));
-  assert(!libreauth_totp_is_valid(&cfg, "!@#$%^"));
-  assert(!libreauth_totp_is_valid(&cfg, ""));
-  assert(!libreauth_totp_is_valid(&cfg, NULL));
+    uint32_t ret = libreauth_totp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(cfg.key == NULL);
+    assert(cfg.key_len == 0);
+    assert(cfg.timestamp != 0);
+    assert(cfg.period == 30);
+    assert(cfg.initial_time == 0);
+    assert(cfg.output_len == DEFAULT_BUFF_LEN);
+    assert(cfg.output_base == NULL);
+    assert(cfg.output_base_len == 0);
+    assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
 
-  return 1;
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
+
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == DEFAULT_BUFF_LEN);
+    assert(!libreauth_totp_is_valid(NULL, "755224"));
+    assert(!libreauth_totp_is_valid(&cfg, "4755224"));
+    assert(!libreauth_totp_is_valid(&cfg, "!@#$%^"));
+    assert(!libreauth_totp_is_valid(&cfg, ""));
+    assert(!libreauth_totp_is_valid(&cfg, NULL));
+
+    return 1;
 }
 
-static int test_advanced_totp(void) {
-  struct libreauth_totp_cfg cfg;
-  char code[9], key[] = "12345678901234567890123456789012";
-  int ret;
+static uint32_t test_advanced_totp(void) {
+    test_name("totp: test_advanced_totp");
 
-  test_name("totp: test_advanced_totp");
-  ret = libreauth_totp_init(&cfg);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890123456789012";
+    char code[BIGGER_BUFF_LEN + 1];
 
-  cfg.key = key;
-  cfg.key_len = sizeof(key);
-  cfg.timestamp = 1111111109;
-  cfg.output_len = 8;
-  cfg.hash_function = LIBREAUTH_OATH_SHA_256;
+    uint32_t ret = libreauth_totp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
-  assert(strlen(code) == 8);
-  assert(strncmp(code, "68084774", 9) == 0);
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
+    cfg.timestamp = 1111111109;
+    cfg.output_len = BIGGER_BUFF_LEN;
+    cfg.hash_function = LIBREAUTH_OATH_SHA_256;
 
-  assert(libreauth_totp_is_valid(&cfg, "68084774"));
-  assert(!libreauth_totp_is_valid(NULL, "68084774"));
-  assert(!libreauth_totp_is_valid(&cfg, "68084775"));
-  assert(!libreauth_totp_is_valid(&cfg, "46808477"));
-  assert(!libreauth_totp_is_valid(&cfg, "!@#$%^&*"));
-  assert(!libreauth_totp_is_valid(&cfg, ""));
-  assert(!libreauth_totp_is_valid(&cfg, NULL));
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strlen(code) == BIGGER_BUFF_LEN);
+    assert(strncmp(code, "68084774", BIGGER_BUFF_LEN + 1) == 0);
 
-  return 1;
+    assert(libreauth_totp_is_valid(&cfg, "68084774"));
+    assert(!libreauth_totp_is_valid(NULL, "68084774"));
+    assert(!libreauth_totp_is_valid(&cfg, "68084775"));
+    assert(!libreauth_totp_is_valid(&cfg, "46808477"));
+    assert(!libreauth_totp_is_valid(&cfg, "!@#$%^&*"));
+    assert(!libreauth_totp_is_valid(&cfg, ""));
+    assert(!libreauth_totp_is_valid(&cfg, NULL));
+
+    return 1;
 }
 
-static int test_init_null_ptr(void) {
-  int ret = libreauth_totp_init(NULL);
-  test_name("totp: test_init_null_ptr");
-  assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
-  return 1;
+static uint32_t test_init_null_ptr(void) {
+    test_name("totp: test_init_null_ptr");
+
+    uint32_t ret = libreauth_totp_init(NULL);
+    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+
+    return 1;
 }
 
-static int test_generate_null_ptr(void) {
-  struct libreauth_totp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890";
-  int ret;
+static uint32_t test_generate_null_ptr(void) {
+    test_name("totp: test_generate_null_ptr");
 
-  test_name("totp: test_generate_null_ptr");
-  libreauth_totp_init(&cfg);
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char code[] = "qwerty";
 
-  ret = libreauth_totp_generate(NULL, code);
-  assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
-  assert(strcmp(code, "qwerty") == 0);
+    libreauth_totp_init(&cfg);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
+    uint32_t ret = libreauth_totp_generate(NULL, code);
+    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(strcmp(code, "qwerty") == 0);
 
-  cfg.key = key;
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_KEY_LEN);
+    cfg.key = key;
 
-  cfg.key_len = sizeof(key);
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_KEY_LEN);
 
-  ret = libreauth_totp_generate(&cfg, NULL);
-  assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
+    cfg.key_len = sizeof(key);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
+    ret = libreauth_totp_generate(&cfg, NULL);
+    assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
 
-  return 1;
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+
+    return 1;
 }
 
-static int test_invalid_base(void) {
-  struct libreauth_totp_cfg cfg;
-  char code[] = "qwerty", key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
-  int ret;
+static uint32_t test_invalid_base(void) {
+    test_name("totp: test_invalid_base");
 
-  test_name("totp: test_invalid_base");
-  libreauth_totp_init(&cfg);
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890", base[] = "0123456789ABCDEF";
+    char code[DEFAULT_BUFF_LEN + 1];
 
-  cfg.key = key;
-  cfg.key_len = sizeof(key);
-  cfg.output_base = base;
+    libreauth_totp_init(&cfg);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
-  cfg.output_base_len = 1;
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
+    cfg.output_base = base;
 
-  cfg.output_base_len = sizeof(base);
+    uint32_t ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
+    cfg.output_base_len = 1;
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
 
-  ret = libreauth_totp_generate(&cfg, code);
-  assert(ret == LIBREAUTH_OATH_SUCCESS);
+    cfg.output_base_len = sizeof(base);
 
-  return 1;
+    ret = libreauth_totp_generate(&cfg, code);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+
+    return 1;
 }
 
-int test_totp(void) {
-  int nb_tests = 0;
+uint32_t test_totp(void) {
+    uint32_t nb_tests = 0;
 
-  nb_tests += test_basic_totp();
-  nb_tests += test_advanced_totp();
-  nb_tests += test_init_null_ptr();
-  nb_tests += test_generate_null_ptr();
-  nb_tests += test_invalid_base();
+    nb_tests += test_basic_totp();
+    nb_tests += test_advanced_totp();
+    nb_tests += test_init_null_ptr();
+    nb_tests += test_generate_null_ptr();
+    nb_tests += test_invalid_base();
 
-  return nb_tests;
+    return nb_tests;
 }

@@ -38,15 +38,14 @@
 #include "libreauth_tests.h"
 
 
-static int test_valid_pass(void) {
-    char password[] = "correct horse battery staple",
-         invalid_pass[] = "123456",
-         storage[LIBREAUTH_PASS_STORAGE_LEN];
-    int ret;
-
+static uint32_t test_valid_pass(void) {
     test_name("pass: test_valid_pass");
 
-    ret = libreauth_pass_derive_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
+    const char password[] = "correct horse battery staple",
+          invalid_pass[] = "123456";
+    uint8_t storage[LIBREAUTH_PASS_STORAGE_LEN];
+
+    uint32_t ret = libreauth_pass_derive_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
     assert(ret == LIBREAUTH_PASS_SUCCESS);
     assert(libreauth_pass_is_valid(password, storage));
     assert(!libreauth_pass_is_valid(invalid_pass, storage));
@@ -54,17 +53,17 @@ static int test_valid_pass(void) {
     return 1;
 }
 
-static int test_invalid_pass(void) {
-    char password[] = "invalid password",
-         reference[] = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9";
-
+static uint32_t test_invalid_pass(void) {
     test_name("pass: test_invalid_pass");
+
+    const char password[] = "invalid password",
+          reference[] = "$pbkdf2-sha256$0$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9";
     assert(!libreauth_pass_is_valid(password, reference));
 
     return 1;
 }
 
-int test_pass(void) {
+uint32_t test_pass(void) {
     int nb_tests = 0;
 
     nb_tests += test_valid_pass();
