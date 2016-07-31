@@ -43,7 +43,7 @@
 //!
 //! ## Modular Crypt Format
 //!
-//! The password fingerprint is stored in the modular crypt format (cf. [[1]](https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt) and [[2]](https://pythonhosted.org/passlib/modular_crypt_format.html)). This format is defined as follows:
+//! The password fingerprint is stored in the modular crypt format (cf. [[1]] and [[2]]). This format is defined as follows:
 //!
 //! `$<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]`
 //!
@@ -93,12 +93,15 @@
 //! </table>
 //!
 //! ## Examples
-//! ```
+//! ```rust
 //! let password = "correct horse battery staple";
-//! let stored_password = libreauth::pass::derive_password(password).unwrap();
-//! assert!(! libreauth::pass::is_valid("bad password", &stored_password));
-//! assert!(libreauth::pass::is_valid(&password, &stored_password));
+//! let derived_password = libreauth::pass::derive_password(password).unwrap();
+//! assert!(! libreauth::pass::is_valid("bad password", &derived_password));
+//! assert!(libreauth::pass::is_valid(&password, &derived_password));
 //! ```
+//!
+//! [1]: https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt
+//! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 use rand::{Rng,thread_rng};
 use crypto::mac::Mac;
@@ -106,17 +109,82 @@ use crypto::hmac::Hmac;
 use crypto::sha2::Sha512;
 
 
+/// The minimal accepted length for passwords.
+///
+/// This value is set at a quite low level so LibreAuth can be used is some scenarios where it is
+/// ok to use such weak passwords. If the password is the main if not only authentication factor,
+/// you should enforce a more robust policy beforehand.
+///
+/// ## C interface
+/// The C interface refers at this constant as `LIBREAUTH_PASS_PASSWORD_MIN_LEN`.
 pub const PASSWORD_MIN_LEN: usize = 4;
+/// The maximal accepted length for passwords.
+///
+/// A basic security advice is to use long password, therefore is may appear that limiting the
+/// maximal length is a bad idea. However, authorizing arbitrary size password leads to a DOS
+/// vulnerability: an attacker would submit excessively long passwords that would take ages to
+/// compute, exhausting the resources. Such vulnerabilities has already been reported, like
+/// CVE-2014-9016, CVE-2014-9034, CVE-2014-9218, and so on.
+///
+/// ## C interface
+/// The C interface refers at this constant as `LIBREAUTH_PASS_PASSWORD_MAX_LEN`.
 pub const PASSWORD_MAX_LEN: usize = 128;
 
 
+/// Error codes used both in the rust and C interfaces.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_pass_errno` and the members has been renamed
+/// as follows:
+/// <style>
+/// .vcentered_table th, .vcentered_table td {vertical-align: middle;}
+/// .vcentered_table > thead > tr > th {text-align: center;}
+/// </style>
+/// <table class="vcentered_table">
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Success</td>
+///             <td>LIBREAUTH_PASS_SUCCESS</td>
+///         </tr>
+///         <tr>
+///             <td>PasswordTooShort</td>
+///             <td>LIBREAUTH_PASS_PASSWORD_TOO_SHORT</td>
+///         </tr>
+///         <tr>
+///             <td>PasswordTooLong</td>
+///             <td>LIBREAUTH_PASS_PASSWORD_TOO_LONG</td>
+///         </tr>
+///         <tr>
+///             <td>InvalidPasswordFormat</td>
+///             <td>LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT</td>
+///         </tr>
+///         <tr>
+///             <td>NotEnoughSpace</td>
+///             <td>LIBREAUTH_PASS_NOT_ENOUGH_SPACE</td>
+///         </tr>
+///     </tbody>
+/// </table>
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
+    /// Used in C-bindings to indicate the absence of errors.
     Success = 0,
+    /// The password is shorter than [PASSWORD_MIN_LEN][1].
+    /// [1]: constant.PASSWORD_MIN_LEN.html
     PasswordTooShort = 1,
+    /// The password is longer than [PASSWORD_MAX_LEN][1].
+    /// [1]: constant.PASSWORD_MAX_LEN.html
     PasswordTooLong = 2,
+    /// The input does not respect the [modular crypt format][1].
+    /// [1]: index.html#modular-crypt-format
     InvalidPasswordFormat = 10,
+    /// Used in C-bindings to indicate the storage does not have enough space to store the data.
     NotEnoughSpace = 20,
 }
 
@@ -131,8 +199,11 @@ fn generate_salt(nb_bytes: usize) -> Vec<u8> {
 
 /// Derivate a password so it can be stored.
 ///
+/// The algorithm is automatically chosen by LibreAuth depending on the current state of
+/// cryptography. This is why you should keep this crate up-to-date.
+///
 /// ## Examples
-/// ```
+/// ```rust
 /// let password = "1234567890";
 /// let stored_password = libreauth::pass::derive_password(password).unwrap();
 /// ```
@@ -146,14 +217,14 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
 /// Check whether or not the password is valid.
 ///
 /// ## Examples
-/// ```
+/// ```rust
 /// let password = "correct horse battery staple";
 /// let stored_password = libreauth::pass::derive_password(password).unwrap();
 /// assert!(! libreauth::pass::is_valid("bad password", &stored_password));
 /// assert!(libreauth::pass::is_valid(&password, &stored_password));
 /// ```
 ///
-/// ```
+/// ```rust
 /// let stored_reference = "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9";
 /// assert!(! libreauth::pass::is_valid("bad password", stored_reference));
 /// assert!(libreauth::pass::is_valid("password123", stored_reference));
@@ -184,6 +255,20 @@ mod cbindings {
     use libc;
     use std;
 
+    /// [C binding] Derivate a password so it can be stored.
+    ///
+    /// ## Examples
+    /// ```c
+    /// const char password[] = "correct horse battery staple";
+    /// uint8_t derived_password[LIBREAUTH_PASS_STORAGE_LEN];
+    ///
+    /// libreauth_pass_errno ret = libreauth_pass_derive_password(password, derived_password, LIBREAUTH_PASS_STORAGE_LEN);
+    /// if (ret == LIBREAUTH_PASS_SUCCESS) {
+    ///     // Store derived_password.
+    /// } else {
+    ///     // Handle the error.
+    /// }
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_pass_derive_password(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t) -> ErrorCode {
         let mut r_storage = unsafe {
@@ -211,6 +296,19 @@ mod cbindings {
         ErrorCode::Success
     }
 
+    /// [C binding] Check whether or not the password is valid.
+    ///
+    /// ## Examples
+    /// ```c
+    /// const char password[] = "correct horse battery staple",
+    ///       invalid_pass[] = "123456";
+    /// uint8_t storage[LIBREAUTH_PASS_STORAGE_LEN];
+    ///
+    /// libreauth_pass_errno ret = libreauth_pass_derive_password(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
+    /// assert(ret == LIBREAUTH_PASS_SUCCESS);
+    /// assert(libreauth_pass_is_valid(password, storage));
+    /// assert(!libreauth_pass_is_valid(invalid_pass, storage));
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_pass_is_valid(password: *const libc::c_char, reference: *const libc::c_char) -> libc::int32_t {
         let c_password = unsafe {
