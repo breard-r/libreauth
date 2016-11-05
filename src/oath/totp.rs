@@ -42,6 +42,8 @@ use time;
 pub struct TOTP {
     key: Vec<u8>,
     timestamp_offset: i64,
+    positive_tolerance: u64,
+    negative_tolerance: u64,
     period: u32,
     initial_time: u64,
     output_len: usize,
@@ -100,17 +102,23 @@ impl TOTP {
     ///     .is_valid(&user_code);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
-        let counter = self.get_counter();
-        let hotp = HOTPBuilder::new()
-            .key(&self.key.clone())
-            .counter(counter)
-            .output_len(self.output_len)
-            .hash_function(self.hash_function)
-            .finalize();
-        match hotp {
-            Ok(h) => h.is_valid(code),
-            Err(e) => panic!(e),
-        }
+        let base_counter = self.get_counter();
+        for counter in (base_counter-self.negative_tolerance)..(base_counter+self.positive_tolerance+1) {
+            let hotp = HOTPBuilder::new()
+                .key(&self.key.clone())
+                .counter(counter)
+                .output_len(self.output_len)
+                .hash_function(self.hash_function)
+                .finalize();
+            let is_valid = match hotp {
+                Ok(h) => h.is_valid(code),
+                Err(e) => panic!(e),
+            };
+            if is_valid {
+                return true;
+            }
+        };
+        false
     }
 }
 
@@ -153,6 +161,8 @@ impl TOTP {
 pub struct TOTPBuilder {
     key: Option<Vec<u8>>,
     timestamp_offset: i64,
+    positive_tolerance: u64,
+    negative_tolerance: u64,
     period: u32,
     initial_time: u64,
     output_len: usize,
@@ -167,6 +177,8 @@ impl TOTPBuilder {
         TOTPBuilder {
             key: None,
             timestamp_offset: 0,
+            positive_tolerance: 0,
+            negative_tolerance: 0,
             period: 30,
             initial_time: 0,
             output_len: 6,
@@ -182,6 +194,28 @@ impl TOTPBuilder {
     pub fn timestamp(&mut self, timestamp: i64) -> &mut TOTPBuilder {
         let current_timestamp = time::now().to_timespec().sec;
         self.timestamp_offset = timestamp - current_timestamp;
+        self
+    }
+
+    /// Sets the number of periods ahead or behind the current one for which the user code will
+    /// still be considered valid. You should not set a value higher than 2. Default is 0.
+    pub fn tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+        self.positive_tolerance = tolerance;
+        self.negative_tolerance = tolerance;
+        self
+    }
+
+    /// Sets the number of periods ahead the current one for which the user code will
+    /// still be considered valid. You should not set a value higher than 2. Default is 0.
+    pub fn positive_tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+        self.positive_tolerance = tolerance;
+        self
+    }
+
+    /// Sets the number of periods behind the current one for which the user code will
+    /// still be considered valid. You should not set a value higher than 2. Default is 0.
+    pub fn negative_tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+        self.negative_tolerance = tolerance;
         self
     }
 
@@ -216,6 +250,8 @@ impl TOTPBuilder {
             Some(ref k) => Ok(TOTP {
                 key: k.clone(),
                 timestamp_offset: self.timestamp_offset,
+                positive_tolerance: self.positive_tolerance,
+                negative_tolerance: self.negative_tolerance,
                 initial_time: self.initial_time,
                 period: self.period,
                 output_len: self.output_len,
@@ -255,7 +291,7 @@ pub mod cbindings {
                                                              timestamp, time::now().to_timespec().sec,
                                                              period, 30,
                                                              initial_time, 0
-                                                             );
+                                                            );
         match res {
             Ok(_) => ErrorCode::Success,
             Err(errno) => errno,
@@ -283,7 +319,7 @@ pub mod cbindings {
                     ErrorCode::Success
                 },
                 Err(errno) => errno,
-        }
+            }
     }
 
     #[no_mangle]
@@ -308,7 +344,7 @@ pub mod cbindings {
                     }
                 },
                 Err(_) => 0,
-        }
+            }
     }
 }
 
@@ -360,7 +396,7 @@ mod tests {
         assert_eq!(code, "04696041");
     }
 
-        #[test]
+    #[test]
     fn test_totp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
@@ -672,6 +708,82 @@ mod tests {
             .unwrap()
             .is_valid(&user_code);
         assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_tolerance() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let examples = [
+            (1234567890, 0, "590587", false), // +1
+            (1234567890, 1, "590587", true), // +1
+            (1234567890, 1, "240500", false), // +2
+            (1234567890, 2, "240500", true), // +2
+            (1234567890, 0, "980357", false), // -1
+            (1234567890, 1, "980357", true), // -1
+            (1234567890, 1, "186057", false), // -2
+            (1234567890, 2, "186057", true), // -2
+        ];
+        for &(timestamp, tolerance, user_code, validity) in examples.iter() {
+            let valid = TOTPBuilder::new()
+                .ascii_key(&key_ascii)
+                .timestamp(timestamp)
+                .tolerance(tolerance)
+                .finalize()
+                .unwrap()
+                .is_valid(&user_code.to_owned());
+            assert_eq!(valid, validity);
+        }
+    }
+
+    #[test]
+    fn test_positive_tolerance() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let examples = [
+            (1234567890, 0, "590587", false), // +1
+            (1234567890, 1, "590587", true), // +1
+            (1234567890, 1, "240500", false), // +2
+            (1234567890, 2, "240500", true), // +2
+            (1234567890, 0, "980357", false), // -1
+            (1234567890, 1, "980357", false), // -1
+            (1234567890, 1, "186057", false), // -2
+            (1234567890, 2, "186057", false), // -2
+        ];
+        for &(timestamp, tolerance, user_code, validity) in examples.iter() {
+            let valid = TOTPBuilder::new()
+                .ascii_key(&key_ascii)
+                .timestamp(timestamp)
+                .positive_tolerance(tolerance)
+                .finalize()
+                .unwrap()
+                .is_valid(&user_code.to_owned());
+            assert_eq!(valid, validity);
+        }
+    }
+
+
+    #[test]
+    fn test_negative_tolerance() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let examples = [
+            (1234567890, 0, "590587", false), // +1
+            (1234567890, 1, "590587", false), // +1
+            (1234567890, 1, "240500", false), // +2
+            (1234567890, 2, "240500", false), // +2
+            (1234567890, 0, "980357", false), // -1
+            (1234567890, 1, "980357", true), // -1
+            (1234567890, 1, "186057", false), // -2
+            (1234567890, 2, "186057", true), // -2
+        ];
+        for &(timestamp, tolerance, user_code, validity) in examples.iter() {
+            let valid = TOTPBuilder::new()
+                .ascii_key(&key_ascii)
+                .timestamp(timestamp)
+                .negative_tolerance(tolerance)
+                .finalize()
+                .unwrap()
+                .is_valid(&user_code.to_owned());
+            assert_eq!(valid, validity);
+        }
     }
 
     #[test]
