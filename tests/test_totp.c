@@ -56,6 +56,8 @@ static uint32_t test_basic_totp(void) {
     assert(cfg.key == NULL);
     assert(cfg.key_len == 0);
     assert(cfg.timestamp != 0);
+    assert(cfg.positive_tolerance == 0);
+    assert(cfg.negative_tolerance == 0);
     assert(cfg.period == 30);
     assert(cfg.initial_time == 0);
     assert(cfg.output_len == DEFAULT_BUFF_LEN);
@@ -106,6 +108,47 @@ static uint32_t test_advanced_totp(void) {
     assert(!libreauth_totp_is_valid(&cfg, "!@#$%^&*"));
     assert(!libreauth_totp_is_valid(&cfg, ""));
     assert(!libreauth_totp_is_valid(&cfg, NULL));
+
+    return 1;
+}
+
+static uint32_t test_tolerance(void) {
+    test_name("totp: test_tolerance");
+
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890";
+
+    uint32_t ret = libreauth_totp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+
+    cfg.key = key;
+    cfg.key_len = sizeof(key);
+    cfg.timestamp = 1234567890;
+
+    cfg.positive_tolerance = 0;
+    cfg.negative_tolerance = 0;
+    assert(!libreauth_totp_is_valid(&cfg, "590587"));
+    cfg.positive_tolerance = 1;
+    cfg.negative_tolerance = 1;
+    assert(libreauth_totp_is_valid(&cfg, "590587"));
+    cfg.positive_tolerance = 1;
+    cfg.negative_tolerance = 1;
+    assert(!libreauth_totp_is_valid(&cfg, "240500"));
+    cfg.positive_tolerance = 2;
+    cfg.negative_tolerance = 2;
+    assert(libreauth_totp_is_valid(&cfg, "240500"));
+    cfg.positive_tolerance = 0;
+    cfg.negative_tolerance = 0;
+    assert(!libreauth_totp_is_valid(&cfg, "980357"));
+    cfg.positive_tolerance = 1;
+    cfg.negative_tolerance = 1;
+    assert(libreauth_totp_is_valid(&cfg, "980357"));
+    cfg.positive_tolerance = 1;
+    cfg.negative_tolerance = 1;
+    assert(!libreauth_totp_is_valid(&cfg, "186057"));
+    cfg.positive_tolerance = 2;
+    cfg.negative_tolerance = 2;
+    assert(libreauth_totp_is_valid(&cfg, "186057"));
 
     return 1;
 }
@@ -183,6 +226,7 @@ uint32_t test_totp(void) {
 
     nb_tests += test_basic_totp();
     nb_tests += test_advanced_totp();
+    nb_tests += test_tolerance();
     nb_tests += test_init_null_ptr();
     nb_tests += test_generate_null_ptr();
     nb_tests += test_invalid_base();

@@ -108,6 +108,8 @@ struct libreauth_totp_cfg {
     const void                   *key;
     size_t                        key_len;
     int64_t                       timestamp;
+    uint64_t                      positive_tolerance;
+    uint64_t                      negative_tolerance;
     uint32_t                      period;
     uint64_t                      initial_time;
     size_t                        output_len;

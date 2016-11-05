@@ -27,6 +27,7 @@ LibreAuth is a collection of tools for user authentication.
   - [x] customizable hash function (sha1, sha256, sha512)
   - [x] customizable output length
   - [x] customizable output alphabet
+  - [x] customizable positive and negative period tolerance
 - YubiKey OTP ([Yubico](https://developers.yubico.com/OTP/))
   - [ ] virtual device API
   - [ ] client API

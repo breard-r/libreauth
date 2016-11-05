@@ -277,6 +277,8 @@ pub mod cbindings {
         key: *const u8,
         key_len: libc::size_t,
         timestamp: libc::int64_t,
+        positive_tolerance: libc::uint64_t,
+        negative_tolerance: libc::uint64_t,
         period: libc::uint32_t,
         initial_time: libc::uint64_t,
         output_len: libc::size_t,
@@ -289,6 +291,8 @@ pub mod cbindings {
     pub extern fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
         let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
                                                              timestamp, time::now().to_timespec().sec,
+                                                             positive_tolerance, 0,
+                                                             negative_tolerance, 0,
                                                              period, 30,
                                                              initial_time, 0
                                                             );
@@ -336,6 +340,8 @@ pub mod cbindings {
             .timestamp(cfg.timestamp)
             .period(cfg.period)
             .initial_time(cfg.initial_time)
+            .positive_tolerance(cfg.positive_tolerance)
+            .negative_tolerance(cfg.negative_tolerance)
             .finalize() {
                 Ok(totp) => {
                     match totp.is_valid(&code) {

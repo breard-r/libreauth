@@ -10,6 +10,8 @@ class TOTPcfg(Structure):
         ('key', c_char_p),
         ('key_len', c_size_t),
         ('timestamp', c_longlong),
+        ('positive_tolerance', c_ulonglong),
+        ('negative_tolerance', c_ulonglong),
         ('period', c_uint),
         ('initial_time', c_ulonglong),
         ('output_len', c_size_t),
@@ -38,6 +40,8 @@ class TestOTP(TestCase):
         self.assertIsNone(cfg.key)
         self.assertEqual(cfg.key_len, 0)
         self.assertNotEqual(cfg.timestamp, 0)
+        self.assertEqual(cfg.positive_tolerance, 0)
+        self.assertEqual(cfg.negative_tolerance, 0)
         self.assertEqual(cfg.period, 30)
         self.assertEqual(cfg.initial_time, 0)
         self.assertEqual(cfg.output_len, 6)
