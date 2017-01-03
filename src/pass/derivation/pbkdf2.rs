@@ -33,8 +33,8 @@
  */
 
 
-use pass::derivation::{HashFunction,PasswordDerivationFunction};
-use super::ErrorCode;
+use super::{HashFunction,PasswordDerivationFunction};
+use pass::ErrorCode;
 use rustc_serialize::hex::ToHex;
 use crypto::sha2::{Sha512,Sha256};
 use crypto::sha1::Sha1;

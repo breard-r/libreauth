@@ -33,11 +33,12 @@
  */
 
 
+mod pbkdf2;
+
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,generate_salt};
 use std::collections::HashMap;
 use rustc_serialize::hex::FromHex;
-use pass::pbkdf2::Pbkdf2;
 
 
 #[repr(C)]
@@ -153,7 +154,7 @@ impl PasswordDerivationFunctionBuilder {
             None => match self.algo.to_owned() {
                 Some(algo) => match algo.as_ref() {
                     "pbkdf2_sha512" => {
-                        let h = Pbkdf2 {
+                        let h = pbkdf2::Pbkdf2 {
                             hash_function: HashFunction::Sha512,
                             salt: get_salt!(self.salt),
                             nb_iter: get_param!(self.parameters, "i", u32, 21000),
@@ -161,7 +162,7 @@ impl PasswordDerivationFunctionBuilder {
                         Ok(Box::new(h))
                     },
                     "pbkdf2_sha256" => {
-                        let h = Pbkdf2 {
+                        let h = pbkdf2::Pbkdf2 {
                             hash_function: HashFunction::Sha256,
                             salt: get_salt!(self.salt),
                             nb_iter: get_param!(self.parameters, "i", u32, 21000),
@@ -169,7 +170,7 @@ impl PasswordDerivationFunctionBuilder {
                         Ok(Box::new(h))
                     },
                     "pbkdf2" => {
-                        let h = Pbkdf2 {
+                        let h = pbkdf2::Pbkdf2 {
                             hash_function: match self.parameters.get("h") {
                                 Some(h) => match h.as_ref() {
                                     "sha512" => HashFunction::Sha512,
@@ -185,7 +186,7 @@ impl PasswordDerivationFunctionBuilder {
                     },
                     _ => Err(ErrorCode::InvalidPasswordFormat)
                 },
-                None => Ok(Box::new(Pbkdf2 {
+                None => Ok(Box::new(pbkdf2::Pbkdf2 {
                     hash_function: HashFunction::Sha512,
                     nb_iter: 21000,
                     salt: generate_salt(8),
