@@ -135,13 +135,13 @@ mod c {
         let len = code.len();
         for i in 0..len {
             dest[i] = code[i];
-        };
+        }
         dest[len] = 0;
     }
 
     pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
         if cfg.is_null() {
-            return Err(ErrorCode::CfgNullPtr)
+            return Err(ErrorCode::CfgNullPtr);
         }
         let cfg: &T = unsafe { &*cfg };
         Ok(cfg)
@@ -149,7 +149,7 @@ mod c {
 
     pub fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
         if code.is_null() {
-            return Err(ErrorCode::CodeNullPtr)
+            return Err(ErrorCode::CodeNullPtr);
         }
         let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
         match String::from_utf8(code) {
@@ -160,19 +160,21 @@ mod c {
 
     pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
         if code.is_null() {
-            return Err(ErrorCode::CodeNullPtr)
+            return Err(ErrorCode::CodeNullPtr);
         }
         Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
     }
 
-    pub fn get_output_base(output_base: *const u8, output_base_len: usize) -> Result<Vec<u8>, ErrorCode> {
+    pub fn get_output_base(output_base: *const u8,
+                           output_base_len: usize)
+                           -> Result<Vec<u8>, ErrorCode> {
         match output_base.is_null() {
             false => {
                 match output_base_len {
                     0 | 1 => Err(ErrorCode::InvalidBaseLen),
-                    l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() })
+                    l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() }),
                 }
-            },
+            }
             true => Ok("0123456789".to_owned().into_bytes()),
         }
     }
@@ -184,7 +186,7 @@ mod c {
                     0 => Err(ErrorCode::InvalidKeyLen),
                     l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
                 }
-            },
+            }
             true => Err(ErrorCode::KeyNullPtr),
         }
     }
