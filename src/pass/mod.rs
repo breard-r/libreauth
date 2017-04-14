@@ -105,6 +105,7 @@
 
 use ring;
 
+#[macro_use]
 mod phc_encoding;
 use self::phc_encoding::PHCEncoded;
 
@@ -187,12 +188,21 @@ pub enum ErrorCode {
     NotEnoughSpace = 20,
 }
 
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub enum HashFunction {
+    //Sha1 has been removed for security by ring so we do not support it either
+    Sha256 = 2,
+    Sha512 = 3,
+}
+
 use ring::rand::SystemRandom;
 
 fn generate_salt(nb_bytes: usize) -> Vec<u8> {
     let mut salt: Vec<u8> = vec![0; nb_bytes];
-    let RNG: SystemRandom = SystemRandom::new();
-    match RNG.fill(&mut salt[..]) {
+    let rng: SystemRandom = SystemRandom::new();
+    match rng.fill(&mut salt[..]) {
         Ok(_) => (),
         Err(e) => panic!(e),
     }
@@ -234,11 +244,32 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
                          password.as_bytes(),
                          &mut out[..]);
 
-    match String::from_utf8(out) {
-        Ok(s) => Ok(s),
-        Err(e) => panic!(e),
-    }
+    //let hash: String = match String::from_utf8(out) {
+    //    Ok(s) => s,
+    //    Err(e) => panic!(e),
+    //};
+    use std::collections::HashMap;
+    let mut parameters: HashMap<String, String> = HashMap::new();
+    let mut parameters_order: Vec<(String, String)> = Vec::new();
+
+    parameters.insert("i".to_string(), iterations.to_string());
+
+
+    use rustc_serialize::hex::ToHex;
+    let encoded_salt = salt.to_hex();
+    let encoded_hash = out.to_hex();
+
+    let hash_info: PHCEncoded = PHCEncoded {
+        id: Some("pbkdf2_sha512".to_string()),
+        parameters: parameters,
+        parameters_order: parameters_order,
+        salt: Some(encoded_salt),
+        hash: Some(encoded_hash),
+    };
+
+    Ok(format!("{}", hash_info))
 }
+
 
 /// Check whether or not the password is valid.
 ///
@@ -260,8 +291,49 @@ pub fn is_valid(password: &str, reference: &str) -> bool {
         Ok(x) => x,
         Err(_) => return false,
     };
+    use ring::pbkdf2::{PRF, HMAC_SHA256, HMAC_SHA512};
 
-    false
+    let algorithm: &'static PRF = match hash_info.id {
+        Some(ref scheme_id) => {
+            match scheme_id.as_ref() {
+                "pbkdf2_sha512" => &HMAC_SHA512,
+                "pbkdf2_sha256" => &HMAC_SHA256,
+                "pbkdf2" => {
+                    match hash_info.parameters.get("h") {
+                        Some(h) => {
+                            match h.as_ref() {
+                                "sha512" => &HMAC_SHA512,
+                                "sha256" => &HMAC_SHA256,
+                                _ => return false,
+                            }
+                        }
+                        None => &HMAC_SHA512,
+                    }
+                }
+                _ => return false,
+            }
+        }
+        None => return false,
+    };
+
+    let iterations: u32 = get_param!(hash_info.parameters, "i", u32, 21000);
+    let salt: Vec<u8> = match hash_info.salt() {
+        Ok(salt) => salt,
+        Err(_) => Vec::new(),
+    };
+    let password_hash: Vec<u8> = match hash_info.hash() {
+        Ok(hash) => hash,
+        Err(_) => return false,
+    };
+
+    match ring::pbkdf2::verify(algorithm,
+                               iterations,
+                               salt.as_ref(),
+                               password.as_bytes(),
+                               password_hash.as_ref()) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
 }
 
 #[cfg(feature = "cbindings")]
@@ -525,8 +597,8 @@ mod tests {
         for p in password_list.iter() {
             //    let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
             //    assert_eq!(p.1.split("$").collect::<Vec<&str>>().last().unwrap(), deriv.split("$").collect::<Vec<&str>>().last().unwrap());
-            //    assert!(! is_valid("bad password", p.1));
-            //    assert!(is_valid(p.0, p.1));
+            assert!(!is_valid("bad password", p.1));
+            assert!(is_valid(p.0, p.1));
         }
     }
 }

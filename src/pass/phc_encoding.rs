@@ -40,17 +40,6 @@ use std::collections::HashMap;
 use rustc_serialize::hex::FromHex;
 use rustc_serialize::hex::ToHex;
 
-use ring;
-
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub enum HashFunction {
-    Sha1 = 1,
-    Sha256 = 2,
-    Sha512 = 3,
-}
-
 macro_rules! get_salt {
     ($salt:expr) => {{
         match $salt.to_owned() {
@@ -78,7 +67,7 @@ pub struct PHCEncoded {
     pub parameters: HashMap<String, String>,
     // we need to keep track of what order the parameters were parsed in
     // so that serializing the produces the same output as the input
-    parameters_order: Vec<(String, String)>,
+    pub parameters_order: Vec<(String, String)>,
     pub salt: Option<String>,
     pub hash: Option<String>,
 }
@@ -93,6 +82,7 @@ impl fmt::Display for PHCEncoded {
         };
 
         write!(f, "${}", scheme_id);
+        // parameters are optional
         if self.parameters_order.len() > 0 {
             write!(f, "$");
 
@@ -106,11 +96,19 @@ impl fmt::Display for PHCEncoded {
                 }
             }
         }
+        // this if expression provides the return valuereturns
         if let Some(ref s) = self.salt {
-            // TODO: remember to base64 encode the salt
+            // the salt should already be encoded correctly
             write!(f, "${}", s);
+            if let Some(ref h) = self.hash {
+                // the hash should already be encoded correctly
+                write!(f, "${}", h)
+            } else {
+                Ok(())
+            }
+        } else {
+            Ok(())
         }
-        write!(f, "")
     }
 }
 
@@ -168,19 +166,58 @@ impl PHCEncoded {
             };
         }
 
+        // NOTE: the PHCEncoded only stores the encoded format, the user must correctly determine
+        // the encoding of the values within This simplifies the logic of the parser and formatter
+        // at the expense of introducing additional accessor functions to the PHCEncoded struct to
+        // access the values of salt and hash as the raw bytes used by the crypto operations
         if segment == "" {
             return Err(ErrorCode::InvalidPasswordFormat);
         } else {
-            // TODO: use the correct encoding of the salt based on the $id
-            encoded.salt = Some(segment.to_string())
+            encoded.salt = Some(segment.to_string());
         }
 
         // even if the salt is provided the hash is optional
         encoded.hash = match parts.pop() {
-            Some(some) => Some(some.to_string()),
+            Some(encoded_hash) => Some(encoded_hash.to_string()),
             None => return Ok(encoded),
         };
 
         return Ok(encoded);
+    }
+
+    pub fn salt(&self) -> Result<Vec<u8>, ErrorCode> {
+        // without knowing the scheme id of the hash we cannot hope to decode
+        // the salt string
+        if let None = self.id {
+            return Err(ErrorCode::InvalidPasswordFormat);
+        }
+
+        match self.salt {
+            Some(ref encoded_salt) => {
+                match encoded_salt.from_hex() {
+                    Ok(raw_salt) => Ok(raw_salt),
+                    Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+                }
+            }
+            None => Err(ErrorCode::InvalidPasswordFormat),
+        }
+    }
+
+    pub fn hash(&self) -> Result<Vec<u8>, ErrorCode> {
+        // without knowing the scheme id of the hash we cannot hope to decode
+        // the hash string
+        if let None = self.id {
+            return Err(ErrorCode::InvalidPasswordFormat);
+        }
+
+        match self.hash {
+            Some(ref encoded_hash) => {
+                match encoded_hash.from_hex() {
+                    Ok(raw_hash) => Ok(raw_hash),
+                    Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+                }
+            }
+            None => Err(ErrorCode::InvalidPasswordFormat),
+        }
     }
 }
