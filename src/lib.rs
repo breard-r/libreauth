@@ -60,6 +60,7 @@
 extern crate rustc_serialize;
 extern crate base32;
 extern crate ring;
+extern crate rand;
 extern crate time;
 
 pub mod oath;

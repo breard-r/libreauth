@@ -41,9 +41,10 @@
 //! - check a password against the stored fingerprint.
 //!
 //!
-//! ## Modular Crypt Format
+//! ## PHC Format
 //!
-//! The password fingerprint is stored in the modular crypt format (cf. [[1]] and [[2]]). This format is defined as follows:
+//! The password fingerprint is stored in the password hashing competition (PHC) format (cf. [[1]] and [[2]]) which is
+//! a subset and successor to the modular crypt format. This format is defined as follows:
 //!
 //! `$<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]`
 //!
@@ -103,7 +104,14 @@
 //! [1]: https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
+use std::collections::HashMap;
+
+use rand::{Rng, thread_rng};
+
 use ring;
+use ring::pbkdf2::{HMAC_SHA256, HMAC_SHA512};
+
+use rustc_serialize::hex::ToHex;
 
 #[macro_use]
 mod phc_encoding;
@@ -181,8 +189,8 @@ pub enum ErrorCode {
     /// The password is longer than [PASSWORD_MAX_LEN][1].
     /// [1]: constant.PASSWORD_MAX_LEN.html
     PasswordTooLong = 2,
-    /// The input does not respect the [modular crypt format][1].
-    /// [1]: index.html#modular-crypt-format
+    /// The input does not respect the [password hashing competition (PHC) format][1].
+    /// [1]: index.html#phc-format
     InvalidPasswordFormat = 10,
     /// Used in C-bindings to indicate the storage does not have enough space to store the data.
     NotEnoughSpace = 20,
@@ -197,17 +205,106 @@ pub enum HashFunction {
     Sha512 = 3,
 }
 
-use ring::rand::SystemRandom;
-
 fn generate_salt(nb_bytes: usize) -> Vec<u8> {
     let mut salt: Vec<u8> = vec![0; nb_bytes];
-    let rng: SystemRandom = SystemRandom::new();
-    match rng.fill(&mut salt[..]) {
-        Ok(_) => (),
-        Err(e) => panic!(e),
-    }
+    thread_rng().fill_bytes(&mut salt);
     salt
 }
+
+
+enum SupportedHashSchemes {
+    Pbkdf2Sha256,
+    Pbkdf2Sha512,
+}
+
+fn from_reference_hash(hash_info: &PHCEncoded)
+                       -> Result<Box<Fn(&str) -> Result<String, ErrorCode>>, ErrorCode> {
+    let algorithm: SupportedHashSchemes = match hash_info.id {
+        Some(ref scheme_id) => {
+            match scheme_id.as_ref() {
+                "pbkdf2_sha512" => SupportedHashSchemes::Pbkdf2Sha512,
+                "pbkdf2_sha256" => SupportedHashSchemes::Pbkdf2Sha256,
+                "pbkdf2" => {
+                    match hash_info.parameters.get("h") {
+                        Some(h) => {
+                            match h.as_ref() {
+                                "sha512" => SupportedHashSchemes::Pbkdf2Sha512,
+                                "sha256" => SupportedHashSchemes::Pbkdf2Sha256,
+                                _ => return Err(ErrorCode::InvalidPasswordFormat),
+                            }
+                        }
+                        None => SupportedHashSchemes::Pbkdf2Sha512,
+                    }
+                }
+                _ => return Err(ErrorCode::InvalidPasswordFormat),
+            }
+        }
+        None => return Err(ErrorCode::InvalidPasswordFormat),
+    };
+
+    match algorithm {
+        SupportedHashSchemes::Pbkdf2Sha256 => {
+            let iterations: u32 = get_param!(hash_info.parameters, "i", u32, 21000);
+            // the output length will depend on the digest algorithm
+            let output_len: usize = ring::digest::SHA256.output_len;
+            let salt: Vec<u8> = hash_info.salt().unwrap_or(Vec::new());
+            Ok(Box::new(move |password: &str| {
+                let mut out: Vec<u8> = vec![0; output_len];
+
+                ring::pbkdf2::derive(&HMAC_SHA256,
+                                     iterations,
+                                     &salt[..],
+                                     password.as_bytes(),
+                                     &mut out[..]);
+
+                let encoded_salt = salt.to_hex();
+                let encoded_hash = out.to_hex();
+
+                let mut new_hash_info: PHCEncoded = PHCEncoded {
+                    id: Some("pbkdf2_sha256".to_string()),
+                    parameters: HashMap::new(),
+                    parameters_order: Vec::new(),
+                    salt: Some(encoded_salt),
+                    hash: Some(encoded_hash),
+                };
+
+                new_hash_info.insert("i".to_string(), iterations.to_string());
+
+                Ok(format!("{}", new_hash_info))
+            }))
+        }
+        SupportedHashSchemes::Pbkdf2Sha512 => {
+            let iterations: u32 = get_param!(hash_info.parameters, "i", u32, 21000);
+            let output_len: usize = ring::digest::SHA512.output_len;
+            // the output length will depend on
+            let salt: Vec<u8> = hash_info.salt().unwrap_or(Vec::new());
+            Ok(Box::new(move |password: &str| {
+                let mut out: Vec<u8> = vec![0; output_len];
+
+                ring::pbkdf2::derive(&HMAC_SHA512,
+                                     iterations,
+                                     &salt[..],
+                                     password.as_bytes(),
+                                     &mut out[..]);
+
+                let encoded_salt = salt.to_hex();
+                let encoded_hash = out.to_hex();
+
+                let mut new_hash_info: PHCEncoded = PHCEncoded {
+                    id: Some("pbkdf2_sha512".to_string()),
+                    parameters: HashMap::new(),
+                    parameters_order: Vec::new(),
+                    salt: Some(encoded_salt),
+                    hash: Some(encoded_hash),
+                };
+                new_hash_info.insert("i".to_string(), iterations.to_string());
+
+                Ok(format!("{}", new_hash_info))
+            }))
+        }
+    }
+}
+
 
 /// Derivate a password so it can be stored.
 ///
@@ -226,48 +323,26 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
         return Err(ErrorCode::PasswordTooLong);
     }
 
-    // default parameters for key derivation function
-    let prf: &'static ring::pbkdf2::PRF = &ring::pbkdf2::HMAC_SHA512;
-    let output_len: usize = ring::digest::SHA512.output_len;
     let iterations: u32 = 21000;
     // 16 bytes of salt
     let salt = generate_salt(16);
-
-
-    // the output length will depend on
-    let mut out: Vec<u8> = vec![0; output_len];
-    //let mut out: &mut [u8] = &mut storage[..];
-
-    ring::pbkdf2::derive(prf,
-                         iterations,
-                         &salt[..],
-                         password.as_bytes(),
-                         &mut out[..]);
-
-    //let hash: String = match String::from_utf8(out) {
-    //    Ok(s) => s,
-    //    Err(e) => panic!(e),
-    //};
-    use std::collections::HashMap;
-    let mut parameters: HashMap<String, String> = HashMap::new();
-    let mut parameters_order: Vec<(String, String)> = Vec::new();
-
-    parameters.insert("i".to_string(), iterations.to_string());
-
-
-    use rustc_serialize::hex::ToHex;
     let encoded_salt = salt.to_hex();
-    let encoded_hash = out.to_hex();
 
-    let hash_info: PHCEncoded = PHCEncoded {
+    let mut hash_info: PHCEncoded = PHCEncoded {
         id: Some("pbkdf2_sha512".to_string()),
-        parameters: parameters,
-        parameters_order: parameters_order,
+        parameters: HashMap::new(),
+        parameters_order: Vec::new(),
         salt: Some(encoded_salt),
-        hash: Some(encoded_hash),
+        hash: None,
+    };
+    hash_info.insert("i".to_string(), iterations.to_string());
+
+    let derive = match from_reference_hash(&hash_info) {
+        Ok(boxed_func) => boxed_func,
+        Err(e) => panic!(e),
     };
 
-    Ok(format!("{}", hash_info))
+    derive(password)
 }
 
 
@@ -424,7 +499,9 @@ pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{derive_password, is_valid};
+    use super::{derive_password, is_valid, from_reference_hash};
+    use super::phc_encoding::PHCEncoded;
+
 
     #[test]
     fn test_default_derivation() {
@@ -493,110 +570,139 @@ mod tests {
         }
     }
 
-    //    #[test]
-    //    fn test_format_with_salt() {
-    //        let list = [
-    //            // (password, storage, expected_output),
-    //            ("password123", "$pbkdf2$i=1000,h=sha1$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-    //            ("password123", "$pbkdf2$i=1000$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-    //            ("password123", "$pbkdf2$$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-    //            ("password123", "$pbkdf2$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-    //            ("password123", "$pbkdf2_sha256$$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-    //            ("password123", "$pbkdf2_sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-    //            ("password123", "$pbkdf2$h=sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-    //        ];
-    //        for p in list.iter() {
-    //            let deriv = derive_password(p.0, p.1).unwrap();
-    //            assert_eq!(p.2, deriv);
-    //            assert!(! is_valid(p.0, p.1));
-    //            assert!(is_valid(p.0, p.2));
-    //        }
-    //    }
+    #[test]
+    fn test_format_with_salt() {
+        let list = [// (password, storage, expected_output),
+                    ("password123",
+                     "$pbkdf2$i=1000$45217803",
+                     "$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
+                    ("password123",
+                     "$pbkdf2$$45217803",
+                     "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
+                    ("password123",
+                     "$pbkdf2$45217803",
+                     "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
+                    ("password123",
+                     "$pbkdf2_sha256$$45217803",
+                     "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+                    ("password123",
+                     "$pbkdf2_sha256$45217803",
+                     "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+                    ("password123",
+                     "$pbkdf2$h=sha256$45217803",
+                     "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9")];
+        for p in list.iter() {
+            let derive = match from_reference_hash(&PHCEncoded::from_string(p.1).unwrap()) {
+                Ok(boxed_func) => boxed_func,
+                Err(e) => {
+                    println!("derive function could not be determined from reference hash");
+                    panic!(e)
+                }
+            };
+            let hash = derive(p.0).unwrap();
+            assert_eq!(p.2, hash);
+            assert!(!is_valid(p.0, p.1));
+            assert!(is_valid(p.0, p.2));
+        }
+    }
 
-    //    #[test]
-    //    fn test_format_without_salt() {
-    //        let list = [
-    //            // (password, storage, expected_output_start),
-    //            ("password123", "$pbkdf2$i=1000,h=sha1", "$pbkdf2$i=1000$"),
-    //            ("password123", "$pbkdf2$i=1000,h=sha512", "$pbkdf2_sha512$i=1000$"),
-    //            ("password123", "$pbkdf2_sha512", "$pbkdf2_sha512$i=21000$"),
-    //        ];
-    //        for p in list.iter() {
-    //            let deriv: String = derive_password(p.0, p.1).unwrap();
-    //            assert!(deriv.starts_with(p.2));
-    //        }
-    //    }
+    #[test]
+    fn test_format_without_salt() {
+        let list = [// (password, storage, expected_output_start),
+                    ("password123", "$pbkdf2$i=1000,h=sha256", "$pbkdf2_sha256$i=1000$"),
+                    ("password123", "$pbkdf2$i=1000,h=sha512", "$pbkdf2_sha512$i=1000$"),
+                    ("password123", "$pbkdf2_sha512", "$pbkdf2_sha512$i=21000$")];
+        for p in list.iter() {
+            let derive = match from_reference_hash(&PHCEncoded::from_string(p.1).unwrap()) {
+                Ok(boxed_func) => boxed_func,
+                Err(e) => {
+                    println!("derive function could not be determined from reference hash");
+                    panic!(e)
+                }
+            };
+            let hash = derive(p.0).unwrap();
+            assert!(hash.starts_with(p.2));
+        }
+    }
 
     #[test]
     fn test_algos() {
-        let password_list =
-            [// (password, stored_hash),
+        let password_list = [// (password, stored_hash),
 
-            // pbkdf2
-             ("password123", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=1000$45217803$c539eccc9b94eb12241b7f616be34b0048742f7c"),
-             ("password123", "$pbkdf2$i=12345$45217803$a5e3182b5d2522558735cdad971dc5ca789401e7"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=12345$45217803$fa38129f680d57e17a46fcc5a358450b380c4e8d"),
-             ("password123", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=21000$45217803$5cf0e9fefb516a0bab783ecda3b9919c13013a9b"),
-             // pbkdf2_sha256
-             ("password123",
-              "$pbkdf2_sha256$i=1000$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha256$i=1000$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
-             ("password123",
-              "$pbkdf2_sha256$i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha256$i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
-             ("password123",
-              "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha256$i=21000$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
-             // pbkdf2 h=sha256
-             ("password123",
-              "$pbkdf2$i=1000,h=sha256$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=1000,h=sha256$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
-             ("password123",
-              "$pbkdf2$h=sha256,i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
-             ("correct horse battery staple",
-              "$pbkdf2$h=sha256,i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
-             ("password123",
-              "$pbkdf2$i=21000,h=sha256$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=21000,h=sha256$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
-             // pbkdf2_sha512
-             ("password123",
-              "$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha512$i=1000$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
-             ("password123",
-              "$pbkdf2_sha512$i=12345$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha512$i=12345$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
-             ("password123",
-              "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
-             ("correct horse battery staple",
-              "$pbkdf2_sha512$i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a"),
-             // pbkdf2 h=sha512
-             ("password123",
-              "$pbkdf2$i=1000,h=sha512$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=1000,h=sha512$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
-             ("password123",
-              "$pbkdf2$i=12345,h=sha512$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
-             ("correct horse battery staple",
-              "$pbkdf2$i=12345,h=sha512$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
-             ("password123",
-              "$pbkdf2$h=sha512,i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
-             ("correct horse battery staple",
-              "$pbkdf2$h=sha512,i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a")];
+            // pbkdf2 defaults to sha512
+                             ("password123",
+                              "$pbkdf2$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=1000$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
+                             ("password123",
+                              "$pbkdf2$i=12345$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=12345$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
+                             ("password123",
+                              "$pbkdf2$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
+                             // pbkdf2_sha256
+                             ("password123",
+                              "$pbkdf2_sha256$i=1000$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha256$i=1000$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
+                             ("password123",
+                              "$pbkdf2_sha256$i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha256$i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
+                             ("password123",
+                              "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha256$i=21000$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
+                             // pbkdf2 h=sha256
+                             ("password123",
+                              "$pbkdf2$i=1000,h=sha256$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=1000,h=sha256$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
+                             ("password123",
+                              "$pbkdf2$h=sha256,i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$h=sha256,i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
+                             ("password123",
+                              "$pbkdf2$i=21000,h=sha256$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=21000,h=sha256$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
+                             // pbkdf2_sha512
+                             ("password123",
+                              "$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha512$i=1000$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
+                             ("password123",
+                              "$pbkdf2_sha512$i=12345$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha512$i=12345$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
+                             ("password123",
+                              "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
+                             ("correct horse battery staple",
+                              "$pbkdf2_sha512$i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a"),
+                             // pbkdf2 h=sha512
+                             ("password123",
+                              "$pbkdf2$i=1000,h=sha512$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=1000,h=sha512$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
+                             ("password123",
+                              "$pbkdf2$i=12345,h=sha512$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$i=12345,h=sha512$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
+                             ("password123",
+                              "$pbkdf2$h=sha512,i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
+                             ("correct horse battery staple",
+                              "$pbkdf2$h=sha512,i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a")];
         for p in password_list.iter() {
-            //    let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
-            //    assert_eq!(p.1.split("$").collect::<Vec<&str>>().last().unwrap(), deriv.split("$").collect::<Vec<&str>>().last().unwrap());
+            let derive = match from_reference_hash(&PHCEncoded::from_string(p.1).unwrap()) {
+                Ok(boxed_func) => boxed_func,
+                Err(e) => panic!(e),
+            };
+            let hash = derive(p.0).unwrap();
+            println!("{}", hash);
+            println!("{}", p.1);
+
+            assert_eq!(p.1.split("$").collect::<Vec<&str>>().last().unwrap(),
+                       hash.split("$").collect::<Vec<&str>>().last().unwrap());
             assert!(!is_valid("bad password", p.1));
             assert!(is_valid(p.0, p.1));
         }

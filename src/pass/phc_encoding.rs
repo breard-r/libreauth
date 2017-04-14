@@ -34,11 +34,9 @@
 
 
 
-use super::{PASSWORD_MIN_LEN, PASSWORD_MAX_LEN};
-use super::{ErrorCode, generate_salt};
+use super::ErrorCode;
 use std::collections::HashMap;
 use rustc_serialize::hex::FromHex;
-use rustc_serialize::hex::ToHex;
 
 macro_rules! get_salt {
     ($salt:expr) => {{
@@ -62,6 +60,7 @@ macro_rules! get_param {
 use std::fmt;
 
 /// We define the format: $<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]
+#[derive(Clone, Debug)]
 pub struct PHCEncoded {
     pub id: Option<String>,
     pub parameters: HashMap<String, String>,
@@ -81,25 +80,25 @@ impl fmt::Display for PHCEncoded {
             None => &empty_string,
         };
 
-        write!(f, "${}", scheme_id);
+        write!(f, "${}", scheme_id)?;
         // parameters are optional
         if self.parameters_order.len() > 0 {
-            write!(f, "$");
+            write!(f, "$")?;
 
             let mut parameters = self.parameters_order.iter();
 
             if let Some(&(ref param, ref value)) = parameters.next() {
-                write!(f, "{}={}", param, value);
+                write!(f, "{}={}", param, value)?;
 
                 while let Some(&(ref p, ref v)) = parameters.next() {
-                    write!(f, ",{}={}", p, v);
+                    write!(f, ",{}={}", p, v)?;
                 }
             }
         }
         // this if expression provides the return valuereturns
         if let Some(ref s) = self.salt {
             // the salt should already be encoded correctly
-            write!(f, "${}", s);
+            write!(f, "${}", s)?;
             if let Some(ref h) = self.hash {
                 // the hash should already be encoded correctly
                 write!(f, "${}", h)
@@ -113,6 +112,11 @@ impl fmt::Display for PHCEncoded {
 }
 
 impl PHCEncoded {
+    pub fn insert(&mut self, k: String, v: String) -> () {
+        self.parameters.insert(k.clone(), v.clone());
+        self.parameters_order.push((k, v));
+    }
+
     pub fn from_string(pch_formatted: &str) -> Result<PHCEncoded, ErrorCode> {
         let mut encoded = PHCEncoded {
             id: None,
@@ -148,8 +152,7 @@ impl PHCEncoded {
                 if pair.len() == 2 {
                     let param: String = pair[0].to_string();
                     let value: String = pair[1].to_string();
-                    encoded.parameters.insert(param.clone(), value.clone());
-                    encoded.parameters_order.push((param, value))
+                    encoded.insert(param, value);
                 } else {
                     return Err(ErrorCode::InvalidPasswordFormat);
                 }
