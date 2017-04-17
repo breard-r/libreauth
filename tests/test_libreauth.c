@@ -47,7 +47,6 @@ int main(void) {
 
     nb_tests += test_hotp();
     nb_tests += test_totp();
-    nb_tests += test_pass();
 
     printf("Ran %d tests.\n", nb_tests);
 
