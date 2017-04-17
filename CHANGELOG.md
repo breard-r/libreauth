@@ -3,13 +3,15 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased][unreleased]
+## [0.5.3] - 2017-04-17
 
 ### Added
-- Password authentication.
+- TOTP tolerance.
 
 ### Changed
-- The oath module does not not expose sub-modules anymore.
+- The oath module does not not expose sub-modules anymore ;
+- header guards now uses "#pragma once" ;
+- C tests now uses C11 standard and clang.
 
 
 ## [0.5.2] - 2016-06-26
