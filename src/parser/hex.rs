@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2016)
- * Author: Rodolphe Breard (2016)
+ * Copyright Rodolphe Breard (2017)
+ * Author: Rodolphe Breard (2017)
  *
  * This software is a computer program whose purpose is to [describe
  * functionalities and technical features of your software].
@@ -33,47 +33,36 @@
  */
 
 
-use super::{HashFunction,PasswordDerivationFunction};
-use pass::ErrorCode;
-use crypto::sha2::{Sha512,Sha256};
-use crypto::sha1::Sha1;
-use crypto::hmac::Hmac;
-use crypto::pbkdf2::pbkdf2;
+use nom::{IResult,be_u8,is_hex_digit};
 
-
-pub struct Pbkdf2 {
-    pub hash_function: HashFunction,
-    pub nb_iter: u32,
-    pub salt: Vec<u8>,
-}
-
-fn to_hex(v: Vec<u8>) -> String {
-    let mut s = "".to_string();
-    for e in v.iter() {
-        s += format!("{:02x}", e).as_str();
+fn hex_ascii_to_val(c: u8) -> u8 {
+    match c {
+        b'0'...b'9' => c - b'0',
+        b'a'...b'f' => c - b'a' + 10,
+        b'A'...b'F' => c - b'A' + 10,
+        _ => 0,
     }
-    s
 }
 
-macro_rules! process_pbkdf2 {
-    ($obj:ident, $pass:ident, $hash:expr, $len:expr, $id:expr) => {{
-        let mut mac = Hmac::new($hash, $pass.as_bytes());
-        let mut derived_pass: Vec<u8> = vec![0; $len];
-        pbkdf2(&mut mac, &$obj.salt, $obj.nb_iter, &mut derived_pass);
-        let out = format!("${}$i={}${}${}", $id, $obj.nb_iter, to_hex($obj.salt.clone()), to_hex(derived_pass));
-        Ok(out)
-    }}
-}
+named!(get_hex_char<u8>, verify!(be_u8, is_hex_digit));
 
-impl PasswordDerivationFunction for Pbkdf2 {
-    fn derive(&self, password: &str) -> Result<String, ErrorCode> {
-        match self.check_password(password) {
-            Ok(_) => match self.hash_function {
-                HashFunction::Sha1 => process_pbkdf2!(self, password, Sha1::new(), 20, "pbkdf2"),
-                HashFunction::Sha256 => process_pbkdf2!(self, password, Sha256::new(), 32, "pbkdf2_sha256"),
-                HashFunction::Sha512 => process_pbkdf2!(self, password, Sha512::new(), 64, "pbkdf2_sha512"),
-            },
-            Err(e) => Err(e),
-        }
+named!(get_hex_couple<Vec<u8>>, count!(get_hex_char, 2));
+
+named!(parse_hex_couple<u8>, map!(get_hex_couple, |v: Vec<u8>| hex_ascii_to_val(v[0]) * 16 + hex_ascii_to_val(v[1])));
+
+named!(parse_hex_str<Vec<u8>>, fold_many0!(parse_hex_couple, Vec::new(), |mut acc: Vec<_>, item| {
+     acc.push(item);
+     acc
+}));
+
+pub fn from_hex(s: &String) -> Result<Vec<u8>, ()> {
+    match parse_hex_str(s.as_str().as_bytes()) {
+        IResult::Done(r, i) => {
+            match r.len() {
+                0 => Ok(i.to_vec()),
+                _ => Err(()),
+            }
+        },
+        _ => Err(()),
     }
 }

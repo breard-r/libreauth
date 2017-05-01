@@ -35,10 +35,10 @@
 
 mod pbkdf2;
 
+use ::parser;
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,generate_salt};
 use std::collections::HashMap;
-use rustc_serialize::hex::FromHex;
 
 
 #[repr(C)]
@@ -138,7 +138,7 @@ impl PasswordDerivationFunctionBuilder {
         }
 
         // Next element is the salt.
-        match elem.from_hex() {
+        match parser::from_hex(&elem.to_string()) {
             Ok(some) => self.salt = Some(some),
             Err(_) => {
                 self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);

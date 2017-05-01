@@ -34,7 +34,7 @@
 
 
 use super::{HashFunction, ErrorCode};
-use rustc_serialize::hex::FromHex;
+use ::parser;
 use crypto::sha2::{Sha256, Sha512};
 use crypto::mac::{Mac, MacResult};
 use crypto::digest::Digest;
