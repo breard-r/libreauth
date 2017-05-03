@@ -66,3 +66,46 @@ pub fn from_hex(s: &String) -> Result<Vec<u8>, ()> {
         _ => Err(()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::from_hex;
+
+    #[test]
+    fn test_valid_data() {
+        let examples: [(&str, Vec<u8>); 4] = [
+            ("576f6c6f6c6f203432202121203e2e3c", vec![87, 111, 108, 111, 108, 111, 32, 52, 50, 32, 33, 33, 32, 62, 46, 60]),
+            ("420069", vec![66, 0, 105]),
+            ("0000000000", vec![0, 0, 0, 0, 0]),
+            ("Ecc25519", vec![236, 194, 85, 25]),
+        ];
+
+        for &(ref hex_str, ref expected_data) in examples.iter() {
+            assert_eq!(&from_hex(&hex_str.to_string()).unwrap(), expected_data);
+        }
+    }
+
+    #[test]
+    fn test_invalid_data() {
+        match from_hex(&"123z12".to_string()) {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_invalid_size() {
+        match from_hex(&"123".to_string()) {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        }
+    }
+
+    #[test]
+    fn test_no_data() {
+        match from_hex(&"".to_string()) {
+            Ok(v) => assert_eq!(v, vec![]),
+            Err(_) => assert!(false),
+        }
+    }
+}
