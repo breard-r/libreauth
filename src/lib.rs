@@ -58,7 +58,7 @@
 //!
 
 extern crate base32;
-extern crate crypto;
+extern crate ring;
 extern crate rand;
 extern crate time;
 #[macro_use]

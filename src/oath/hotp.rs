@@ -34,12 +34,8 @@
 
 
 use super::{HashFunction, ErrorCode};
+use ring;
 use ::parser;
-use crypto::sha2::{Sha256, Sha512};
-use crypto::mac::{Mac, MacResult};
-use crypto::digest::Digest;
-use crypto::hmac::Hmac;
-use crypto::sha1::Sha1;
 use base32;
 
 
@@ -52,19 +48,24 @@ pub struct HOTP {
 }
 
 impl HOTP {
-    fn compute_hmac<H: Digest>(&self, digest: H, msg: &Vec<u8>) -> MacResult {
-        let mut hmac = Hmac::new(digest, &self.key);
-        hmac.input(msg);
-        hmac.result()
+    fn signing_key(&self) -> ring::hmac::SigningKey {
+        use ring::hmac::SigningKey;
+        use ring::digest::{SHA1, SHA256, SHA512};
+
+        match self.hash_function {
+            HashFunction::Sha1 => SigningKey::new(&SHA1, &self.key[..]),
+            HashFunction::Sha256 => SigningKey::new(&SHA256, &self.key[..]),
+            HashFunction::Sha512 => SigningKey::new(&SHA512, &self.key[..]),
+        }
     }
+
 
     fn reduce_result(&self, hs: &[u8]) -> u32 {
         let offset = (hs[hs.len() - 1] & 0xf) as usize;
-        let hash = hs[offset..offset+4].to_vec();
-        let snum: u32 = ((hash[0] as u32 & 0x7f) << 24)
-            | ((hash[1] as u32 & 0xff) << 16)
-            | ((hash[2] as u32 & 0xff) <<  8)
-            | (hash[3] as u32 & 0xff);
+        let hash = hs[offset..offset + 4].to_vec();
+        let snum: u32 = ((hash[0] as u32 & 0x7f) << 24) | ((hash[1] as u32 & 0xff) << 16) |
+                        ((hash[2] as u32 & 0xff) << 8) |
+                        (hash[3] as u32 & 0xff);
 
         let base = self.output_base.len() as u32;
         snum % base.pow(self.output_len as u32)
@@ -106,23 +107,17 @@ impl HOTP {
     /// assert_eq!(code, "287082");
     /// ```
     pub fn generate(&self) -> String {
-        let msg = vec![
-            ((self.counter >> 56) & 0xff) as u8,
-            ((self.counter >> 48) & 0xff) as u8,
-            ((self.counter >> 40) & 0xff) as u8,
-            ((self.counter >> 32) & 0xff) as u8,
-            ((self.counter >> 24) & 0xff) as u8,
-            ((self.counter >> 16) & 0xff) as u8,
-            ((self.counter >> 8) & 0xff) as u8,
-            (self.counter & 0xff) as u8,
-        ];
-        let result = match self.hash_function {
-            HashFunction::Sha1 => self.compute_hmac(Sha1::new(), &msg),
-            HashFunction::Sha256 => self.compute_hmac(Sha256::new(), &msg),
-            HashFunction::Sha512 => self.compute_hmac(Sha512::new(), &msg),
-        };
-        let hs = result.code();
-        let nb = self.reduce_result(&hs);
+        let msg: [u8; 8] = [((self.counter >> 56) & 0xff) as u8,
+                            ((self.counter >> 48) & 0xff) as u8,
+                            ((self.counter >> 40) & 0xff) as u8,
+                            ((self.counter >> 32) & 0xff) as u8,
+                            ((self.counter >> 24) & 0xff) as u8,
+                            ((self.counter >> 16) & 0xff) as u8,
+                            ((self.counter >> 8) & 0xff) as u8,
+                            (self.counter & 0xff) as u8];
+        let result = ring::hmac::sign(&self.signing_key(), &msg);
+
+        let nb = self.reduce_result(&result.as_ref());
         self.format_result(nb)
     }
 
@@ -147,16 +142,15 @@ impl HOTP {
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
         if code.len() != self.output_len {
-            return false
+            return false;
         }
         let ref_code = self.generate().into_bytes();
         let code = code.clone().into_bytes();
-        let (code, ref_code) = match self.hash_function {
-            HashFunction::Sha1 => (self.compute_hmac(Sha1::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
-            HashFunction::Sha256 => (self.compute_hmac(Sha256::new(), &code), self.compute_hmac(Sha256::new(), &ref_code)),
-            HashFunction::Sha512 => (self.compute_hmac(Sha512::new(), &code), self.compute_hmac(Sha512::new(), &ref_code)),
-        };
-        code == ref_code
+
+        use ring::hmac::sign;
+        let (code, ref_code) = (sign(&self.signing_key(), &code),
+                                sign(&self.signing_key(), &ref_code));
+        code.as_ref() == ref_code.as_ref()
     }
 }
 
@@ -240,13 +234,15 @@ impl HOTPBuilder {
             _ => (),
         }
         match self.key {
-            Some(ref k) => Ok(HOTP {
-                key: k.clone(),
-                counter: self.counter,
-                output_len: self.output_len,
-                output_base: self.output_base.clone(),
-                hash_function: self.hash_function,
-            }),
+            Some(ref k) => {
+                Ok(HOTP {
+                       key: k.clone(),
+                       counter: self.counter,
+                       output_len: self.output_len,
+                       output_base: self.output_base.clone(),
+                       hash_function: self.hash_function,
+                   })
+            }
             None => Err(ErrorCode::InvalidKey),
         }
 
@@ -273,7 +269,7 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
+    pub extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
         let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
         match res {
             Ok(_) => ErrorCode::Success,
@@ -282,47 +278,53 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut libc::uint8_t) -> ErrorCode {
+    pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg,
+                                              code: *mut libc::uint8_t)
+                                              -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let mut code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base,
+                                                                 cfg.output_base_len as usize));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match HOTPBuilder::new()
-            .key(&key)
-            .output_len(cfg.output_len as usize)
-            .output_base(&output_base)
-            .hash_function(cfg.hash_function)
-            .counter(cfg.counter)
-            .finalize() {
-                Ok(hotp) => {
-                    let ref_code = hotp.generate().into_bytes();
-                    c::write_code(&ref_code, code);
-                    ErrorCode::Success
-                },
-                Err(errno) => errno,
+                  .key(&key)
+                  .output_len(cfg.output_len as usize)
+                  .output_base(&output_base)
+                  .hash_function(cfg.hash_function)
+                  .counter(cfg.counter)
+                  .finalize() {
+            Ok(hotp) => {
+                let ref_code = hotp.generate().into_bytes();
+                c::write_code(&ref_code, code);
+                ErrorCode::Success
+            }
+            Err(errno) => errno,
         }
     }
 
     #[no_mangle]
-    pub extern fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const libc::uint8_t) -> libc::int32_t {
+    pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg,
+                                              code: *const libc::uint8_t)
+                                              -> libc::int32_t {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base,
+                                                                 cfg.output_base_len as usize));
         let key = get_value_or_false!(c::get_key(cfg.key, cfg.key_len as usize));
         match HOTPBuilder::new()
-            .key(&key)
-            .output_len(cfg.output_len as usize)
-            .output_base(&output_base)
-            .hash_function(cfg.hash_function)
-            .counter(cfg.counter)
-            .finalize() {
-                Ok(hotp) => {
-                    match hotp.is_valid(&code) {
-                        true => 1,
-                        false => 0,
-                    }
-                },
-                Err(_) => 0,
+                  .key(&key)
+                  .output_len(cfg.output_len as usize)
+                  .output_base(&output_base)
+                  .hash_function(cfg.hash_function)
+                  .counter(cfg.counter)
+                  .finalize() {
+            Ok(hotp) => {
+                match hotp.is_valid(&code) {
+                    true => 1,
+                    false => 0,
+                }
+            }
+            Err(_) => 0,
         }
     }
 }
@@ -335,12 +337,10 @@ mod tests {
 
     #[test]
     fn test_hotp_key_simple() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
-        let hotp = HOTPBuilder::new()
-            .key(&key)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().key(&key).finalize().unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
@@ -357,7 +357,8 @@ mod tests {
 
     #[test]
     fn test_hotp_key_full() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let hotp = HOTPBuilder::new()
             .key(&key)
@@ -383,7 +384,8 @@ mod tests {
     #[test]
     fn test_hotp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
@@ -406,7 +408,8 @@ mod tests {
     #[test]
     fn test_hotp_asciikey_full() {
         let key_ascii = "12345678901234567890".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
@@ -432,12 +435,10 @@ mod tests {
     #[test]
     fn test_hotp_hexkey_simple() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
-        let hotp = HOTPBuilder::new()
-            .hex_key(&key_hex)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().hex_key(&key_hex).finalize().unwrap();
 
         assert_eq!(hotp.key, key);
         assert_eq!(hotp.counter, 0);
@@ -455,7 +456,8 @@ mod tests {
     #[test]
     fn test_hotp_hexkey_full() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let hotp = HOTPBuilder::new()
             .hex_key(&key_hex)
@@ -480,7 +482,8 @@ mod tests {
 
     #[test]
     fn test_hotp_base32key_simple() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let hotp = HOTPBuilder::new()
@@ -503,7 +506,8 @@ mod tests {
 
     #[test]
     fn test_hotp_base32key_full() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let hotp = HOTPBuilder::new()
@@ -557,7 +561,10 @@ mod tests {
     fn test_empty_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
         let output_base = vec![];
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&output_base).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&output_base)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -567,7 +574,10 @@ mod tests {
     fn test_invalid_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
         let output_base = "1".to_owned().into_bytes();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&output_base).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&output_base)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -576,7 +586,10 @@ mod tests {
     #[test]
     fn test_small_result_base10() {
         let key_ascii = "12345678901234567890".to_owned();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(5)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -586,7 +599,10 @@ mod tests {
     fn test_big_result_base10() {
         let key_ascii = "12345678901234567890".to_owned();
         for nb in vec![10, 42, 69, 1024, 0xffffff] {
-            match HOTPBuilder::new().ascii_key(&key_ascii).output_len(nb).finalize() {
+            match HOTPBuilder::new()
+                      .ascii_key(&key_ascii)
+                      .output_len(nb)
+                      .finalize() {
                 Ok(_) => assert!(false),
                 Err(_) => assert!(true),
             }
@@ -596,11 +612,17 @@ mod tests {
     #[test]
     fn test_result_ok_base10() {
         let key_ascii = "12345678901234567890".to_owned();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(6).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(6)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_len(9).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(9)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
@@ -609,8 +631,14 @@ mod tests {
     #[test]
     fn test_small_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(3).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(3)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -619,8 +647,14 @@ mod tests {
     #[test]
     fn test_big_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(6).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(6)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -629,12 +663,22 @@ mod tests {
     #[test]
     fn test_result_ok_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(4).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(4)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
-        match HOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(5).finalize() {
+        match HOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(5)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
@@ -643,21 +687,20 @@ mod tests {
     #[test]
     fn test_rfc4226_examples() {
         let key_ascii = "12345678901234567890".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
         let hex_base = "0123456789ABCDEF".to_owned().into_bytes();
 
-        let examples = [
-            ["755224", "93CF18"],
-            ["287082", "397EEA"],
-            ["359152", "2FEF30"],
-            ["969429", "EF7655"],
-            ["338314", "C5938A"],
-            ["254676", "C083D4"],
-            ["287922", "56C032"],
-            ["162583", "E5B397"],
-            ["399871", "23443F"],
-            ["520489", "79DC69"],
-        ];
+        let examples = [["755224", "93CF18"],
+                        ["287082", "397EEA"],
+                        ["359152", "2FEF30"],
+                        ["969429", "EF7655"],
+                        ["338314", "C5938A"],
+                        ["254676", "C083D4"],
+                        ["287922", "56C032"],
+                        ["162583", "E5B397"],
+                        ["399871", "23443F"],
+                        ["520489", "79DC69"]];
         let mut hotp1 = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()

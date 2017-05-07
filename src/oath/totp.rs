@@ -103,7 +103,8 @@ impl TOTP {
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
         let base_counter = self.get_counter();
-        for counter in (base_counter-self.negative_tolerance)..(base_counter+self.positive_tolerance+1) {
+        for counter in (base_counter - self.negative_tolerance)..
+                       (base_counter + self.positive_tolerance + 1) {
             let hotp = HOTPBuilder::new()
                 .key(&self.key.clone())
                 .counter(counter)
@@ -117,7 +118,7 @@ impl TOTP {
             if is_valid {
                 return true;
             }
-        };
+        }
         false
     }
 }
@@ -247,17 +248,19 @@ impl TOTPBuilder {
             _ => (),
         }
         match self.key {
-            Some(ref k) => Ok(TOTP {
-                key: k.clone(),
-                timestamp_offset: self.timestamp_offset,
-                positive_tolerance: self.positive_tolerance,
-                negative_tolerance: self.negative_tolerance,
-                initial_time: self.initial_time,
-                period: self.period,
-                output_len: self.output_len,
-                output_base: self.output_base.clone(),
-                hash_function: self.hash_function,
-            }),
+            Some(ref k) => {
+                Ok(TOTP {
+                       key: k.clone(),
+                       timestamp_offset: self.timestamp_offset,
+                       positive_tolerance: self.positive_tolerance,
+                       negative_tolerance: self.negative_tolerance,
+                       initial_time: self.initial_time,
+                       period: self.period,
+                       output_len: self.output_len,
+                       output_base: self.output_base.clone(),
+                       hash_function: self.hash_function,
+                   })
+            }
             None => Err(ErrorCode::InvalidKey),
         }
     }
@@ -288,14 +291,19 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
-        let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
-                                                             timestamp, time::now().to_timespec().sec,
-                                                             positive_tolerance, 0,
-                                                             negative_tolerance, 0,
-                                                             period, 30,
-                                                             initial_time, 0
-                                                            );
+    pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
+        let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg,
+                                                             cfg,
+                                                             timestamp,
+                                                             time::now().to_timespec().sec,
+                                                             positive_tolerance,
+                                                             0,
+                                                             negative_tolerance,
+                                                             0,
+                                                             period,
+                                                             30,
+                                                             initial_time,
+                                                             0);
         match res {
             Ok(_) => ErrorCode::Success,
             Err(errno) => errno,
@@ -303,54 +311,60 @@ pub mod cbindings {
     }
 
     #[no_mangle]
-    pub extern fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut libc::uint8_t) -> ErrorCode {
+    pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg,
+                                              code: *mut libc::uint8_t)
+                                              -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let mut code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base,
+                                                                 cfg.output_base_len as usize));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match TOTPBuilder::new()
-            .key(&key)
-            .output_len(cfg.output_len as usize)
-            .output_base(&output_base)
-            .hash_function(cfg.hash_function)
-            .timestamp(cfg.timestamp)
-            .period(cfg.period)
-            .initial_time(cfg.initial_time)
-            .finalize() {
-                Ok(hotp) => {
-                    let ref_code = hotp.generate().into_bytes();
-                    c::write_code(&ref_code, code);
-                    ErrorCode::Success
-                },
-                Err(errno) => errno,
+                  .key(&key)
+                  .output_len(cfg.output_len as usize)
+                  .output_base(&output_base)
+                  .hash_function(cfg.hash_function)
+                  .timestamp(cfg.timestamp)
+                  .period(cfg.period)
+                  .initial_time(cfg.initial_time)
+                  .finalize() {
+            Ok(hotp) => {
+                let ref_code = hotp.generate().into_bytes();
+                c::write_code(&ref_code, code);
+                ErrorCode::Success
             }
+            Err(errno) => errno,
+        }
     }
 
     #[no_mangle]
-    pub extern fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const libc::uint8_t) -> libc::int32_t {
+    pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg,
+                                              code: *const libc::uint8_t)
+                                              -> libc::int32_t {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base, cfg.output_base_len as usize));
+        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base,
+                                                                 cfg.output_base_len as usize));
         let key = get_value_or_false!(c::get_key(cfg.key, cfg.key_len as usize));
         match TOTPBuilder::new()
-            .key(&key)
-            .output_len(cfg.output_len as usize)
-            .output_base(&output_base)
-            .hash_function(cfg.hash_function)
-            .timestamp(cfg.timestamp)
-            .period(cfg.period)
-            .initial_time(cfg.initial_time)
-            .positive_tolerance(cfg.positive_tolerance)
-            .negative_tolerance(cfg.negative_tolerance)
-            .finalize() {
-                Ok(totp) => {
-                    match totp.is_valid(&code) {
-                        true => 1,
-                        false => 0,
-                    }
-                },
-                Err(_) => 0,
+                  .key(&key)
+                  .output_len(cfg.output_len as usize)
+                  .output_base(&output_base)
+                  .hash_function(cfg.hash_function)
+                  .timestamp(cfg.timestamp)
+                  .period(cfg.period)
+                  .initial_time(cfg.initial_time)
+                  .positive_tolerance(cfg.positive_tolerance)
+                  .negative_tolerance(cfg.negative_tolerance)
+                  .finalize() {
+            Ok(totp) => {
+                match totp.is_valid(&code) {
+                    true => 1,
+                    false => 0,
+                }
             }
+            Err(_) => 0,
+        }
     }
 }
 
@@ -362,12 +376,10 @@ mod tests {
 
     #[test]
     fn test_totp_key_simple() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
-        let totp = TOTPBuilder::new()
-            .key(&key)
-            .finalize()
-            .unwrap();
+        let totp = TOTPBuilder::new().key(&key).finalize().unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.output_len, 6);
@@ -382,7 +394,8 @@ mod tests {
 
     #[test]
     fn test_totp_keu_full() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let totp = TOTPBuilder::new()
             .key(&key)
@@ -405,7 +418,8 @@ mod tests {
     #[test]
     fn test_totp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let totp = TOTPBuilder::new()
             .ascii_key(&key_ascii)
@@ -426,7 +440,8 @@ mod tests {
     #[test]
     fn test_totp_asciikeu_full() {
         let key_ascii = "12345678901234567890".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let totp = TOTPBuilder::new()
             .ascii_key(&key_ascii)
@@ -449,12 +464,10 @@ mod tests {
     #[test]
     fn test_totp_kexkey_simple() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
-        let totp = TOTPBuilder::new()
-            .hex_key(&key_hex)
-            .finalize()
-            .unwrap();
+        let totp = TOTPBuilder::new().hex_key(&key_hex).finalize().unwrap();
 
         assert_eq!(totp.key, key);
         assert_eq!(totp.output_len, 6);
@@ -470,7 +483,8 @@ mod tests {
     #[test]
     fn test_totp_hexkey_full() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
 
         let totp = TOTPBuilder::new()
             .hex_key(&key_hex)
@@ -492,7 +506,8 @@ mod tests {
 
     #[test]
     fn test_totp_base32key_simple() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let totp = TOTPBuilder::new()
@@ -513,7 +528,8 @@ mod tests {
 
     #[test]
     fn test_totp_base32key_full() {
-        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                       48];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
         let totp = TOTPBuilder::new()
@@ -563,7 +579,10 @@ mod tests {
     #[test]
     fn test_small_result_base10() {
         let key_ascii = "12345678901234567890".to_owned();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_len(5).finalize() {
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(5)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -573,7 +592,10 @@ mod tests {
     fn test_big_result_base10() {
         let key_ascii = "12345678901234567890".to_owned();
         for nb in vec![10, 42, 69, 1024, 0xffffff] {
-            match TOTPBuilder::new().ascii_key(&key_ascii).output_len(nb).finalize() {
+            match TOTPBuilder::new()
+                      .ascii_key(&key_ascii)
+                      .output_len(nb)
+                      .finalize() {
                 Ok(_) => assert!(false),
                 Err(_) => assert!(true),
             }
@@ -583,11 +605,17 @@ mod tests {
     #[test]
     fn test_result_ok_base10() {
         let key_ascii = "12345678901234567890".to_owned();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_len(6).finalize() {
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(6)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_len(9).finalize() {
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_len(9)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
@@ -596,8 +624,14 @@ mod tests {
     #[test]
     fn test_small_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(3).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(3)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -606,8 +640,14 @@ mod tests {
     #[test]
     fn test_big_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(6).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(6)
+                  .finalize() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
@@ -616,12 +656,22 @@ mod tests {
     #[test]
     fn test_result_ok_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/".to_owned().into_bytes();
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(4).finalize() {
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
+            .to_owned()
+            .into_bytes();
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(4)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
-        match TOTPBuilder::new().ascii_key(&key_ascii).output_base(&base).output_len(5).finalize() {
+        match TOTPBuilder::new()
+                  .ascii_key(&key_ascii)
+                  .output_base(&base)
+                  .output_len(5)
+                  .finalize() {
             Ok(_) => assert!(true),
             Err(_) => assert!(false),
         }
@@ -630,14 +680,12 @@ mod tests {
     #[test]
     fn test_rfc6238_examples_sha1() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
-        let examples = [
-            (59,          HashFunction::Sha1,   "94287082"),
-            (1111111109,  HashFunction::Sha1,   "07081804"),
-            (1111111111,  HashFunction::Sha1,   "14050471"),
-            (1234567890,  HashFunction::Sha1,   "89005924"),
-            (2000000000,  HashFunction::Sha1,   "69279037"),
-            (20000000000, HashFunction::Sha1,   "65353130"),
-        ];
+        let examples = [(59, HashFunction::Sha1, "94287082"),
+                        (1111111109, HashFunction::Sha1, "07081804"),
+                        (1111111111, HashFunction::Sha1, "14050471"),
+                        (1234567890, HashFunction::Sha1, "89005924"),
+                        (2000000000, HashFunction::Sha1, "69279037"),
+                        (20000000000, HashFunction::Sha1, "65353130")];
         for &(timestamp, hash_function, ref_code) in examples.iter() {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
@@ -655,14 +703,12 @@ mod tests {
     #[test]
     fn test_rfc6238_examples_sha256() {
         let key_hex = "3132333435363738393031323334353637383930313233343536373839303132".to_owned();
-        let examples = [
-            (59,          HashFunction::Sha256, "46119246"),
-            (1111111109,  HashFunction::Sha256, "68084774"),
-            (1111111111,  HashFunction::Sha256, "67062674"),
-            (1234567890,  HashFunction::Sha256, "91819424"),
-            (2000000000,  HashFunction::Sha256, "90698825"),
-            (20000000000, HashFunction::Sha256, "77737706"),
-        ];
+        let examples = [(59, HashFunction::Sha256, "46119246"),
+                        (1111111109, HashFunction::Sha256, "68084774"),
+                        (1111111111, HashFunction::Sha256, "67062674"),
+                        (1234567890, HashFunction::Sha256, "91819424"),
+                        (2000000000, HashFunction::Sha256, "90698825"),
+                        (20000000000, HashFunction::Sha256, "77737706")];
         for &(timestamp, hash_function, ref_code) in examples.iter() {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
@@ -680,14 +726,12 @@ mod tests {
     #[test]
     fn test_rfc6238_examples_sha512() {
         let key_hex = "31323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334".to_owned();
-        let examples = [
-            (59,          HashFunction::Sha512, "90693936"),
-            (1111111109,  HashFunction::Sha512, "25091201"),
-            (1111111111,  HashFunction::Sha512, "99943326"),
-            (1234567890,  HashFunction::Sha512, "93441116"),
-            (2000000000,  HashFunction::Sha512, "38618901"),
-            (20000000000, HashFunction::Sha512, "47863826"),
-        ];
+        let examples = [(59, HashFunction::Sha512, "90693936"),
+                        (1111111109, HashFunction::Sha512, "25091201"),
+                        (1111111111, HashFunction::Sha512, "99943326"),
+                        (1234567890, HashFunction::Sha512, "93441116"),
+                        (2000000000, HashFunction::Sha512, "38618901"),
+                        (20000000000, HashFunction::Sha512, "47863826")];
         for &(timestamp, hash_function, ref_code) in examples.iter() {
             let code = TOTPBuilder::new()
                 .hex_key(&key_hex)
