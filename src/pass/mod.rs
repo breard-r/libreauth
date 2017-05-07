@@ -111,8 +111,6 @@ use rand::{Rng, thread_rng};
 use ring;
 use ring::pbkdf2::{HMAC_SHA256, HMAC_SHA512};
 
-use rustc_serialize::hex::ToHex;
-
 #[macro_use]
 mod phc_encoding;
 use self::phc_encoding::PHCEncoded;
@@ -178,6 +176,15 @@ pub const PASSWORD_MAX_LEN: usize = 128;
 ///         </tr>
 ///     </tbody>
 /// </table>
+
+fn to_hex(v: Vec<u8>) -> String {
+    let mut s = "".to_string();
+    for e in v.iter() {
+        s += format!("{:02x}", e).as_str();
+    }
+    s
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
@@ -257,8 +264,8 @@ fn from_reference_hash(hash_info: &PHCEncoded)
                                      password.as_bytes(),
                                      &mut out[..]);
 
-                let encoded_salt = salt.to_hex();
-                let encoded_hash = out.to_hex();
+                let encoded_salt = to_hex(salt.clone());
+                let encoded_hash = to_hex(out);
 
                 let mut new_hash_info: PHCEncoded = PHCEncoded {
                     id: Some("pbkdf2_sha256".to_string()),
@@ -287,8 +294,8 @@ fn from_reference_hash(hash_info: &PHCEncoded)
                                      password.as_bytes(),
                                      &mut out[..]);
 
-                let encoded_salt = salt.to_hex();
-                let encoded_hash = out.to_hex();
+                let encoded_salt = to_hex(salt.clone());
+                let encoded_hash = to_hex(out);
 
                 let mut new_hash_info: PHCEncoded = PHCEncoded {
                     id: Some("pbkdf2_sha512".to_string()),
@@ -326,7 +333,7 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
     let iterations: u32 = 21000;
     // 16 bytes of salt
     let salt = generate_salt(16);
-    let encoded_salt = salt.to_hex();
+    let encoded_salt = to_hex(salt);
 
     let mut hash_info: PHCEncoded = PHCEncoded {
         id: Some("pbkdf2_sha512".to_string()),

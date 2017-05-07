@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015)
- * Author: Rodolphe Breard (2015)
+ * Copyright Rodolphe Breard (2017)
+ * Author: Rodolphe Breard (2017)
  *
  * This software is a computer program whose purpose is to [describe
  * functionalities and technical features of your software].
@@ -32,41 +32,6 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
+mod hex;
 
-//!
-//! [![Build Status](https://api.travis-ci.org/breard-r/libreauth.svg?branch=master)](https://travis-ci.org/breard-r/libreauth)
-//! [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
-//!
-//! LibreAuth is a collection of tools for user authentication.
-//!
-//!
-//! ## Features
-//! - HOTP - HMAC-based One-time Password Algorithm ([RFC 4226](https://tools.ietf.org/html/rfc4226))
-//!   - the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
-//!   - customizable counter
-//!   - customizable hash function (sha1, sha256, sha512)
-//!   - customizable output length
-//!   - customizable output alphabet
-//! - TOTP - Time-based One-time Password Algorithm ([RFC 6238](https://tools.ietf.org/html/rfc6238))
-//!   - the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
-//!   - customizable timestamp
-//!   - customizable period
-//!   - customizable initial time (T0)
-//!   - customizable hash function (sha1, sha256, sha512)
-//!   - customizable output length
-//!   - customizable output alphabet
-//!
-
-extern crate base32;
-extern crate ring;
-extern crate rand;
-extern crate time;
-#[macro_use]
-extern crate nom;
-
-pub mod oath;
-pub mod pass;
-mod parser;
-
-#[cfg(feature = "cbindings")]
-extern crate libc;
+pub use self::hex::from_hex;

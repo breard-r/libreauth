@@ -34,8 +34,8 @@
 
 
 use super::{HashFunction, ErrorCode};
-use rustc_serialize::hex::FromHex;
 use ring;
+use ::parser;
 use base32;
 
 

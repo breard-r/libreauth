@@ -34,7 +34,7 @@
 
 
 use super::{HashFunction, ErrorCode, HOTPBuilder};
-use rustc_serialize::hex::FromHex;
+use ::parser;
 use base32;
 use time;
 

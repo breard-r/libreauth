@@ -36,7 +36,7 @@
 
 use super::ErrorCode;
 use std::collections::HashMap;
-use rustc_serialize::hex::FromHex;
+use parser;
 
 macro_rules! get_salt {
     ($salt:expr) => {{
@@ -197,7 +197,7 @@ impl PHCEncoded {
 
         match self.salt {
             Some(ref encoded_salt) => {
-                match encoded_salt.from_hex() {
+                match parser::from_hex(encoded_salt) {
                     Ok(raw_salt) => Ok(raw_salt),
                     Err(_) => Err(ErrorCode::InvalidPasswordFormat),
                 }
@@ -215,7 +215,7 @@ impl PHCEncoded {
 
         match self.hash {
             Some(ref encoded_hash) => {
-                match encoded_hash.from_hex() {
+                match parser::from_hex(encoded_hash) {
                     Ok(raw_hash) => Ok(raw_hash),
                     Err(_) => Err(ErrorCode::InvalidPasswordFormat),
                 }
