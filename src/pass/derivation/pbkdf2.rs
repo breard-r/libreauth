@@ -33,6 +33,8 @@
  */
 
 
+use std::collections::HashMap;
+use ::pass::phc::PHCData;
 use super::{HashFunction,PasswordDerivationFunction};
 use pass::ErrorCode;
 use crypto::sha2::{Sha512,Sha256};
@@ -60,8 +62,18 @@ macro_rules! process_pbkdf2 {
         let mut mac = Hmac::new($hash, $pass.as_bytes());
         let mut derived_pass: Vec<u8> = vec![0; $len];
         pbkdf2(&mut mac, &$obj.salt, $obj.nb_iter, &mut derived_pass);
-        let out = format!("${}$i={}${}${}", $id, $obj.nb_iter, to_hex($obj.salt.clone()), to_hex(derived_pass));
-        Ok(out)
+        let mut params = HashMap::new();
+        params.insert("i".to_string(), format!("{}", $obj.nb_iter));
+        let out = PHCData {
+            id: $id.to_string(),
+            parameters: params,
+            salt: Some($obj.salt.clone()),
+            hash: Some(derived_pass),
+        };
+        match out.to_string() {
+            Ok(v) => Ok(v),
+            Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+        }
     }}
 }
 
@@ -70,8 +82,8 @@ impl PasswordDerivationFunction for Pbkdf2 {
         match self.check_password(password) {
             Ok(_) => match self.hash_function {
                 HashFunction::Sha1 => process_pbkdf2!(self, password, Sha1::new(), 20, "pbkdf2"),
-                HashFunction::Sha256 => process_pbkdf2!(self, password, Sha256::new(), 32, "pbkdf2_sha256"),
-                HashFunction::Sha512 => process_pbkdf2!(self, password, Sha512::new(), 64, "pbkdf2_sha512"),
+                HashFunction::Sha256 => process_pbkdf2!(self, password, Sha256::new(), 32, "pbkdf2-sha256"),
+                HashFunction::Sha512 => process_pbkdf2!(self, password, Sha512::new(), 64, "pbkdf2-sha512"),
             },
             Err(e) => Err(e),
         }

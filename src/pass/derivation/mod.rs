@@ -35,9 +35,9 @@
 
 mod pbkdf2;
 
-use ::parser;
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,generate_salt};
+use super::phc::PHCData;
 use std::collections::HashMap;
 
 
@@ -98,53 +98,14 @@ impl PasswordDerivationFunctionBuilder {
     }
 
     pub fn set_reference_hash(&mut self, hash: &str) -> &mut PasswordDerivationFunctionBuilder {
-        let mut splited: Vec<&str> = hash.split("$").collect();
-        if splited.len() < 2 || splited.len() > 5 {
-            self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
-            return self;
-        }
-
-        splited.reverse();
-        splited.pop(); // Remove the first empty element.
-
-        // Scheme id.
-        self.algo = Some(splited.pop().unwrap().to_string());
-
-        let mut elem = match splited.pop() {
-            Some(some) => some,
-            None => return self, // Format: $id
-        };
-
-        // Next element is the param element.
-        if elem.contains("=") {
-            let splited_params: Vec<&str> = elem.split(",").collect();
-            for param_couple in splited_params.iter() {
-                let couple: Vec<&str> = param_couple.split("=").collect();
-                if couple.len() == 2 {
-                    self.parameters.insert(couple[0].to_string(), couple[1].to_string());
-                }
-            }
-            elem = match splited.pop() {
-                Some(some) => some,
-                None => return self,
-            };
-        }
-        // Empty param variant.
-        if elem.len() == 0 {
-            elem = match splited.pop() {
-                Some(some) => some,
-                None => return self,
-            };
-        }
-
-        // Next element is the salt.
-        match parser::from_hex(&elem.to_string()) {
-            Ok(some) => self.salt = Some(some),
-            Err(_) => {
-                self.runtime_error = Some(ErrorCode::InvalidPasswordFormat);
-                return self;
+        match PHCData::from_string(&hash.to_string()) {
+            Ok(r) => {
+                self.algo = Some(r.id);
+                self.salt = r.salt;
+                self.parameters = r.parameters;
             },
-        }
+            Err(_) => { self.runtime_error = Some(ErrorCode::InvalidPasswordFormat) },
+        };
         self
     }
 
@@ -153,7 +114,7 @@ impl PasswordDerivationFunctionBuilder {
             Some(e) => Err(e),
             None => match self.algo.to_owned() {
                 Some(algo) => match algo.as_ref() {
-                    "pbkdf2_sha512" => {
+                    "pbkdf2-sha512" => {
                         let h = pbkdf2::Pbkdf2 {
                             hash_function: HashFunction::Sha512,
                             salt: get_salt!(self.salt),
@@ -161,7 +122,7 @@ impl PasswordDerivationFunctionBuilder {
                         };
                         Ok(Box::new(h))
                     },
-                    "pbkdf2_sha256" => {
+                    "pbkdf2-sha256" => {
                         let h = pbkdf2::Pbkdf2 {
                             hash_function: HashFunction::Sha256,
                             salt: get_salt!(self.salt),

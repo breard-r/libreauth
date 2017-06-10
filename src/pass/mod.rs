@@ -41,11 +41,11 @@
 //! - check a password against the stored fingerprint.
 //!
 //!
-//! ## Modular Crypt Format
+//! ## Storage format
 //!
-//! The password fingerprint is stored in the modular crypt format (cf. [[1]] and [[2]]). This format is defined as follows:
+//! The password fingerprint is stored in the [PHC] format which is very close to the modular crypt format (cf. [[1]] and [[2]]).
 //!
-//! `$<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]`
+//! ## Supported identifiers and parameters
 //!
 //! <style>
 //! .vcentered_table th, .vcentered_table td {vertical-align: middle;}
@@ -58,36 +58,31 @@
 //!             <th>Parameter name</th>
 //!             <th>Parameter type</th>
 //!             <th>Parameter description</th>
-//!             <th>Example</th>
 //!         </tr>
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td style="vertical-align: middle;">pbkdf2_sha512</td>
+//!             <td style="vertical-align: middle;">pbkdf2-sha512</td>
 //!             <td>i</td>
 //!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
-//!             <td>$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba</td>
 //!         </tr>
 //!         <tr>
-//!             <td style="vertical-align: middle;">pbkdf2_sha256</td>
+//!             <td style="vertical-align: middle;">pbkdf2-sha256</td>
 //!             <td>i</td>
 //!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
-//!             <td>$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9</td>
 //!         </tr>
 //!         <tr>
 //!             <td rowspan="2" style="vertical-align: middle;">pbkdf2</td>
 //!             <td>i</td>
 //!             <td>integer<br>Default: 21000</td>
 //!             <td>Number of iterations.</td>
-//!             <td>$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7</td>
 //!         </tr>
 //!         <tr>
 //!             <td>h</td>
 //!             <td>string: sha1|sha256|sha512<br>Default: sha1</td>
 //!             <td>The hash function.</td>
-//!             <td>$pbkdf2$h=sha256$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9</td>
 //!         </tr>
 //!     </tbody>
 //! </table>
@@ -100,6 +95,7 @@
 //! assert!(libreauth::pass::is_valid(&password, &derived_password));
 //! ```
 //!
+//! [PHC]: https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
 //! [1]: https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
@@ -189,6 +185,7 @@ pub enum ErrorCode {
 }
 
 mod derivation;
+mod phc;
 
 fn generate_salt(nb_bytes: usize) -> Vec<u8> {
     let mut salt: Vec<u8> = vec![0; nb_bytes];
@@ -224,7 +221,7 @@ pub fn derive_password(password: &str) -> Result<String, ErrorCode> {
 /// ```
 ///
 /// ```rust
-/// let stored_reference = "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9";
+/// let stored_reference = "$pbkdf2-sha256$i=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk";
 /// assert!(! libreauth::pass::is_valid("bad password", stored_reference));
 /// assert!(libreauth::pass::is_valid("password123", stored_reference));
 /// ```
@@ -338,7 +335,7 @@ mod tests {
     fn test_default_derivation() {
         let password = "123456";
         let stored_password = derive_password(password).unwrap();
-        assert!(stored_password.starts_with("$pbkdf2_sha512$"));
+        assert!(stored_password.starts_with("$pbkdf2-sha512$"));
     }
 
     #[test]
@@ -363,13 +360,13 @@ mod tests {
 
     #[test]
     fn test_empty_password_validation() {
-        let stored_password = "$pbkdf2$0$45217803$2dade20112c105c0520f8bc08bac2a3be0c241a5";
+        let stored_password = "$pbkdf2$0$RSF4Aw$La3iARLBBcBSD4vAi6wqO+DCQaU";
         assert!(! is_valid("", stored_password));
     }
 
     #[test]
     fn test_short_password_validation() {
-        let stored_password = "$pbkdf2$0$45217803$ce035bbb80414de3de01dc54a9ee204b27ad1ae5";
+        let stored_password = "$pbkdf2$0$RSF4Aw$zgNbu4BBTePeAdxUqe4gSyetGuU";
         assert!(! is_valid("abc", stored_password));
     }
 
@@ -409,16 +406,19 @@ mod tests {
     fn test_format_with_salt() {
         let list = [
             // (password, storage, expected_output),
-            ("password123", "$pbkdf2$i=1000,h=sha1$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-            ("password123", "$pbkdf2$i=1000$45217803", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-            ("password123", "$pbkdf2$$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-            ("password123", "$pbkdf2$45217803", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-            ("password123", "$pbkdf2_sha256$$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-            ("password123", "$pbkdf2_sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-            ("password123", "$pbkdf2$h=sha256$45217803", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
+            ("password123", "$pbkdf2$i=1000,h=sha1$RSF4Aw", "$pbkdf2$i=1000$RSF4Aw$xvdfA4H7QJQ1w/4jGcjBEIjCvsc"),
+            ("password123", "$pbkdf2$i=1000$RSF4Aw", "$pbkdf2$i=1000$RSF4Aw$xvdfA4H7QJQ1w/4jGcjBEIjCvsc"),
+            ("password123", "$pbkdf2$$RSF4Aw", "$pbkdf2$i=21000$RSF4Aw$LwCbGeQoBZIraYoDZ8Oe/PxdJHc"),
+            ("password123", "$pbkdf2-sha256$$RSF4Aw", "$pbkdf2-sha256$i=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk"),
+            ("password123", "$pbkdf2$h=sha256$RSF4Aw", "$pbkdf2-sha256$i=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk"),
         ];
         for p in list.iter() {
-            let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            let deriv = PasswordDerivationFunctionBuilder::new()
+                .set_reference_hash(p.1)
+                .finalize()
+                .unwrap()
+                .derive(p.0)
+                .unwrap();
             assert_eq!(p.2, deriv);
             assert!(! is_valid(p.0, p.1));
             assert!(is_valid(p.0, p.2));
@@ -430,11 +430,16 @@ mod tests {
         let list = [
             // (password, storage, expected_output_start),
             ("password123", "$pbkdf2$i=1000,h=sha1", "$pbkdf2$i=1000$"),
-            ("password123", "$pbkdf2$i=1000,h=sha512", "$pbkdf2_sha512$i=1000$"),
-            ("password123", "$pbkdf2_sha512", "$pbkdf2_sha512$i=21000$"),
+            ("password123", "$pbkdf2$i=1000,h=sha512", "$pbkdf2-sha512$i=1000$"),
+            ("password123", "$pbkdf2-sha512", "$pbkdf2-sha512$i=21000$"),
         ];
         for p in list.iter() {
-            let deriv: String = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            let deriv: String = PasswordDerivationFunctionBuilder::new()
+                .set_reference_hash(p.1)
+                .finalize()
+                .unwrap()
+                .derive(p.0)
+                .unwrap();
             assert!(deriv.starts_with(p.2));
         }
     }
@@ -445,43 +450,48 @@ mod tests {
             // (password, stored_hash),
 
             // pbkdf2
-            ("password123", "$pbkdf2$i=1000$45217803$c6f75f0381fb409435c3fe2319c8c11088c2bec7"),
-            ("correct horse battery staple", "$pbkdf2$i=1000$45217803$c539eccc9b94eb12241b7f616be34b0048742f7c"),
-            ("password123", "$pbkdf2$i=12345$45217803$a5e3182b5d2522558735cdad971dc5ca789401e7"),
-            ("correct horse battery staple", "$pbkdf2$i=12345$45217803$fa38129f680d57e17a46fcc5a358450b380c4e8d"),
-            ("password123", "$pbkdf2$i=21000$45217803$2f009b19e42805922b698a0367c39efcfc5d2477"),
-            ("correct horse battery staple", "$pbkdf2$i=21000$45217803$5cf0e9fefb516a0bab783ecda3b9919c13013a9b"),
-            // pbkdf2_sha256
-            ("password123", "$pbkdf2_sha256$i=1000$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
-            ("correct horse battery staple", "$pbkdf2_sha256$i=1000$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
-            ("password123", "$pbkdf2_sha256$i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
-            ("correct horse battery staple", "$pbkdf2_sha256$i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
-            ("password123", "$pbkdf2_sha256$i=21000$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-            ("correct horse battery staple", "$pbkdf2_sha256$i=21000$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
+            ("password123", "$pbkdf2$i=1000$RSF4Aw$xvdfA4H7QJQ1w/4jGcjBEIjCvsc"),
+            ("correct horse battery staple", "$pbkdf2$i=1000$RSF4Aw$xTnszJuU6xIkG39ha+NLAEh0L3w"),
+            ("password123", "$pbkdf2$i=12345$RSF4Aw$peMYK10lIlWHNc2tlx3FyniUAec"),
+            ("correct horse battery staple", "$pbkdf2$i=12345$RSF4Aw$+jgSn2gNV+F6RvzFo1hFCzgMTo0"),
+            ("password123", "$pbkdf2$i=21000$RSF4Aw$LwCbGeQoBZIraYoDZ8Oe/PxdJHc"),
+            ("correct horse battery staple", "$pbkdf2$i=21000$RSF4Aw$XPDp/vtRagureD7No7mRnBMBOps"),
+            // pbkdf2-sha256
+            ("password123", "$pbkdf2-sha256$i=1000$RSF4Aw$yY82x+kyEjBAfH9nhcKpOGmHCdFtH7YWTEPIP4t5V7U"),
+            ("correct horse battery staple", "$pbkdf2-sha256$i=1000$RSF4Aw$fG/oZ6fBkkxuzqGnknc6rbj7bMwdIgZh91WKb6QfFbw"),
+            ("password123", "$pbkdf2-sha256$i=12345$RSF4Aw$mV/c0MvAqHu8HzeRX1arlTy4hD4zaxV+RUDZv7zQ6bg"),
+            ("correct horse battery staple", "$pbkdf2-sha256$i=12345$RSF4Aw$9C3iX18uvqcU9z6Z/7Ar0cJ0flk5eVviYyGAkPc8xc4"),
+            ("password123", "$pbkdf2-sha256$i=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk"),
+            ("correct horse battery staple", "$pbkdf2-sha256$i=21000$RSF4Aw$KuyNYVkNyeDRKEIdNFpj7qCSPKUTbN6ta/n9Pw+KBEc"),
             // pbkdf2 h=sha256
-            ("password123", "$pbkdf2$i=1000,h=sha256$45217803$c98f36c7e9321230407c7f6785c2a938698709d16d1fb6164c43c83f8b7957b5"),
-            ("correct horse battery staple", "$pbkdf2$i=1000,h=sha256$45217803$7c6fe867a7c1924c6ecea1a792773aadb8fb6ccc1d220661f7558a6fa41f15bc"),
-            ("password123", "$pbkdf2$h=sha256,i=12345$45217803$995fdcd0cbc0a87bbc1f37915f56ab953cb8843e336b157e4540d9bfbcd0e9b8"),
-            ("correct horse battery staple", "$pbkdf2$h=sha256,i=12345$45217803$f42de25f5f2ebea714f73e99ffb02bd1c2747e5939795be263218090f73cc5ce"),
-            ("password123", "$pbkdf2$i=21000,h=sha256$45217803$a607a72c2c92357a4568b998c5f708f801f0b1ffbaea205357e08e4d325830c9"),
-            ("correct horse battery staple", "$pbkdf2$i=21000,h=sha256$45217803$2aec8d61590dc9e0d128421d345a63eea0923ca5136cdead6bf9fd3f0f8a0447"),
-            // pbkdf2_sha512
-            ("password123", "$pbkdf2_sha512$i=1000$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
-            ("correct horse battery staple", "$pbkdf2_sha512$i=1000$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
-            ("password123", "$pbkdf2_sha512$i=12345$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
-            ("correct horse battery staple", "$pbkdf2_sha512$i=12345$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
-            ("password123", "$pbkdf2_sha512$i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
-            ("correct horse battery staple", "$pbkdf2_sha512$i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a"),
+            ("password123", "$pbkdf2$i=1000,h=sha256$RSF4Aw$yY82x+kyEjBAfH9nhcKpOGmHCdFtH7YWTEPIP4t5V7U"),
+            ("correct horse battery staple", "$pbkdf2$i=1000,h=sha256$RSF4Aw$fG/oZ6fBkkxuzqGnknc6rbj7bMwdIgZh91WKb6QfFbw"),
+            ("password123", "$pbkdf2$h=sha256,i=12345$RSF4Aw$mV/c0MvAqHu8HzeRX1arlTy4hD4zaxV+RUDZv7zQ6bg"),
+            ("correct horse battery staple", "$pbkdf2$h=sha256,i=12345$RSF4Aw$9C3iX18uvqcU9z6Z/7Ar0cJ0flk5eVviYyGAkPc8xc4"),
+            ("password123", "$pbkdf2$i=21000,h=sha256$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk"),
+            ("correct horse battery staple", "$pbkdf2$i=21000,h=sha256$RSF4Aw$KuyNYVkNyeDRKEIdNFpj7qCSPKUTbN6ta/n9Pw+KBEc"),
+            // pbkdf2-sha512
+            ("password123", "$pbkdf2-sha512$i=1000$RSF4Aw$tH1SBLzs8BoxFS0IctA/Jw06jrK7MFhk0Ji+KBvCQ7JBLw7QE8x4F2DmTd6nBcwQTDcRHZnr3bNiMv5JTyTAug"),
+            ("correct horse battery staple", "$pbkdf2-sha512$i=1000$RSF4Aw$U/19XPe7nKM/iZE1ZCQx/miEX67rG2cxA+n873HlN4Urqt0NBYT6u6o+GMaZvAhKpwfFqP8SXlFUlCeEcZAHgw"),
+            ("password123", "$pbkdf2-sha512$i=12345$RSF4Aw$vKxujfEvw74w8Oud86V2zXnrrF+as5tAKqRHGc/bFlA+bKZEEWgen4iqE5bBOpJ2c6m9mR5iUhcdx4Fv1H2yfA"),
+            ("correct horse battery staple", "$pbkdf2-sha512$i=12345$RSF4Aw$w4gfA+r/YvQvDtuAmnGZB4N03fg/jz2mOJer8ZA2k1mrh/+cPEYhrb1EUfp4guBXLT3GJe3oTMHMg0F5xn4IZg"),
+            ("password123", "$pbkdf2-sha512$i=21000$RSF4Aw$xThRbOE1DPfUjMa1kRn6HZT6ufG5KixgPCt4+P0YALmdmkRH3fwcXCl721PP359zbYMYVOgkr3yt+XohRLk/aw"),
+            ("correct horse battery staple", "$pbkdf2-sha512$i=21000$RSF4Aw$L2bmVIwbQ693Tbcm9upA0ZrtIf/bWSsqgwsLAb1Z2X2htwgEcPJdFzTxMxpxsiFqBiluLnuCbVtXulrhA8ZBSg"),
             // pbkdf2 h=sha512
-            ("password123", "$pbkdf2$i=1000,h=sha512$45217803$b47d5204bcecf01a31152d0872d03f270d3a8eb2bb305864d098be281bc243b2412f0ed013cc781760e64ddea705cc104c37111d99ebddb36232fe494f24c0ba"),
-            ("correct horse battery staple", "$pbkdf2$i=1000,h=sha512$45217803$53fd7d5cf7bb9ca33f899135642431fe68845faeeb1b673103e9fcef71e537852baadd0d0584fabbaa3e18c699bc084aa707c5a8ff125e515494278471900783"),
-            ("password123", "$pbkdf2$i=12345,h=sha512$45217803$bcac6e8df12fc3be30f0eb9df3a576cd79ebac5f9ab39b402aa44719cfdb16503e6ca64411681e9f88aa1396c13a927673a9bd991e6252171dc7816fd47db27c"),
-            ("correct horse battery staple", "$pbkdf2$i=12345,h=sha512$45217803$c3881f03eaff62f42f0edb809a7199078374ddf83f8f3da63897abf190369359ab87ff9c3c4621adbd4451fa7882e0572d3dc625ede84cc1cc834179c67e0866"),
-            ("password123", "$pbkdf2$h=sha512,i=21000$45217803$c538516ce1350cf7d48cc6b59119fa1d94fab9f1b92a2c603c2b78f8fd1800b99d9a4447ddfc1c5c297bdb53cfdf9f736d831854e824af7cadf97a2144b93f6b"),
-            ("correct horse battery staple", "$pbkdf2$h=sha512,i=21000$45217803$2f66e6548c1b43af774db726f6ea40d19aed21ffdb592b2a830b0b01bd59d97da1b7080470f25d1734f1331a71b2216a06296e2e7b826d5b57ba5ae103c6414a"),
+            ("password123", "$pbkdf2$i=1000,h=sha512$RSF4Aw$tH1SBLzs8BoxFS0IctA/Jw06jrK7MFhk0Ji+KBvCQ7JBLw7QE8x4F2DmTd6nBcwQTDcRHZnr3bNiMv5JTyTAug"),
+            ("correct horse battery staple", "$pbkdf2$i=1000,h=sha512$RSF4Aw$U/19XPe7nKM/iZE1ZCQx/miEX67rG2cxA+n873HlN4Urqt0NBYT6u6o+GMaZvAhKpwfFqP8SXlFUlCeEcZAHgw"),
+            ("password123", "$pbkdf2$i=12345,h=sha512$RSF4Aw$vKxujfEvw74w8Oud86V2zXnrrF+as5tAKqRHGc/bFlA+bKZEEWgen4iqE5bBOpJ2c6m9mR5iUhcdx4Fv1H2yfA"),
+            ("correct horse battery staple", "$pbkdf2$i=12345,h=sha512$RSF4Aw$w4gfA+r/YvQvDtuAmnGZB4N03fg/jz2mOJer8ZA2k1mrh/+cPEYhrb1EUfp4guBXLT3GJe3oTMHMg0F5xn4IZg"),
+            ("password123", "$pbkdf2$h=sha512,i=21000$RSF4Aw$xThRbOE1DPfUjMa1kRn6HZT6ufG5KixgPCt4+P0YALmdmkRH3fwcXCl721PP359zbYMYVOgkr3yt+XohRLk/aw"),
+            ("correct horse battery staple", "$pbkdf2$h=sha512,i=21000$RSF4Aw$L2bmVIwbQ693Tbcm9upA0ZrtIf/bWSsqgwsLAb1Z2X2htwgEcPJdFzTxMxpxsiFqBiluLnuCbVtXulrhA8ZBSg"),
         ];
         for p in password_list.iter() {
-            let deriv = PasswordDerivationFunctionBuilder::new().set_reference_hash(p.1).finalize().unwrap().derive(p.0).unwrap();
+            let deriv = PasswordDerivationFunctionBuilder::new()
+                .set_reference_hash(p.1)
+                .finalize()
+                .unwrap()
+                .derive(p.0)
+                .unwrap();
             assert_eq!(p.1.split("$").collect::<Vec<&str>>().last().unwrap(), deriv.split("$").collect::<Vec<&str>>().last().unwrap());
             assert!(! is_valid("bad password", p.1));
             assert!(is_valid(p.0, p.1));

@@ -58,6 +58,7 @@
 //!
 
 extern crate base32;
+extern crate base64;
 extern crate crypto;
 extern crate rand;
 extern crate time;
