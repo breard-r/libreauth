@@ -1,9 +1,9 @@
 /*
- * Copyright Rodolphe Breard (2016)
- * Author: Rodolphe Breard (2016)
+ * Copyright Rodolphe Breard (2016-2017)
+ * Author: Rodolphe Breard (2016-2017)
  *
- * This software is a computer program whose purpose is to [describe
- * functionalities and technical features of your software].
+ * This software is a computer library whose purpose is to offer a
+ * collection of tools for user authentication.
  *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
