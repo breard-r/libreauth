@@ -62,7 +62,7 @@ $ make install prefix=/usr
 
 ### Rust
 
-More examples are available in the [documentation](https://what.tf/libreauth/).
+More examples are available in the [documentation](https://docs.rs/libreauth/).
 
 ```rust
 extern crate libreauth;
