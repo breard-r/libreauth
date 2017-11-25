@@ -197,7 +197,7 @@ macro_rules! builder_common {
 
         /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
         pub fn hex_key(&mut self, key: &String) -> &mut $t {
-            match parser::from_hex(key) {
+            match hex::decode(key) {
                 Ok(k) => { self.key = Some(k); }
                 Err(_) => { self.runtime_error = Some(ErrorCode::InvalidKey); }
             }

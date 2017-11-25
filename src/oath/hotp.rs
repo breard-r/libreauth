@@ -34,13 +34,13 @@
 
 
 use super::{HashFunction, ErrorCode};
-use ::parser;
 use crypto::sha2::{Sha256, Sha512};
 use crypto::mac::{Mac, MacResult};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::sha1::Sha1;
 use base32;
+use hex;
 
 
 /// Generates, manipulates and checks HOTP codes.

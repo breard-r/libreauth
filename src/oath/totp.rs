@@ -34,9 +34,9 @@
 
 
 use super::{HashFunction, ErrorCode, HOTPBuilder};
-use ::parser;
 use base32;
 use time;
+use hex;
 
 
 /// Generates and checks TOTP codes.

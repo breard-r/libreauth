@@ -47,12 +47,12 @@ extern crate base64;
 extern crate crypto;
 extern crate rand;
 extern crate time;
+extern crate hex;
 #[macro_use]
 extern crate nom;
 
 pub mod oath;
 pub mod pass;
-mod parser;
 
 #[cfg(feature = "cbindings")]
 extern crate libc;
