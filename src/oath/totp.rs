@@ -39,6 +39,7 @@ use base32;
 use time;
 
 
+/// Generates and checks TOTP codes.
 pub struct TOTP {
     key: Vec<u8>,
     timestamp_offset: i64,
@@ -122,42 +123,44 @@ impl TOTP {
     }
 }
 
+/// Builds a TOTP object.
+///
 /// ## Examples
 ///
 /// The following examples uses the same shared secret passed in various forms.
 ///
-///```
+/// ```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize()
 ///     .unwrap();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_ascii = "12345678901234567890".to_owned();
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .period(42)
 ///     .finalize();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_hex = "3132333435363738393031323334353637383930".to_owned();
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .timestamp(1234567890)
 ///     .finalize();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
 ///     .hash_function(libreauth::oath::HashFunction::Sha256)
 ///     .finalize();
-///```
+/// ```
 pub struct TOTPBuilder {
     key: Option<Vec<u8>>,
     timestamp_offset: i64,
@@ -272,6 +275,7 @@ pub mod cbindings {
     use time;
     use std;
 
+    /// [C binding] TOTP configuration storage
     #[repr(C)]
     pub struct TOTPcfg {
         key: *const u8,
@@ -287,6 +291,20 @@ pub mod cbindings {
         hash_function: HashFunction,
     }
 
+    /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_totp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    ///
+    /// uint32_t ret = libreauth_totp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
         let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(TOTPcfg, cfg,
@@ -302,6 +320,28 @@ pub mod cbindings {
         }
     }
 
+    /// [C binding] Generate a TOTP code according to the given configuration and stores it in the supplied buffer.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_totp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    /// char code[DEFAULT_BUFF_LEN + 1] = {0};
+    ///
+    /// uint32_t ret = libreauth_totp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    ///
+    /// ret = libreauth_totp_generate(&cfg, code);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    ///
+    /// printf("TOTP code: %s\n", code);
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut libc::uint8_t) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
@@ -326,6 +366,26 @@ pub mod cbindings {
             }
     }
 
+    /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_totp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    ///
+    /// uint32_t ret = libreauth_totp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    ///
+    /// if (libreauth_totp_is_valid(&cfg, "4755224")) {
+    ///     printf("Valid TOTP code\n");
+    /// } else {
+    ///     printf("Invalid TOTP code\n");
+    /// }
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const libc::uint8_t) -> libc::int32_t {
         let cfg = get_value_or_false!(c::get_cfg(cfg));

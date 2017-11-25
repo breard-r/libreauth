@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015)
- * Author: Rodolphe Breard (2015)
+ * Copyright Rodolphe Breard (2015-2017)
+ * Author: Rodolphe Breard (2015-2017)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -43,6 +43,7 @@ use crypto::sha1::Sha1;
 use base32;
 
 
+/// Generates, manipulates and checks HOTP codes.
 pub struct HOTP {
     key: Vec<u8>,
     counter: u64,
@@ -143,7 +144,7 @@ impl HOTP {
     ///     .finalize()
     ///     .unwrap()
     ///     .is_valid(&user_code);
-    /// assert_eq!(valid, true);
+    /// assert!(valid);
     /// ```
     pub fn is_valid(&self, code: &String) -> bool {
         if code.len() != self.output_len {
@@ -160,44 +161,46 @@ impl HOTP {
     }
 }
 
+/// Builds an HOTP object.
+///
 /// ## Examples
 ///
 /// The following examples uses the same shared secret passed in various forms.
 ///
-///```
+/// ```
 /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .key(&key)
 ///     .finalize()
 ///     .unwrap();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_ascii = "12345678901234567890".to_owned();
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .ascii_key(&key_ascii)
 ///     .counter(42)
 ///     .finalize()
 ///     .unwrap();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_hex = "3132333435363738393031323334353637383930".to_owned();
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .hex_key(&key_hex)
 ///     .counter(69)
 ///     .output_len(8)
 ///     .finalize();
-///```
+/// ```
 ///
-///```
+/// ```
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
 ///     .hash_function(libreauth::oath::HashFunction::Sha256)
 ///     .finalize();
-///```
+/// ```
 pub struct HOTPBuilder {
     key: Option<Vec<u8>>,
     counter: u64,
@@ -261,6 +264,7 @@ pub mod cbindings {
     use libc;
     use std;
 
+    /// [C binding] HOTP configuration storage
     #[repr(C)]
     pub struct HOTPcfg {
         key: *const u8,
@@ -272,6 +276,20 @@ pub mod cbindings {
         hash_function: HashFunction,
     }
 
+    /// [C binding] Initialize a `struct libreauth_hotp_cfg` with the default values.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_hotp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    ///
+    /// uint32_t ret = libreauth_hotp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
         let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
@@ -281,6 +299,28 @@ pub mod cbindings {
         }
     }
 
+    /// [C binding] Generate an HOTP code according to the given configuration and stores it in the supplied buffer.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_hotp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    /// char code[DEFAULT_BUFF_LEN + 1];
+    ///
+    /// uint32_t ret = libreauth_hotp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    ///
+    /// ret = libreauth_hotp_generate(&cfg, code);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    ///
+    /// printf("HOTP code: %s\n", code);
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut libc::uint8_t) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
@@ -303,6 +343,26 @@ pub mod cbindings {
         }
     }
 
+    /// [C binding] Check whether or not the supplied HOTP code is valid.
+    ///
+    /// ## Examples
+    /// ```c
+    /// struct libreauth_hotp_cfg cfg;
+    /// const char key[] = "12345678901234567890";
+    ///
+    /// uint32_t ret = libreauth_hotp_init(&cfg);
+    /// if (ret != LIBREAUTH_OATH_SUCCESS) {
+    ///     // Handle the error.
+    /// }
+    /// cfg.key = key;
+    /// cfg.key_len = sizeof(key);
+    ///
+    /// if (libreauth_hotp_is_valid(&cfg, "755224")) {
+    ///     printf("Valid HOTP code\n");
+    /// } else {
+    ///     printf("Invalid HOTP code\n");
+    /// }
+    /// ```
     #[no_mangle]
     pub extern fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const libc::uint8_t) -> libc::int32_t {
         let cfg = get_value_or_false!(c::get_cfg(cfg));

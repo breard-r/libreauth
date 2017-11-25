@@ -33,6 +33,66 @@
  */
 
 
+//! HOTP and TOTP authentication module.
+//!
+//! ## Examples
+//!
+//! ```rust
+//! let key_ascii = "12345678901234567890".to_owned();
+//! let mut hotp = libreauth::oath::HOTPBuilder::new()
+//!     .ascii_key(&key_ascii)
+//!     .finalize()
+//!     .unwrap();
+//!
+//! let code = hotp.generate();
+//! assert_eq!(code, "755224");
+//! assert!(hotp.is_valid(&"755224".to_owned()));
+//!
+//! let code = hotp.increment_counter().generate();
+//! assert_eq!(code, "287082");
+//! assert!(hotp.is_valid(&"287082".to_owned()));
+//! ```
+//!
+//! ```rust
+//! let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
+//! let mut totp = libreauth::oath::TOTPBuilder::new()
+//!     .base32_key(&key_base32)
+//!     .finalize()
+//!     .unwrap();
+//!
+//! let code = totp.generate();
+//! println!("TOTP code: {}", code);
+//!
+//! assert!(totp.is_valid(&code));
+//! ```
+
+/// Hash functions used for the code's computation.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_oath_hash_function` and
+/// the members has been renamed as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Sha1</td>
+///             <td>LIBREAUTH_OATH_SHA_1</td>
+///         </tr>
+///         <tr>
+///             <td>Sha256</td>
+///             <td>LIBREAUTH_OATH_SHA_256</td>
+///         </tr>
+///         <tr>
+///             <td>Sha512</td>
+///             <td>LIBREAUTH_OATH_SHA_512</td>
+///         </tr>
+///     </tbody>
+/// </table>
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum HashFunction {
@@ -41,6 +101,65 @@ pub enum HashFunction {
     Sha512 = 3,
 }
 
+/// Error codes used both in the rust and C interfaces.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_oath_errno` and the
+/// members has been renamed as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Success</td>
+///             <td>LIBREAUTH_OATH_SUCCESS</td>
+///         </tr>
+///         <tr>
+///             <td>CfgNullPtr</td>
+///             <td>LIBREAUTH_OATH_CFG_NULL_PTR</td>
+///         </tr>
+///         <tr>
+///             <td>CodeNullPtr</td>
+///             <td>LIBREAUTH_OATH_CODE_NULL_PTR</td>
+///         </tr>
+///         <tr>
+///             <td>KeyNullPtr</td>
+///             <td>LIBREAUTH_OATH_KEY_NULL_PTR</td>
+///         </tr>
+///         <tr>
+///             <td>InvalidBaseLen</td>
+///             <td>LIBREAUTH_OATH_INVALID_BASE_LEN</td>
+///         </tr>
+///         <tr>
+///             <td>InvalidKeyLen</td>
+///             <td>LIBREAUTH_OATH_INVALID_KEY_LEN</td>
+///         </tr>
+///         <tr>
+///             <td>CodeTooSmall</td>
+///             <td>LIBREAUTH_OATH_CODE_TOO_SMALL</td>
+///         </tr>
+///         <tr>
+///             <td>CodeTooBig</td>
+///             <td>LIBREAUTH_OATH_CODE_TOO_BIG</td>
+///         </tr>
+///         <tr>
+///             <td>InvalidKey</td>
+///             <td>LIBREAUTH_OATH_INVALID_KEY</td>
+///         </tr>
+///         <tr>
+///             <td>InvalidPeriod</td>
+///             <td>LIBREAUTH_OATH_INVALID_PERIOD</td>
+///         </tr>
+///         <tr>
+///             <td>CodeInvalidUTF8</td>
+///             <td>LIBREAUTH_OATH_CODE_INVALID_UTF8</td>
+///         </tr>
+///     </tbody>
+/// </table>
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {

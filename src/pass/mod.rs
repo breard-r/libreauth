@@ -127,11 +127,7 @@ pub const PASSWORD_MAX_LEN: usize = 128;
 /// ## C interface
 /// The C interface uses an enum of type `libreauth_pass_errno` and the members has been renamed
 /// as follows:
-/// <style>
-/// .vcentered_table th, .vcentered_table td {vertical-align: middle;}
-/// .vcentered_table > thead > tr > th {text-align: center;}
-/// </style>
-/// <table class="vcentered_table">
+/// <table>
 ///     <thead>
 ///         <tr>
 ///             <th>Rust</th>
@@ -180,6 +176,28 @@ pub enum ErrorCode {
 }
 
 /// Defines whether or not LibreAuth should comply with recommendations from a specific standard.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_pass_standard` and the members has been renamed
+/// as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>NoStandard</td>
+///             <td>LIBREAUTH_PASS_NOSTANDARD</td>
+///         </tr>
+///         <tr>
+///             <td>Nist80063b</td>
+///             <td>LIBREAUTH_PASS_NIST80063B</td>
+///         </tr>
+///     </tbody>
+/// </table>
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum PasswordStorageStandard {
