@@ -42,9 +42,9 @@
  * PASS module
  */
 
-#define LIBREAUTH_PASS_PASSWORD_MIN_LEN 4
-#define LIBREAUTH_PASS_PASSWORD_MAX_LEN 128
-#define LIBREAUTH_PASS_STORAGE_LEN      1024
+#define LIBREAUTH_PASSWORD_MIN_LEN          8
+#define LIBREAUTH_PASSWORD_MAX_LEN          128
+#define LIBREAUTH_PASSWORD_STORAGE_LEN      1024
 
 typedef enum {
     LIBREAUTH_PASS_SUCCESS                  = 0,
@@ -54,8 +54,14 @@ typedef enum {
     LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20
 } libreauth_pass_errno;
 
-libreauth_pass_errno    libreauth_pass_derive_password(const void *password, void *storage, size_t storage_len);
-int32_t                 libreauth_pass_is_valid(const void *password, const void *reference);
+typedef enum {
+    LIBREAUTH_PASS_NOSTANDARD               = 0,
+    LIBREAUTH_PASS_NIST80063B               = 1
+} libreauth_pass_standard;
+
+libreauth_pass_errno    libreauth_password_hash(const void *password, void *storage, size_t storage_len);
+libreauth_pass_errno    libreauth_password_hash_standard(const void *password, void *storage, size_t storage_len, libreauth_pass_standard standard);
+int32_t                 libreauth_password_is_valid(const void *password, const void *reference);
 
 
 /*

@@ -141,8 +141,8 @@ pub struct PHCData {
 }
 
 impl PHCData {
-    pub fn from_string(s: &String) -> Result<PHCData, ()> {
-        match get_phc(s.as_str().as_bytes()) {
+    pub fn from_bytes(s: &Vec<u8>) -> Result<PHCData, ()> {
+        match get_phc(s) {
             IResult::Done(r, v) => {
                 match r.len() {
                     0 => Ok(v),
@@ -208,7 +208,7 @@ mod tests {
             "$pbkdf2$i=21000$RSF4Aw$LwCbGeQoBZIraYoDZ8Oe/PxdJHc",
         ];
         for d in data.iter() {
-            match PHCData::from_string(&d.to_string()) {
+            match PHCData::from_bytes(&d.to_string().into_bytes()) {
                 Ok(r) => match r.to_string() {
                     Ok(s) => {
                         assert_eq!(s, d.to_string());
@@ -229,7 +229,7 @@ mod tests {
             ("$test$i=42$YXN1cmUu$", "$test$i=42$YXN1cmUu"),
         ];
         for &(d, c) in data.iter() {
-            match PHCData::from_string(&d.to_string()) {
+            match PHCData::from_bytes(&d.to_string().into_bytes()) {
                 Ok(r) => match r.to_string() {
                     Ok(s) => {
                         assert_eq!(s, c);
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_valid_data_id() {
-        match PHCData::from_string(&"$dummy".to_string()) {
+        match PHCData::from_bytes(&"$dummy".to_string().into_bytes()) {
             Ok(phc) => {
                 assert_eq!(phc.id, "dummy".to_string());
                 assert!(phc.parameters.is_empty());
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_valid_data_params() {
-        match PHCData::from_string(&"$dummy$i=42".to_string()) {
+        match PHCData::from_bytes(&"$dummy$i=42".to_string().into_bytes()) {
             Ok(phc) => {
                 assert_eq!(phc.id, "dummy".to_string());
                 assert_eq!(phc.parameters.len(), 1);
@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn test_valid_data_salt() {
-        match PHCData::from_string(&"$dummy$i=42$YXN1cmUu".to_string()) {
+        match PHCData::from_bytes(&"$dummy$i=42$YXN1cmUu".to_string().into_bytes()) {
             Ok(phc) => {
                 assert_eq!(phc.id, "dummy".to_string());
                 assert_eq!(phc.parameters.len(), 1);
@@ -293,7 +293,7 @@ mod tests {
 
     #[test]
     fn test_valid_data_full() {
-        match PHCData::from_string(&"$dummy$i=42$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3Vy".to_string()) {
+        match PHCData::from_bytes(&"$dummy$i=42$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3Vy".to_string().into_bytes()) {
             Ok(phc) => {
                 assert_eq!(phc.id, "dummy".to_string());
                 assert_eq!(phc.parameters.len(), 1);
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn test_multiple_params() {
-        match PHCData::from_string(&"$dummy$i=42,plop=asdfg,21=abcd12efg$YXN1cmUu".to_string()) {
+        match PHCData::from_bytes(&"$dummy$i=42,plop=asdfg,21=abcd12efg$YXN1cmUu".to_string().into_bytes()) {
             Ok(phc) => {
                 assert_eq!(phc.parameters.len(), 3);
                 match phc.parameters.get("i") {
@@ -354,7 +354,7 @@ mod tests {
             "$test$i=$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3V=", // no padding allowed
         ];
         for s in data.iter() {
-            match PHCData::from_string(&s.to_string()) {
+            match PHCData::from_bytes(&s.to_string().into_bytes()) {
                 Ok(p) => {
                     println!("*** Debug ***");
                     println!("input data: {}", s);
