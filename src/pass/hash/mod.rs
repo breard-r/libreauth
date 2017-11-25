@@ -38,6 +38,7 @@ use super::{ErrorCode,PasswordStorageStandard};
 use super::phc::PHCData;
 use super::generate_salt;
 
+mod argon2;
 mod pbkdf2;
 
 trait HashingFunction {
@@ -56,16 +57,17 @@ pub struct PasswordHasher {
 impl PasswordHasher {
     pub fn new(standard: PasswordStorageStandard) -> PasswordHasher {
         PasswordHasher {
-            hashing_function: Box::new(match standard {
-                PasswordStorageStandard::NoStandard => pbkdf2::Pbkdf2Hash::new(),
-                PasswordStorageStandard::Nist80063b => pbkdf2::Pbkdf2Hash::new(),
-            }),
+            hashing_function: match standard {
+                PasswordStorageStandard::NoStandard => Box::new(argon2::Argon2Hash::new()),
+                PasswordStorageStandard::Nist80063b => Box::new(pbkdf2::Pbkdf2Hash::new()),
+            },
         }
     }
 
     pub fn new_from_phc(ref_hash: &PHCData) -> Result<PasswordHasher, ErrorCode> {
-        let mut func = match ref_hash.id.as_ref() {
-            "pbkdf2" => pbkdf2::Pbkdf2Hash::new(),
+        let mut func: Box<HashingFunction> = match ref_hash.id.as_ref() {
+            "argon2" => Box::new(argon2::Argon2Hash::new()),
+            "pbkdf2" => Box::new(pbkdf2::Pbkdf2Hash::new()),
             _ => { return Err(ErrorCode::InvalidPasswordFormat) },
         };
         for (name, value) in ref_hash.parameters.clone() {
@@ -82,7 +84,7 @@ impl PasswordHasher {
             None => {},
         };
         Ok(PasswordHasher {
-            hashing_function: Box::new(func),
+            hashing_function: func,
         })
     }
 

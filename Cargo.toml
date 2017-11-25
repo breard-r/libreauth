@@ -18,6 +18,7 @@ crate-type = ["rlib", "dylib"]
 cbindings = ["libc"]
 
 [dependencies]
+rust-argon2 = "^0.3.0"
 rust-crypto = "^0.2.31"
 base64 = "^0.4.1"
 base32 = "^0.3.0"

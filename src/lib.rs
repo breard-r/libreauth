@@ -42,6 +42,7 @@
 //!
 //!
 
+extern crate argon2;
 extern crate base32;
 extern crate base64;
 extern crate crypto;

@@ -58,6 +58,7 @@
 //! .vcentered_table > thead > tr > th {text-align: center;}
 //! .vcentered_table > tbody > tr > td:last-child {text-align: center;}
 //! .hash {text-align: center; vertical-align: middle;}
+//! .legend {font-style: italic; font-size: smaller; color: gray;}
 //! </style>
 //! <table class="vcentered_table">
 //!     <thead>
@@ -71,7 +72,32 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="2" class="hash">pbkdf2<br />(default)</td>
+//!             <td rowspan="4" class="hash">argon2<br /><span class="legend">default</span></td>
+//!             <td>passes</td>
+//!             <td>integer</td>
+//!             <td>The number of block matrix iterations to perform.</td>
+//!             <td>3</td>
+//!         </tr>
+//!         <tr>
+//!             <td>mem</td>
+//!             <td>integer</td>
+//!             <td>Memmory cost (2^mem kibbibytes).</td>
+//!             <td>12 (4096 KiB)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>lanes</td>
+//!             <td>integer</td>
+//!             <td>The degree of parallelism by which memory is filled during hash computation.</td>
+//!             <td>4</td>
+//!         </tr>
+//!         <tr>
+//!             <td>len</td>
+//!             <td>integer</td>
+//!             <td>Output length, in bytes.</td>
+//!             <td>32</td>
+//!         </tr>
+//!         <tr>
+//!             <td rowspan="2" class="hash">pbkdf2<br /><span class="legend">NIST SP 800-63B</span></td>
 //!             <td>iter</td>
 //!             <td>integer</td>
 //!             <td>Number of iterations.</td>
