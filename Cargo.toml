@@ -1,6 +1,6 @@
 [package]
 name = "libreauth"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
 description = "Collection of tools for user authentication."
 keywords = ["authentication", "password", "pass", "pwd", "2fa", "oath", "otp", "hotp", "totp"]
