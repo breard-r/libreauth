@@ -51,10 +51,6 @@ release: test
 	@make sync_doc
 	@echo "$(NAME) $(VERSION) released."
 
-sync_doc: test doc
-	@rsync -havz --progress $(DOC_PATH) "what.tf:/srv/http/what.tf/"
-	@echo "Documentation updated."
-
 help:
 	@echo "Default target: $(NAME)"
 	@echo
@@ -72,4 +68,4 @@ help:
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
 
-.PHONY: all install uninstall debug test tests clean doc release sync_doc help
+.PHONY: all install uninstall debug test tests clean doc release help
