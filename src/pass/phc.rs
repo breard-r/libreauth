@@ -355,23 +355,7 @@ mod tests {
         ];
         for s in data.iter() {
             match PHCData::from_bytes(&s.to_string().into_bytes()) {
-                Ok(p) => {
-                    println!("*** Debug ***");
-                    println!("input data: {}", s);
-                    println!("id: {}", p.id);
-                    for (k, v) in p.parameters.iter() {
-                        println!(" - {} => {}", k, v);
-                    }
-                    match p.salt {
-                        Some(s) => println!("salt: {:?}", s),
-                        None => println!("No salt found."),
-                    };
-                    match p.hash {
-                        Some(s) => println!("hash: {:?}", s),
-                        None => println!("No hash found."),
-                    };
-                    assert!(false);
-                },
+                Ok(_) => assert!(false),
                 Err(_) => assert!(true),
             }
         }
