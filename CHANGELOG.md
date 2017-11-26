@@ -12,6 +12,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - The oath module does not not expose sub-modules anymore.
 
 
+## [0.5.3] - 2017-04-17
+
+### Added
+- TOTP tolerance.
+
+### Changed
+- The oath module does not not expose sub-modules anymore;
+- header guards now uses "#pragma once";
+- C tests now uses C11 standard and clang.
+
+
 ## [0.5.2] - 2016-06-26
 
 ### Changed
