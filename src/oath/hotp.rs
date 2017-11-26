@@ -34,14 +34,20 @@
 
 
 use super::{HashFunction, ErrorCode};
-use crypto::sha2::{Sha256, Sha512};
-use crypto::mac::{Mac, MacResult};
-use crypto::digest::Digest;
-use crypto::hmac::Hmac;
-use crypto::sha1::Sha1;
+use sha2::{Sha256, Sha512};
+use sha_1::Sha1;
+use hmac::{Hmac, Mac};
 use base32;
 use hex;
 
+
+macro_rules! compute_hmac {
+    ($obj:ident, $hash:ty, $input:ident) => {{
+        let mut hmac = Hmac::<$hash>::new(&$obj.key.as_slice());
+        hmac.input($input.as_slice());
+        hmac.result().code().to_vec()
+    }}
+}
 
 /// Generates, manipulates and checks HOTP codes.
 pub struct HOTP {
@@ -53,12 +59,6 @@ pub struct HOTP {
 }
 
 impl HOTP {
-    fn compute_hmac<H: Digest>(&self, digest: H, msg: &Vec<u8>) -> MacResult {
-        let mut hmac = Hmac::new(digest, &self.key);
-        hmac.input(msg);
-        hmac.result()
-    }
-
     fn reduce_result(&self, hs: &[u8]) -> u32 {
         let offset = (hs[hs.len() - 1] & 0xf) as usize;
         let hash = hs[offset..offset+4].to_vec();
@@ -117,12 +117,12 @@ impl HOTP {
             ((self.counter >> 8) & 0xff) as u8,
             (self.counter & 0xff) as u8,
         ];
-        let result = match self.hash_function {
-            HashFunction::Sha1 => self.compute_hmac(Sha1::new(), &msg),
-            HashFunction::Sha256 => self.compute_hmac(Sha256::new(), &msg),
-            HashFunction::Sha512 => self.compute_hmac(Sha512::new(), &msg),
+        let result: Vec<u8> = match self.hash_function {
+            HashFunction::Sha1 => compute_hmac!(self, Sha1, msg),
+            HashFunction::Sha256 => compute_hmac!(self, Sha256, msg),
+            HashFunction::Sha512 => compute_hmac!(self, Sha512, msg),
         };
-        let hs = result.code();
+        let hs = result.as_slice();
         let nb = self.reduce_result(&hs);
         self.format_result(nb)
     }
@@ -153,9 +153,9 @@ impl HOTP {
         let ref_code = self.generate().into_bytes();
         let code = code.clone().into_bytes();
         let (code, ref_code) = match self.hash_function {
-            HashFunction::Sha1 => (self.compute_hmac(Sha1::new(), &code), self.compute_hmac(Sha1::new(), &ref_code)),
-            HashFunction::Sha256 => (self.compute_hmac(Sha256::new(), &code), self.compute_hmac(Sha256::new(), &ref_code)),
-            HashFunction::Sha512 => (self.compute_hmac(Sha512::new(), &code), self.compute_hmac(Sha512::new(), &ref_code)),
+            HashFunction::Sha1 => (compute_hmac!(self, Sha1, code), compute_hmac!(self, Sha1, ref_code)),
+            HashFunction::Sha256 => (compute_hmac!(self, Sha256, code), compute_hmac!(self, Sha256, ref_code)),
+            HashFunction::Sha512 => (compute_hmac!(self, Sha512, code), compute_hmac!(self, Sha512, ref_code)),
         };
         code == ref_code
     }

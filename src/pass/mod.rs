@@ -105,7 +105,7 @@
 //!         </tr>
 //!         <tr>
 //!             <td>hash</td>
-//!             <td>string: sha1|sha256|sha512</td>
+//!             <td>string: sha1|sha224|sha256|sha384|sha512|sha512t224|sha512t256</td>
 //!             <td>The hash function.</td>
 //!             <td>sha256</td>
 //!         </tr>
@@ -125,9 +125,8 @@
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 use rand::{Rng,thread_rng};
-use crypto::mac::Mac;
-use crypto::hmac::Hmac;
-use crypto::sha2::Sha512;
+use sha2::Sha512;
+use hmac::{Hmac, Mac};
 
 
 /// The minimal accepted length for passwords.
@@ -298,13 +297,13 @@ pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
                         Some(v) => v,
                         None => { return false; },
                     };
-                    let mut ref_hmac = Hmac::new(Sha512::new(), &salt);
+                    let mut ref_hmac = Hmac::<Sha512>::new(&salt);
                     ref_hmac.input(sh_value.as_slice());
 
-                    let mut pass_hmac = Hmac::new(Sha512::new(), &salt);
+                    let mut pass_hmac = Hmac::<Sha512>::new(&salt);
                     pass_hmac.input(hashed_pass.hash.unwrap().as_slice());
 
-                    ref_hmac.result() == pass_hmac.result()
+                    ref_hmac.result().code() == pass_hmac.result().code()
                 },
                 Err(_) => false,
             },

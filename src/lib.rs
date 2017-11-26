@@ -43,9 +43,13 @@
 //!
 
 extern crate argon2;
+extern crate pbkdf2;
+extern crate sha_1;
+extern crate sha2;
+extern crate hmac;
+
 extern crate base32;
 extern crate base64;
-extern crate crypto;
 extern crate rand;
 extern crate time;
 extern crate hex;

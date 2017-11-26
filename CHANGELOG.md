@@ -9,7 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Password authentication.
 
 ### Changed
-- The oath module does not not expose sub-modules anymore.
+- The `rust-crypto` crate has been replaced by several crates from the RustCrypto project (although the name is very similar, those are two different projects);
+- the oath module does not not expose sub-modules anymore.
 
 
 ## [0.5.3] - 2017-04-17
