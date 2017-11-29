@@ -10,6 +10,9 @@ readme = "README.md"
 license = "CECILL-2.1"
 include = ["src/**/*", "Cargo.toml", "LICENSE-*.txt"]
 
+[package.metadata.docs.rs]
+features = ["cbindings"]
+
 [lib]
 name = "libreauth"
 crate-type = ["rlib", "dylib"]
