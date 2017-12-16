@@ -110,39 +110,4 @@ $ ./totp
 
 ### Python
 
-```Python
-from ctypes.util import find_library
-from struct import Struct
-from ctypes import *
-
-class TOTPcfg(Structure):
-    _fields_ = [
-        ('key', c_char_p),
-        ('key_len', c_size_t),
-        ('timestamp', c_longlong),
-        ('period', c_uint),
-        ('initial_time', c_ulonglong),
-        ('output_len', c_size_t),
-        ('output_base', c_char_p),
-        ('output_base_len', c_size_t),
-        ('hash_function', c_int),
-    ]
-
-def get_totp():
-    key = b'12345678901234567890'
-    lib_path = find_library('libreauth') or 'target/release/liblibreauth.so'
-    lib = cdll.LoadLibrary(lib_path)
-    cfg = TOTPcfg()
-    if lib.libreauth_totp_init(byref(cfg)) != 0:
-        return
-    cfg.key_len = len(key)
-    cfg.key = c_char_p(key)
-    code = create_string_buffer(b'\000' * cfg.output_len)
-    if lib.libreauth_totp_generate(byref(cfg), code) != 0:
-        return
-    return str(code.value, encoding="utf-8")
-
-if __name__ == '__main__':
-    code = get_totp()
-    print('{}'.format(code))
-```
+Python bindings are available. See the [Python LibreAuth](https://github.com/breard-r/py-libreauth) project.

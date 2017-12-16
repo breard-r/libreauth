@@ -21,13 +21,11 @@ $(NAME): $(OBJ)
 test: cc_version $(NAME)
 	@(hash valgrind 2>/dev/null && LD_LIBRARY_PATH=$(LIBDIR) valgrind ./$(NAME))
 	@LD_LIBRARY_PATH=$(LIBDIR) ./$(NAME)
-	@(hash python2 2>/dev/null && python2 --version && python2 -m unittest $(PYSRC))
-	@(hash python3 2>/dev/null && python3 --version && python3 -m unittest $(PYSRC))
 
 tests: test
 
 clean:
-	@rm -rf $(NAME) $(OBJ) '__pycache__' *.pyc
+	@rm -rf $(NAME) $(OBJ)
 
 cc_version:
 	$(CC) --version
