@@ -48,7 +48,6 @@ release: test
 	@git push origin $(TAG_NAME)
 	@cargo package
 	@cargo publish
-	@make sync_doc
 	@echo "$(NAME) $(VERSION) released."
 
 help:
