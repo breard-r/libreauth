@@ -50,16 +50,19 @@
 //!
 //! Generate a random key and display it in several forms.
 //! ```rust
-//! let mut key = KeyBuilder::new().generate();
+//! let mut key = libreauth::key::KeyBuilder::new();
 //! println!("Key: Vec<u8>: {:?}", key.as_vec());
 //! println!("Key: hex String: {}", key.as_hex());
 //! println!("Key: base 32 String: {}", key.as_base32());
+//! assert!(key.as_vec() == key.as_vec());
+//! assert!(key.as_hex() == key.as_hex());
+//! assert!(key.as_base32() == key.as_base32());
 //! ```
 //!
 //! Generate two random key and test if they are different.
 //! ```rust
-//! let k1 = KeyBuilder::new().as_vec();
-//! let k2 = KeyBuilder::new().as_vec();
+//! let k1 = libreauth::key::KeyBuilder::new().as_vec();
+//! let k2 = libreauth::key::KeyBuilder::new().as_vec();
 //! assert!(k1 != k2);
 //! ```
 
