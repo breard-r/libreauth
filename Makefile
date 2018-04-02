@@ -32,6 +32,12 @@ test:
 
 tests: test
 
+test_nightly:
+	@rustup run nightly cargo test --features "cbindings"
+	@make -C tests clean test
+	@echo
+	@echo "All tests completed successfully."
+
 clean:
 	@cargo clean
 	@make -C tests clean
@@ -67,4 +73,4 @@ help:
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
 
-.PHONY: all install uninstall debug test tests clean doc release help
+.PHONY: all install uninstall debug test tests test_nightly clean doc release help
