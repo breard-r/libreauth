@@ -105,7 +105,7 @@
 //!         </tr>
 //!         <tr>
 //!             <td>hash</td>
-//!             <td>string: sha1|sha224|sha256|sha384|sha512|sha512t224|sha512t256</td>
+//!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256</td>
 //!             <td>The hash function.</td>
 //!             <td>sha256</td>
 //!         </tr>
