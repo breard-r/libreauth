@@ -49,6 +49,7 @@
 //! ## Examples
 //!
 //! Generate a random key and display it in several forms.
+//!
 //! ```rust
 //! let mut key = libreauth::key::KeyBuilder::new();
 //! println!("Key: Vec<u8>: {:?}", key.as_vec());
@@ -60,6 +61,7 @@
 //! ```
 //!
 //! Generate two random key and test if they are different.
+//!
 //! ```rust
 //! let k1 = libreauth::key::KeyBuilder::new().as_vec();
 //! let k2 = libreauth::key::KeyBuilder::new().as_vec();
@@ -70,6 +72,24 @@ use rand::os::OsRng;
 use rand::Rng;
 use base32;
 use hex;
+
+
+macro_rules! gen_or_retrive_key {
+    ($obj:ident, $ft:expr, $f:ident) => {{
+        let key = match $obj.key {
+            Some(ref k) => if k.len() == $obj.size {
+                Some(k.clone())
+            } else {
+                None
+            },
+            None => None,
+        };
+        match key {
+            Some(k) => $ft(&k),
+            None => $obj.generate().$f(),
+        }
+    }}
+}
 
 /// Random key builder.
 pub struct KeyBuilder {
@@ -106,28 +126,23 @@ impl KeyBuilder {
     /// Return the current key as a Vec<u8>.
     /// Calls `KeyBuilder::generate` if no key has been generated yet.
     pub fn as_vec(&mut self) -> Vec<u8> {
-        match self.key {
-            Some(ref k) => k.clone(),
-            None => self.generate().as_vec(),
-        }
+        gen_or_retrive_key!(self, |x: &Vec<u8>| { x.clone() }, as_vec)
     }
 
     /// Return the current key as an hexadecimal string.
     /// Calls `KeyBuilder::generate` if no key has been generated yet.
     pub fn as_hex(&mut self) -> String {
-        match self.key {
-            Some(ref k) => hex::encode(k),
-            None => self.generate().as_hex(),
-        }
+        gen_or_retrive_key!(self, hex::encode, as_hex)
     }
 
     /// Return the current key as a base 32 encoded string.
     /// Calls `KeyBuilder::generate` if no key has been generated yet.
     pub fn as_base32(&mut self) -> String {
-        match self.key {
-            Some(ref k) => base32::encode(base32::Alphabet::RFC4648 { padding: false }, k.as_slice()),
-            None => self.generate().as_base32(),
-        }
+        gen_or_retrive_key!(
+            self,
+            |x: &Vec<u8>| { base32::encode(base32::Alphabet::RFC4648 { padding: false }, x.as_slice()) },
+            as_base32
+        )
     }
 }
 
@@ -184,6 +199,24 @@ mod tests {
     fn test_equality() {
         let mut key = KeyBuilder::new();
         assert!(key.as_vec() == key.as_vec());
+    }
+
+    #[test]
+    fn test_size_change() {
+        let mut key = KeyBuilder::new();
+        let k1 = key.as_vec();
+        key.size(42);
+        let k2 = key.as_vec();
+        assert!(k1 != k2);
+    }
+
+    #[test]
+    fn test_size_unchanged() {
+        let mut key = KeyBuilder::new();
+        let k1 = key.as_vec();
+        key.size(21);
+        let k2 = key.as_vec();
+        assert!(k1 == k2);
     }
 
     #[test]
