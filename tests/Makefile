@@ -4,6 +4,7 @@ LIBDIR  = ../target/$(CHANNEL)/
 INCDIR  = ../include/
 SRC     = test_libreauth.c \
 		test_hotp.c \
+		test_key.c \
 		test_pass.c \
 		test_totp.c
 OBJ     = $(SRC:.c=.o)

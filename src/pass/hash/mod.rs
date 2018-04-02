@@ -36,7 +36,6 @@ use std::collections::HashMap;
 use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
 use super::{ErrorCode,PasswordStorageStandard};
 use super::phc::PHCData;
-use super::generate_salt;
 
 mod argon2;
 mod pbkdf2;

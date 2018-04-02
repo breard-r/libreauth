@@ -39,6 +39,13 @@
 
 
 /*
+ * Key generation module
+ */
+
+int32_t libreauth_keygen(void *buff, size_t buff_len);
+
+
+/*
  * PASS module
  */
 

@@ -124,9 +124,9 @@
 //! [1]: https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
-use rand::{Rng,thread_rng};
 use sha2::Sha512;
 use hmac::{Hmac, Mac};
+use key::KeyBuilder;
 
 
 /// The minimal accepted length for passwords.
@@ -235,12 +235,6 @@ pub enum PasswordStorageStandard {
 mod hash;
 mod phc;
 
-fn generate_salt(nb_bytes: usize) -> Vec<u8> {
-    let mut salt: Vec<u8> = vec![0; nb_bytes];
-    thread_rng().fill_bytes(&mut salt);
-    salt
-}
-
 /// Hash a password and returns its string representation so it can be stored.
 ///
 /// The algorithm is automatically chosen by LibreAuth depending on the current state of
@@ -291,7 +285,7 @@ pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
         Ok(sh) => match hash::PasswordHasher::new_from_phc(&sh) {
             Ok(hasher) => match hasher.hash(password) {
                 Ok(hashed_pass) => {
-                    let salt = generate_salt(32);
+                    let salt = KeyBuilder::new().size(32).as_vec();
 
                     let sh_value = match sh.hash {
                         Some(v) => v,
@@ -426,7 +420,7 @@ mod tests {
     fn test_salt_gen() {
         let mut vec = Vec::new();
         for _ in 0..512 {
-            let s = generate_salt(6);
+            let s = KeyBuilder::new().size(6).as_vec();
             vec.push(s);
         }
         let l = vec.len();

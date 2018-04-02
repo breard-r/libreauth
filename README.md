@@ -30,6 +30,10 @@ LibreAuth is a collection of tools for user authentication.
   - [x] customizable output length
   - [x] customizable output alphabet
   - [x] customizable positive and negative period tolerance
+- Random key generation
+  - [x] uses the platform's secure entropy source
+  - [x] customizable size
+  - [x] customizable output format (Vec<u8>, hexadicimal string, base32 string)
 - ~~U2F - Universal 2nd Factor~~ ([FIDO Alliance](https://fidoalliance.org/specifications/download/)) :warning: Not started
   - [ ] virtual device API
   - [ ] client API

@@ -35,7 +35,7 @@
 use std::collections::HashMap;
 use super::HashingFunction;
 use super::ErrorCode;
-use super::generate_salt;
+use key::KeyBuilder;
 
 use pbkdf2::pbkdf2;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
@@ -79,7 +79,7 @@ impl Pbkdf2Hash {
         Pbkdf2Hash {
             hash_function: DEFAULT_HASH_FUNCTION,
             nb_iter: DEFAULT_ITER,
-            salt: generate_salt(DEFAULT_SALT_LENGTH),
+            salt: KeyBuilder::new().size(DEFAULT_SALT_LENGTH).as_vec(),
         }
     }
 }

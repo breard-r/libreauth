@@ -35,7 +35,7 @@
 use std::collections::HashMap;
 use super::HashingFunction;
 use super::ErrorCode;
-use super::generate_salt;
+use key::KeyBuilder;
 use argon2;
 
 
@@ -85,7 +85,7 @@ impl Argon2Hash {
             mem_cost: DEFAULT_MEM_COST,
             lanes: DEFAULT_LANES,
             output_len: DEFAULT_OUTPUT_LEN,
-            salt: generate_salt(DEFAULT_SALT_LENGTH),
+            salt: KeyBuilder::new().size(DEFAULT_SALT_LENGTH).as_vec(),
         }
     }
 }
