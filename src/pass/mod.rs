@@ -291,10 +291,16 @@ pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
                         Some(v) => v,
                         None => { return false; },
                     };
-                    let mut ref_hmac = Hmac::<Sha512>::new(&salt);
+                    let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
+                        Ok(h) => h,
+                        Err(_) => { return false; },
+                    };
                     ref_hmac.input(sh_value.as_slice());
 
-                    let mut pass_hmac = Hmac::<Sha512>::new(&salt);
+                    let mut pass_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
+                        Ok(h) => h,
+                        Err(_) => { return false; },
+                    };
                     pass_hmac.input(hashed_pass.hash.unwrap().as_slice());
 
                     ref_hmac.result().code() == pass_hmac.result().code()

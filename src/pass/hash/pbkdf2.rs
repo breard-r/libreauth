@@ -39,7 +39,7 @@ use key::KeyBuilder;
 
 use pbkdf2::pbkdf2;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
-use sha_1::Sha1;
+use sha1::Sha1;
 use hmac::Hmac;
 
 pub enum HashFunction {

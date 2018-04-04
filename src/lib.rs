@@ -44,7 +44,7 @@
 
 extern crate argon2;
 extern crate pbkdf2;
-extern crate sha_1;
+extern crate sha1;
 extern crate sha2;
 extern crate hmac;
 

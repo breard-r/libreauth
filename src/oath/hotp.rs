@@ -35,7 +35,7 @@
 
 use super::{HashFunction, ErrorCode};
 use sha2::{Sha256, Sha512};
-use sha_1::Sha1;
+use sha1::Sha1;
 use hmac::{Hmac, Mac};
 use base32;
 use hex;
@@ -43,7 +43,7 @@ use hex;
 
 macro_rules! compute_hmac {
     ($obj:ident, $hash:ty, $input:ident) => {{
-        let mut hmac = Hmac::<$hash>::new(&$obj.key.as_slice());
+        let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
         hmac.input($input.as_slice());
         hmac.result().code().to_vec()
     }}
