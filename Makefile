@@ -13,6 +13,10 @@ all: $(NAME)
 $(NAME):
 	@cargo build --release --features "cbindings"
 
+audit:
+	@cargo outdated
+	@cargo audit
+
 install:
 	@install -d $(prefix)/include $(prefix)/lib
 	@install --mode=0644 $(INCDIR)$(NAME).h $(prefix)/include
@@ -46,7 +50,7 @@ doc:
 	@rm -rf $(DOC_PATH)
 	@cargo doc --no-deps --features "cbindings"
 
-release: test
+release: test audit
 	@git diff --exit-code >/dev/null || (echo "The local git directory is not clean." && exit 1)
 	@git diff --exit-code --cached >/dev/null || (echo "The local git directory is not clean." && exit 1)
 	@test "$(shell git tag -l $(TAG_NAME))" = "" || (echo "Version $(VERSION) already exists." && exit 1)
@@ -73,4 +77,4 @@ help:
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
 
-.PHONY: all install uninstall debug test tests test_nightly clean doc release help
+.PHONY: all audit install uninstall debug test tests test_nightly clean doc release help
