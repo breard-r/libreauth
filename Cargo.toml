@@ -32,7 +32,7 @@ base32 = "^0.3.0"
 rand = "^0.4.2"
 time = "^0.1.31"
 hex = "^0.3.1"
-nom = "^2.2.1"
+nom = "^3.2.1"
 
 [dependencies.libc]
 version = "^0.2.40"
