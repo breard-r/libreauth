@@ -36,13 +36,11 @@ use std::collections::HashMap;
 use nom::{IResult};
 use base64;
 
-pub static PHC_BASE64: base64::Config = base64::Config {char_set: base64::CharacterSet::Standard, pad: false};
-
 fn from_b64(data: Option<Vec<u8>>) -> Option<Vec<u8>> {
     match data {
         Some(v) => match v.len() {
             0 => None,
-            _ => match base64::decode_config(v.as_slice(), PHC_BASE64) {
+            _ => match base64::decode_config(v.as_slice(), base64::STANDARD_NO_PAD) {
                 Ok(r) => Some(r),
                 Err(_) => None,
             },
@@ -52,7 +50,7 @@ fn from_b64(data: Option<Vec<u8>>) -> Option<Vec<u8>> {
 }
 
 fn to_b64(data: &[u8]) -> String {
-    base64::encode_config(data, PHC_BASE64)
+    base64::encode_config(data, base64::STANDARD_NO_PAD)
 }
 
 #[inline]
