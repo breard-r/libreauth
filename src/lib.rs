@@ -32,7 +32,6 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-
 //!
 //! [![Build Status](https://api.travis-ci.org/breard-r/libreauth.svg?branch=master)](https://travis-ci.org/breard-r/libreauth)
 //! [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
@@ -43,16 +42,16 @@
 //!
 
 extern crate argon2;
+extern crate hmac;
 extern crate pbkdf2;
 extern crate sha1;
 extern crate sha2;
-extern crate hmac;
 
 extern crate base32;
 extern crate base64;
+extern crate hex;
 extern crate rand;
 extern crate time;
-extern crate hex;
 #[macro_use]
 extern crate nom;
 

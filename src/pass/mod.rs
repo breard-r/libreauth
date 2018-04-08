@@ -32,7 +32,6 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-
 //! Password authentication module.
 //!
 //! It allows you to:
@@ -128,7 +127,6 @@ use sha2::Sha512;
 use hmac::{Hmac, Mac};
 use key::KeyBuilder;
 
-
 /// The minimal accepted length for passwords.
 ///
 /// ## C interface
@@ -145,7 +143,6 @@ pub const PASSWORD_MIN_LEN: usize = 8;
 /// ## C interface
 /// The C interface refers at this constant as `LIBREAUTH_PASSWORD_MAX_LEN`.
 pub const PASSWORD_MAX_LEN: usize = 128;
-
 
 /// Error codes used both in the rust and C interfaces.
 ///
@@ -258,7 +255,10 @@ pub fn password_hash(password: &Vec<u8>) -> Result<String, ErrorCode> {
 /// let password = "1234567890".to_string().into_bytes();
 /// let stored_password = libreauth::pass::password_hash_standard(&password, libreauth::pass::PasswordStorageStandard::Nist80063b).unwrap();
 /// ```
-pub fn password_hash_standard(password: &Vec<u8>, standard: PasswordStorageStandard) -> Result<String, ErrorCode> {
+pub fn password_hash_standard(
+    password: &Vec<u8>,
+    standard: PasswordStorageStandard,
+) -> Result<String, ErrorCode> {
     match hash::PasswordHasher::new(standard).hash(password) {
         Ok(s) => Ok(s.to_string().unwrap()),
         Err(e) => Err(e),
@@ -289,22 +289,28 @@ pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
 
                     let sh_value = match sh.hash {
                         Some(v) => v,
-                        None => { return false; },
+                        None => {
+                            return false;
+                        }
                     };
                     let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
-                        Err(_) => { return false; },
+                        Err(_) => {
+                            return false;
+                        }
                     };
                     ref_hmac.input(sh_value.as_slice());
 
                     let mut pass_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
-                        Err(_) => { return false; },
+                        Err(_) => {
+                            return false;
+                        }
                     };
                     pass_hmac.input(hashed_pass.hash.unwrap().as_slice());
 
                     ref_hmac.result().code() == pass_hmac.result().code()
-                },
+                }
                 Err(_) => false,
             },
             Err(_) => false,
@@ -334,8 +340,17 @@ mod cbindings {
     /// }
     /// ```
     #[no_mangle]
-    pub extern fn libreauth_password_hash(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t) -> ErrorCode {
-        libreauth_password_hash_standard(password, storage, storage_len, PasswordStorageStandard::NoStandard)
+    pub extern "C" fn libreauth_password_hash(
+        password: *const libc::c_char,
+        storage: *mut libc::uint8_t,
+        storage_len: libc::size_t,
+    ) -> ErrorCode {
+        libreauth_password_hash_standard(
+            password,
+            storage,
+            storage_len,
+            PasswordStorageStandard::NoStandard,
+        )
     }
 
     /// [C binding] Hash a password and returns its string representation so it can be stored.
@@ -353,7 +368,12 @@ mod cbindings {
     /// }
     /// ```
     #[no_mangle]
-    pub extern fn libreauth_password_hash_standard(password: *const libc::c_char, storage: *mut libc::uint8_t, storage_len: libc::size_t, standard: PasswordStorageStandard) -> ErrorCode {
+    pub extern "C" fn libreauth_password_hash_standard(
+        password: *const libc::c_char,
+        storage: *mut libc::uint8_t,
+        storage_len: libc::size_t,
+        standard: PasswordStorageStandard,
+    ) -> ErrorCode {
         let r_storage = unsafe {
             assert!(!storage.is_null());
             std::slice::from_raw_parts_mut(storage, storage_len as usize)
@@ -374,11 +394,10 @@ mod cbindings {
         }
         for i in 0..out_len {
             r_storage[i] = pass_b[i];
-        };
+        }
         r_storage[out_len] = 0;
         ErrorCode::Success
     }
-
 
     /// [C binding] Check whether or not the password is valid.
     ///
@@ -394,7 +413,10 @@ mod cbindings {
     /// assert(!libreauth_password_is_valid(invalid_pass, storage));
     /// ```
     #[no_mangle]
-    pub extern fn libreauth_password_is_valid(password: *const libc::c_char, reference: *const libc::c_char) -> libc::int32_t {
+    pub extern "C" fn libreauth_password_is_valid(
+        password: *const libc::c_char,
+        reference: *const libc::c_char,
+    ) -> libc::int32_t {
         let c_password = unsafe {
             assert!(!password.is_null());
             std::ffi::CStr::from_ptr(password)

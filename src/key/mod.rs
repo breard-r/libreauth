@@ -76,7 +76,6 @@ use base64;
 use base32;
 use hex;
 
-
 /// Random key builder.
 pub struct KeyBuilder {
     size: usize,
@@ -98,7 +97,7 @@ impl KeyBuilder {
             true => {
                 self.size = size;
                 self.generate()
-            },
+            }
             false => self,
         }
     }
@@ -108,7 +107,7 @@ impl KeyBuilder {
         if self.size == 0 {
             panic!();
         }
-        let mut key:Vec<u8> = vec![0; self.size];
+        let mut key: Vec<u8> = vec![0; self.size];
         OsRng::new().unwrap().fill_bytes(&mut key.as_mut_slice());
         self.key = Some(key);
         self
@@ -128,7 +127,7 @@ impl KeyBuilder {
     pub fn as_base32(&self) -> String {
         base32::encode(
             base32::Alphabet::RFC4648 { padding: false },
-            self.key.clone().unwrap().as_slice()
+            self.key.clone().unwrap().as_slice(),
         )
     }
 
@@ -137,7 +136,6 @@ impl KeyBuilder {
         base64::encode(self.key.clone().unwrap().as_slice())
     }
 }
-
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_keygen;
@@ -159,7 +157,10 @@ mod cbindings {
     /// }
     /// ```
     #[no_mangle]
-    pub extern fn libreauth_keygen(buff: *mut libc::uint8_t, buff_len: libc::size_t) -> libc::int32_t {
+    pub extern "C" fn libreauth_keygen(
+        buff: *mut libc::uint8_t,
+        buff_len: libc::size_t,
+    ) -> libc::int32_t {
         let key_size = buff_len as usize;
         if key_size == 0 || buff.is_null() {
             return 1;
@@ -169,12 +170,11 @@ mod cbindings {
         let len = out.len();
         for i in 0..len {
             key[i] = out[i];
-        };
+        }
         key[len] = 0;
         0
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -38,7 +38,6 @@ use super::ErrorCode;
 use key::KeyBuilder;
 use argon2;
 
-
 const DEFAULT_SALT_LENGTH: usize = 16; // in bytes
 const MIN_SALT_LENGTH: usize = 8; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
@@ -56,18 +55,18 @@ const MIN_OUTPUT_LEN: u32 = 32;
 const MAX_OUTPUT_LEN: u32 = 256;
 
 macro_rules! set_param {
-    ($obj:ident, $attr:ident, $val:ident, $t:ty, $min:expr, $max:expr) => {{
+    ($obj: ident, $attr: ident, $val: ident, $t: ty, $min: expr, $max: expr) => {{
         match $val.parse::<$t>() {
             Ok(i) => match i {
-                $min ... $max => {
+                $min...$max => {
                     $obj.$attr = i;
                     Ok(())
-                },
+                }
                 _ => Err(ErrorCode::InvalidPasswordFormat),
             },
             Err(_) => Err(ErrorCode::InvalidPasswordFormat),
         }
-    }}
+    }};
 }
 
 pub struct Argon2Hash {
@@ -120,10 +119,10 @@ impl HashingFunction for Argon2Hash {
 
     fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode> {
         match salt.len() {
-            MIN_SALT_LENGTH ... MAX_SALT_LENGTH => {
+            MIN_SALT_LENGTH...MAX_SALT_LENGTH => {
                 self.salt = salt;
                 Ok(())
-            },
+            }
             _ => Err(ErrorCode::InvalidPasswordFormat),
         }
     }
@@ -168,7 +167,10 @@ mod tests {
 
     #[test]
     fn test_salt_randomness() {
-        assert_ne!(Argon2Hash::new().get_salt().unwrap(), Argon2Hash::new().get_salt().unwrap());
+        assert_ne!(
+            Argon2Hash::new().get_salt().unwrap(),
+            Argon2Hash::new().get_salt().unwrap()
+        );
     }
 
     /// Test vector from the PHC repository.
@@ -185,6 +187,12 @@ mod tests {
             output_len: 24,
             salt: "somesalt".to_string().into_bytes(),
         }.hash(&"password".to_string().into_bytes());
-        assert_eq!(h, vec![69, 215, 172, 114, 231, 111, 36, 43, 32, 183, 123, 155, 249, 191, 157, 89, 21, 137, 78, 102, 154, 36, 230, 198]);
+        assert_eq!(
+            h,
+            vec![
+                69, 215, 172, 114, 231, 111, 36, 43, 32, 183, 123, 155, 249, 191, 157, 89, 21, 137,
+                78, 102, 154, 36, 230, 198,
+            ],
+        );
     }
 }

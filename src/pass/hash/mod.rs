@@ -33,8 +33,8 @@
  */
 
 use std::collections::HashMap;
-use super::{PASSWORD_MIN_LEN,PASSWORD_MAX_LEN};
-use super::{ErrorCode,PasswordStorageStandard};
+use super::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
+use super::{ErrorCode, PasswordStorageStandard};
 use super::phc::PHCData;
 
 mod argon2;
@@ -67,20 +67,24 @@ impl PasswordHasher {
         let mut func: Box<HashingFunction> = match ref_hash.id.as_ref() {
             "argon2" => Box::new(argon2::Argon2Hash::new()),
             "pbkdf2" => Box::new(pbkdf2::Pbkdf2Hash::new()),
-            _ => { return Err(ErrorCode::InvalidPasswordFormat) },
+            _ => return Err(ErrorCode::InvalidPasswordFormat),
         };
         for (name, value) in ref_hash.parameters.clone() {
             match func.set_parameter(name, value) {
-                Ok(_) => {},
-                Err(e) => { return Err(e); },
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(e);
+                }
             };
         }
         match ref_hash.salt {
             Some(ref salt) => match func.set_salt(salt.clone()) {
-                Ok(_) => {},
-                Err(e) => { return Err(e); },
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(e);
+                }
             },
-            None => {},
+            None => {}
         };
         Ok(PasswordHasher {
             hashing_function: func,
@@ -89,9 +93,13 @@ impl PasswordHasher {
 
     pub fn hash(&self, input: &Vec<u8>) -> Result<PHCData, ErrorCode> {
         match input.len() {
-            n if n < PASSWORD_MIN_LEN => { return Err(ErrorCode::PasswordTooShort); },
-            n if n > PASSWORD_MAX_LEN => { return Err(ErrorCode::PasswordTooLong); },
-            _ => {},
+            n if n < PASSWORD_MIN_LEN => {
+                return Err(ErrorCode::PasswordTooShort);
+            }
+            n if n > PASSWORD_MAX_LEN => {
+                return Err(ErrorCode::PasswordTooLong);
+            }
+            _ => {}
         };
         Ok(PHCData {
             id: self.hashing_function.get_id(),
@@ -119,15 +127,22 @@ mod tests {
 
     #[test]
     fn test_from_phc() {
-        for std in vec![PasswordStorageStandard::NoStandard, PasswordStorageStandard::Nist80063b] {
+        for std in vec![
+            PasswordStorageStandard::NoStandard,
+            PasswordStorageStandard::Nist80063b,
+        ] {
             match PasswordHasher::new(std).hash(&vec![1; 32]) {
-                Ok(phc) => {
-                    match PasswordHasher::new_from_phc(&phc) {
-                        Ok(_) => { assert!(true); },
-                        Err(_) => { assert!(false); },
+                Ok(phc) => match PasswordHasher::new_from_phc(&phc) {
+                    Ok(_) => {
+                        assert!(true);
+                    }
+                    Err(_) => {
+                        assert!(false);
                     }
                 },
-                Err(_) => { assert!(false); },
+                Err(_) => {
+                    assert!(false);
+                }
             }
         }
     }
