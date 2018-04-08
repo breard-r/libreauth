@@ -55,6 +55,7 @@
 //! println!("Key: Vec<u8>: {:?}", key.as_vec());
 //! println!("Key: hex String: {}", key.as_hex());
 //! println!("Key: base 32 String: {}", key.as_base32());
+//! println!("Key: base 64 String: {}", key.as_base64());
 //! assert!(key.as_vec() == key.as_vec());
 //! assert!(key.as_hex() == key.as_hex());
 //! assert!(key.as_base32() == key.as_base32());
@@ -70,6 +71,7 @@
 
 use rand::os::OsRng;
 use rand::Rng;
+use base64;
 use base32;
 use hex;
 
@@ -142,6 +144,16 @@ impl KeyBuilder {
             self,
             |x: &Vec<u8>| { base32::encode(base32::Alphabet::RFC4648 { padding: false }, x.as_slice()) },
             as_base32
+        )
+    }
+
+    /// Return the current key as a base 64 encoded string.
+    /// Calls `KeyBuilder::generate` if no key has been generated yet.
+    pub fn as_base64(&mut self) -> String {
+        gen_or_retrive_key!(
+            self,
+            |x: &Vec<u8>| { base64::encode(x) },
+            as_base64
         )
     }
 }

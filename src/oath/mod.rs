@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015)
- * Author: Rodolphe Breard (2015)
+ * Copyright Rodolphe Breard (2015-2018)
+ * Author: Rodolphe Breard (2015-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -209,6 +209,15 @@ macro_rules! builder_common {
             match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
                 Some(k) => { self.key = Some(k); }
                 None => { self.runtime_error = Some(ErrorCode::InvalidKey); }
+            }
+            self
+        }
+
+        /// Sets the shared secret. This secret is passed as a base64 encoded string.
+        pub fn base64_key(&mut self, key: &String) -> &mut $t {
+            match base64::decode(key) {
+                Ok(k) => { self.key = Some(k); }
+                Err(_) => { self.runtime_error = Some(ErrorCode::InvalidKey); }
             }
             self
         }

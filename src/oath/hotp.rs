@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015-2017)
- * Author: Rodolphe Breard (2015-2017)
+ * Copyright Rodolphe Breard (2015-2018)
+ * Author: Rodolphe Breard (2015-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -37,6 +37,7 @@ use super::{HashFunction, ErrorCode};
 use sha2::{Sha256, Sha512};
 use sha1::Sha1;
 use hmac::{Hmac, Mac};
+use base64;
 use base32;
 use hex;
 
@@ -197,6 +198,15 @@ impl HOTP {
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
+///     .output_len(8)
+///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .finalize();
+/// ```
+///
+/// ```
+/// let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+/// let mut hotp = libreauth::oath::HOTPBuilder::new()
+///     .base64_key(&key_base64)
 ///     .output_len(8)
 ///     .hash_function(libreauth::oath::HashFunction::Sha256)
 ///     .finalize();
@@ -568,6 +578,55 @@ mod tests {
 
         let hotp = HOTPBuilder::new()
             .base32_key(&key_base32)
+            .counter(5)
+            .output_len(8)
+            .hash_function(HashFunction::Sha512)
+            .finalize()
+            .unwrap();
+
+        assert_eq!(hotp.key, key);
+        assert_eq!(hotp.counter, 5);
+        assert_eq!(hotp.output_len, 8);
+        match hotp.hash_function {
+            HashFunction::Sha512 => assert!(true),
+            _ => assert!(false),
+        }
+
+        let code = hotp.generate();
+        assert_eq!(code.len(), 8);
+        assert_eq!(code, "16848329");
+    }
+
+    #[test]
+    fn test_hotp_base64key_simple() {
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+
+        let hotp = HOTPBuilder::new()
+            .base64_key(&key_base64)
+            .finalize()
+            .unwrap();
+
+        assert_eq!(hotp.key, key);
+        assert_eq!(hotp.counter, 0);
+        assert_eq!(hotp.output_len, 6);
+        match hotp.hash_function {
+            HashFunction::Sha1 => assert!(true),
+            _ => assert!(false),
+        }
+
+        let code = hotp.generate();
+        assert_eq!(code.len(), 6);
+        assert_eq!(code, "755224");
+    }
+
+    #[test]
+    fn test_hotp_base64key_full() {
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+
+        let hotp = HOTPBuilder::new()
+            .base64_key(&key_base64)
             .counter(5)
             .output_len(8)
             .hash_function(HashFunction::Sha512)

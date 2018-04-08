@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2015)
- * Author: Rodolphe Breard (2015)
+ * Copyright Rodolphe Breard (2015-2018)
+ * Author: Rodolphe Breard (2015-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -34,6 +34,7 @@
 
 
 use super::{HashFunction, ErrorCode, HOTPBuilder};
+use base64;
 use base32;
 use time;
 use hex;
@@ -157,6 +158,15 @@ impl TOTP {
 /// let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
+///     .output_len(8)
+///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .finalize();
+/// ```
+///
+/// ```
+/// let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
+///     .base64_key(&key_base64)
 ///     .output_len(8)
 ///     .hash_function(libreauth::oath::HashFunction::Sha256)
 ///     .finalize();
@@ -578,6 +588,50 @@ mod tests {
 
         let totp = TOTPBuilder::new()
             .base32_key(&key_base32)
+            .timestamp(1111111109)
+            .period(70)
+            .output_len(8)
+            .hash_function(HashFunction::Sha256)
+            .finalize()
+            .unwrap();
+        assert_eq!(totp.key, key);
+        assert_eq!(totp.period, 70);
+        assert_eq!(totp.initial_time, 0);
+        assert_eq!(totp.output_len, 8);
+
+        let code = totp.generate();
+        assert_eq!(code.len(), 8);
+        assert_eq!(code, "04696041");
+    }
+
+    #[test]
+    fn test_totp_base64key_simple() {
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+
+        let totp = TOTPBuilder::new()
+            .base64_key(&key_base64)
+            .finalize()
+            .unwrap();
+
+        assert_eq!(totp.key, key);
+        assert_eq!(totp.output_len, 6);
+        match totp.hash_function {
+            HashFunction::Sha1 => assert!(true),
+            _ => assert!(false),
+        }
+
+        let code = totp.generate();
+        assert_eq!(code.len(), 6);
+    }
+
+    #[test]
+    fn test_totp_base64key_full() {
+        let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+        let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
+
+        let totp = TOTPBuilder::new()
+            .base64_key(&key_base64)
             .timestamp(1111111109)
             .period(70)
             .output_len(8)

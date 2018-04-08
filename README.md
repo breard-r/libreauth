@@ -16,13 +16,13 @@ LibreAuth is a collection of tools for user authentication.
   - [x] strong, evolutive and retro-compatible password hashing functions
   - [x] optional NIST Special Publication 800-63B compatibility
 - HOTP - HMAC-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 4226](https://tools.ietf.org/html/rfc4226))
-  - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
+  - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string, a base32 string or a base64 string
   - [x] customizable counter
   - [x] customizable hash function (sha1, sha256, sha512)
   - [x] customizable output length
   - [x] customizable output alphabet
 - TOTP - Time-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 6238](https://tools.ietf.org/html/rfc6238))
-  - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string or a base32 string
+  - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string, a base32 string or a base64 string
   - [x] customizable timestamp
   - [x] customizable period
   - [x] customizable initial time (T0)
@@ -33,7 +33,7 @@ LibreAuth is a collection of tools for user authentication.
 - Random key generation
   - [x] uses the platform's secure entropy source
   - [x] customizable size
-  - [x] customizable output format (Vec<u8>, hexadicimal string, base32 string)
+  - [x] customizable output format (Vec<u8>, hexadicimal string, base32 string, base64 string)
 - ~~U2F - Universal 2nd Factor~~ ([FIDO Alliance](https://fidoalliance.org/specifications/download/)) :warning: Not started
   - [ ] virtual device API
   - [ ] client API
