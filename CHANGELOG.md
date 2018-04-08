@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - base64 key support
 
+### Changed
+- The `key` module does no more implicitly call `generate()` when requesting the key in a certain form.
+
 
 ## [0.7.0] - 2018-04-04
 
