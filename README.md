@@ -40,6 +40,23 @@ LibreAuth is a collection of tools for user authentication.
   - [ ] server API
 
 
+## Status
+
+The project itself is still in development and therefore should not be used in production before version 1.0.0. Below is the list of features that will be present in the first stable version and their individual status.
+
+- OATH HOTP/TOTP: almost ready!
+  * :white_check_mark: lot of features
+  * :warning: almost stable API
+  * :warning: lack of peer review
+- Password / passphrase authentication: not ready yet.
+  * :bangbang: incomplete
+  * :bangbang: unstable API
+  * :warning: lack of peer review
+- Random key generation: almost ready!
+  * :warning: almost stable API
+  * :warning: lack of peer review
+
+
 ## Using within a Rust project
 
 You can find LibreAuth on [crates.io](https://crates.io/crates/libreauth) and include it in your `Cargo.toml`:
