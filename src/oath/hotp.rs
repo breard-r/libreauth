@@ -33,7 +33,7 @@
  */
 
 use super::{ErrorCode, HashFunction};
-use sha2::{Sha256, Sha512};
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha1::Sha1;
 use hmac::{Hmac, Mac};
 use base64;
@@ -116,8 +116,12 @@ impl HOTP {
         ];
         let result: Vec<u8> = match self.hash_function {
             HashFunction::Sha1 => compute_hmac!(self, Sha1, msg),
+            HashFunction::Sha224 => compute_hmac!(self, Sha224, msg),
             HashFunction::Sha256 => compute_hmac!(self, Sha256, msg),
+            HashFunction::Sha384 => compute_hmac!(self, Sha384, msg),
             HashFunction::Sha512 => compute_hmac!(self, Sha512, msg),
+            HashFunction::Sha512Trunc224 => compute_hmac!(self, Sha512Trunc224, msg),
+            HashFunction::Sha512Trunc256 => compute_hmac!(self, Sha512Trunc256, msg),
         };
         let hs = result.as_slice();
         let nb = self.reduce_result(&hs);
@@ -154,13 +158,29 @@ impl HOTP {
                 compute_hmac!(self, Sha1, code),
                 compute_hmac!(self, Sha1, ref_code),
             ),
+            HashFunction::Sha224 => (
+                compute_hmac!(self, Sha224, code),
+                compute_hmac!(self, Sha224, ref_code),
+            ),
             HashFunction::Sha256 => (
                 compute_hmac!(self, Sha256, code),
                 compute_hmac!(self, Sha256, ref_code),
             ),
+            HashFunction::Sha384 => (
+                compute_hmac!(self, Sha384, code),
+                compute_hmac!(self, Sha384, ref_code),
+            ),
             HashFunction::Sha512 => (
                 compute_hmac!(self, Sha512, code),
                 compute_hmac!(self, Sha512, ref_code),
+            ),
+            HashFunction::Sha512Trunc224 => (
+                compute_hmac!(self, Sha512Trunc224, code),
+                compute_hmac!(self, Sha512Trunc224, ref_code),
+            ),
+            HashFunction::Sha512Trunc256 => (
+                compute_hmac!(self, Sha512Trunc256, code),
+                compute_hmac!(self, Sha512Trunc256, ref_code),
             ),
         };
         code == ref_code
@@ -900,12 +920,38 @@ mod tests {
     }
 
     #[test]
+    fn test_valid_sha224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "893239".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
     fn test_valid_sha256_code() {
         let key_ascii = "12345678901234567890".to_owned();
         let user_code = "875740".to_owned();
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .hash_function(HashFunction::Sha256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "502125".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha384)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -926,12 +972,51 @@ mod tests {
     }
 
     #[test]
+    fn test_valid_sha512t224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "627914".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512Trunc224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha512t256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "289990".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512Trunc256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
     fn test_invalid_sha1_code() {
         let key_ascii = "12345678901234567890".to_owned();
         let user_code = "123456".to_owned();
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .hash_function(HashFunction::Sha1)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "893238".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha224)
             .finalize()
             .unwrap()
             .is_valid(&user_code);
@@ -952,12 +1037,51 @@ mod tests {
     }
 
     #[test]
+    fn test_invalid_sha384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "502225".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha384)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
     fn test_invalid_sha512_code() {
         let key_ascii = "12345678901234567890".to_owned();
         let user_code = "123456".to_owned();
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .hash_function(HashFunction::Sha512)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha512t224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "627904".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512Trunc224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha512t256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "289900".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha512Trunc256)
             .finalize()
             .unwrap()
             .is_valid(&user_code);

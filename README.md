@@ -18,7 +18,7 @@ LibreAuth is a collection of tools for user authentication.
 - HOTP - HMAC-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 4226](https://tools.ietf.org/html/rfc4226))
   - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string, a base32 string or a base64 string
   - [x] customizable counter
-  - [x] customizable hash function (sha1, sha256, sha512)
+  - [x] customizable hash function (sha1, full sha2 family)
   - [x] customizable output length
   - [x] customizable output alphabet
 - TOTP - Time-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 6238](https://tools.ietf.org/html/rfc6238))
@@ -26,7 +26,7 @@ LibreAuth is a collection of tools for user authentication.
   - [x] customizable timestamp
   - [x] customizable period
   - [x] customizable initial time (T0)
-  - [x] customizable hash function (sha1, sha256, sha512)
+  - [x] customizable hash function (sha1, full sha2 family)
   - [x] customizable output length
   - [x] customizable output alphabet
   - [x] customizable positive and negative period tolerance

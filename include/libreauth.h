@@ -76,9 +76,13 @@ int32_t                 libreauth_password_is_valid(const void *password, const 
  */
 
 typedef enum {
-    LIBREAUTH_OATH_SHA_1   = 1,
-    LIBREAUTH_OATH_SHA_256 = 2,
-    LIBREAUTH_OATH_SHA_512 = 3
+    LIBREAUTH_OATH_SHA_1                = 1,
+    LIBREAUTH_OATH_SHA_224              = 2,
+    LIBREAUTH_OATH_SHA_256              = 3,
+    LIBREAUTH_OATH_SHA_384              = 4,
+    LIBREAUTH_OATH_SHA_512              = 5,
+    LIBREAUTH_OATH_SHA_512_TRUNC_224    = 6,
+    LIBREAUTH_OATH_SHA_512_TRUN_256     = 7,
 } libreauth_oath_hash_function;
 
 typedef enum {

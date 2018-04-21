@@ -96,8 +96,12 @@
 #[derive(Clone, Copy)]
 pub enum HashFunction {
     Sha1 = 1,
-    Sha256 = 2,
-    Sha512 = 3,
+    Sha224 = 2,
+    Sha256 = 3,
+    Sha384 = 4,
+    Sha512 = 5,
+    Sha512Trunc224 = 6,
+    Sha512Trunc256 = 7,
 }
 
 /// Error codes used both in the rust and C interfaces.
