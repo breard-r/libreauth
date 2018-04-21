@@ -33,9 +33,9 @@
  */
 
 use std::collections::HashMap;
-use super::HashingFunction;
-use super::ErrorCode;
+use super::{ErrorCode, HashingFunction, Normalization};
 use key::KeyBuilder;
+use unicode_normalization::UnicodeNormalization;
 
 use pbkdf2::pbkdf2;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
@@ -77,6 +77,7 @@ pub struct Pbkdf2Hash {
     hash_function: HashFunction,
     nb_iter: usize,
     salt: Vec<u8>,
+    norm: Normalization,
 }
 
 impl Pbkdf2Hash {
@@ -85,6 +86,7 @@ impl Pbkdf2Hash {
             hash_function: DEFAULT_HASH_FUNCTION,
             nb_iter: DEFAULT_ITER,
             salt: KeyBuilder::new().size(DEFAULT_SALT_LENGTH).as_vec(),
+            norm: Normalization::Nfkc,
         }
     }
 }
@@ -96,6 +98,7 @@ impl HashingFunction for Pbkdf2Hash {
 
     fn get_parameters(&self) -> HashMap<String, String> {
         let mut params = HashMap::new();
+        set_normalization!(self, norm, params, "norm".to_string());
         params.insert("iter".to_string(), self.nb_iter.to_string());
         params.insert(
             "hash".to_string(),
@@ -114,6 +117,7 @@ impl HashingFunction for Pbkdf2Hash {
 
     fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode> {
         match name.as_str() {
+            "norm" => get_normalization!(self, norm, value),
             "iter" => match value.parse::<usize>() {
                 Ok(i) => match i {
                     MIN_ITER...MAX_ITER => {
@@ -174,14 +178,15 @@ impl HashingFunction for Pbkdf2Hash {
     }
 
     fn hash(&self, input: &Vec<u8>) -> Vec<u8> {
+        let pass = normalize!(self, norm, input);
         match self.hash_function {
-            HashFunction::Sha1 => process_pbkdf2!(self, input, Sha1, 20),
-            HashFunction::Sha224 => process_pbkdf2!(self, input, Sha224, 28),
-            HashFunction::Sha256 => process_pbkdf2!(self, input, Sha256, 32),
-            HashFunction::Sha384 => process_pbkdf2!(self, input, Sha384, 48),
-            HashFunction::Sha512 => process_pbkdf2!(self, input, Sha512, 64),
-            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, input, Sha512Trunc224, 28),
-            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, input, Sha512Trunc256, 32),
+            HashFunction::Sha1 => process_pbkdf2!(self, pass, Sha1, 20),
+            HashFunction::Sha224 => process_pbkdf2!(self, pass, Sha224, 28),
+            HashFunction::Sha256 => process_pbkdf2!(self, pass, Sha256, 32),
+            HashFunction::Sha384 => process_pbkdf2!(self, pass, Sha384, 48),
+            HashFunction::Sha512 => process_pbkdf2!(self, pass, Sha512, 64),
+            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, pass, Sha512Trunc224, 28),
+            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, pass, Sha512Trunc256, 32),
         }
     }
 }
@@ -199,16 +204,19 @@ mod tests {
                 hash_function: HashFunction::Sha1,
                 nb_iter: 42,
                 salt: vec![0, 1, 2, 3, 4, 5],
+                norm: Normalization::Nfkc,
             },
             Pbkdf2Hash {
                 hash_function: HashFunction::Sha256,
                 nb_iter: 42,
                 salt: vec![0, 1, 2, 3, 4, 5],
+                norm: Normalization::Nfkc,
             },
             Pbkdf2Hash {
                 hash_function: HashFunction::Sha512,
                 nb_iter: 42,
                 salt: vec![0, 1, 2, 3, 4, 5],
+                norm: Normalization::Nfkc,
             },
         ];
         for h in lst.iter() {
@@ -222,6 +230,7 @@ mod tests {
             hash_function: HashFunction::Sha1,
             nb_iter: 42,
             salt: vec![0, 1, 2, 3, 4, 5],
+            norm: Normalization::Nfkc,
         };
         assert_eq!(h.get_salt().unwrap(), vec![0, 1, 2, 3, 4, 5]);
     }
@@ -425,6 +434,7 @@ mod tests {
                 },
                 nb_iter: nb_iter,
                 salt: salt.to_string().into_bytes(),
+                norm: Normalization::Nfkc,
             };
             assert_eq!(&h.hash(&key.to_string().into_bytes()), result);
         }

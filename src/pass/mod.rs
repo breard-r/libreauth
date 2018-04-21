@@ -71,7 +71,7 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="4" class="hash">argon2<br /><span class="legend">default</span></td>
+//!             <td rowspan="5" class="hash">argon2<br /><span class="legend">default</span></td>
 //!             <td>passes</td>
 //!             <td>integer</td>
 //!             <td>The number of block matrix iterations to perform.</td>
@@ -96,7 +96,13 @@
 //!             <td>32</td>
 //!         </tr>
 //!         <tr>
-//!             <td rowspan="2" class="hash">pbkdf2<br /><span class="legend">NIST SP 800-63B</span></td>
+//!             <td>norm</td>
+//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
+//!             <td>Unicode normalization.</td>
+//!             <td>nfkc</td>
+//!         </tr>
+//!         <tr>
+//!             <td rowspan="3" class="hash">pbkdf2<br /><span class="legend">NIST SP 800-63B</span></td>
 //!             <td>iter</td>
 //!             <td>integer</td>
 //!             <td>Number of iterations.</td>
@@ -107,6 +113,12 @@
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256</td>
 //!             <td>The hash function.</td>
 //!             <td>sha256</td>
+//!         </tr>
+//!         <tr>
+//!             <td>norm</td>
+//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
+//!             <td>Unicode normalization.</td>
+//!             <td>nfkc</td>
 //!         </tr>
 //!     </tbody>
 //! </table>
@@ -462,5 +474,43 @@ mod tests {
         let h = password_hash(&password).unwrap().into_bytes();
         assert!(!is_valid(&"bad password".to_string().into_bytes(), &h));
         assert!(is_valid(&password, &h));
+    }
+
+    #[test]
+    fn test_default_normalization() {
+        let pass1 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
+            0x32,
+        ];
+        let pass2 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
+            0x31,
+        ];
+        let pass3 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xc3, 0x85, 0xce, 0xa9, 0x31, 0x32
+        ];
+        let h = password_hash(&pass1).unwrap().into_bytes();
+        assert!(!is_valid(&pass2, &h));
+        assert!(is_valid(&pass3, &h));
+    }
+
+    #[test]
+    fn test_std_nist_normalization() {
+        let pass1 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
+            0x32,
+        ];
+        let pass2 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
+            0x31,
+        ];
+        let pass3 = vec![
+            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xc3, 0x85, 0xce, 0xa9, 0x31, 0x32
+        ];
+        let h = password_hash_standard(&pass1, PasswordStorageStandard::Nist80063b)
+            .unwrap()
+            .into_bytes();
+        assert!(!is_valid(&pass2, &h));
+        assert!(is_valid(&pass3, &h));
     }
 }

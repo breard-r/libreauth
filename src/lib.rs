@@ -53,6 +53,7 @@ extern crate base64;
 extern crate hex;
 extern crate rand;
 extern crate time;
+extern crate unicode_normalization;
 #[macro_use]
 extern crate nom;
 

@@ -37,9 +37,6 @@ use super::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
 use super::{ErrorCode, PasswordStorageStandard};
 use super::phc::PHCData;
 
-mod argon2;
-mod pbkdf2;
-
 trait HashingFunction {
     fn get_id(&self) -> String;
     fn get_parameters(&self) -> HashMap<String, String>;
@@ -47,6 +44,14 @@ trait HashingFunction {
     fn get_salt(&self) -> Option<Vec<u8>>;
     fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode>;
     fn hash(&self, input: &Vec<u8>) -> Vec<u8>;
+}
+
+enum Normalization {
+    Nfd,
+    Nfkd,
+    Nfc,
+    Nfkc,
+    None,
 }
 
 pub struct PasswordHasher {
@@ -110,6 +115,64 @@ impl PasswordHasher {
     }
 }
 
+macro_rules! set_normalization {
+    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
+        $val.insert(
+            $name,
+            match $obj.$attr {
+                Normalization::Nfd => "nfd".to_string(),
+                Normalization::Nfkd => "nfkd".to_string(),
+                Normalization::Nfc => "nfc".to_string(),
+                Normalization::Nfkc => "nfkc".to_string(),
+                Normalization::None => "none".to_string(),
+            },
+        );
+    };
+}
+
+macro_rules! get_normalization {
+    ($obj: ident, $attr: ident, $val: ident) => {{
+        match $val.as_str() {
+            "nfd" => {
+                $obj.$attr = Normalization::Nfd;
+                Ok(())
+            }
+            "nfkd" => {
+                $obj.$attr = Normalization::Nfkd;
+                Ok(())
+            }
+            "nfc" => {
+                $obj.$attr = Normalization::Nfc;
+                Ok(())
+            }
+            "nfkc" => {
+                $obj.$attr = Normalization::Nfkc;
+                Ok(())
+            }
+            "none" => {
+                $obj.$attr = Normalization::None;
+                Ok(())
+            }
+            _ => Err(ErrorCode::InvalidPasswordFormat),
+        }
+    }};
+}
+
+macro_rules! normalize {
+    ($obj: ident, $attr: ident, $val: ident) => {
+        match String::from_utf8($val.to_vec()) {
+            Ok(s) => match $obj.$attr {
+                Normalization::Nfd => s.nfd().collect::<String>().into_bytes(),
+                Normalization::Nfkd => s.nfkd().collect::<String>().into_bytes(),
+                Normalization::Nfc => s.nfc().collect::<String>().into_bytes(),
+                Normalization::Nfkc => s.nfkc().collect::<String>().into_bytes(),
+                Normalization::None => s.into_bytes(),
+            },
+            Err(_) => $val.to_vec(),
+        };
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,3 +210,6 @@ mod tests {
         }
     }
 }
+
+mod argon2;
+mod pbkdf2;
