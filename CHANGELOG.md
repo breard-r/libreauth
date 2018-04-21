@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - OATH support for sha224, sha384, sha512 trunc 224 and sha512 trunc 256.
 - OATH support for sha3-224, sha3-256, sha3-384, sha3-512, Keccak224, Keccak256, Keccak384, Keccak512.
+- NFKC normalization for Unicode passwords.
 
 ### Changed
 - Identifiers for sha256 and sha512 has been changed (compatibility break).
