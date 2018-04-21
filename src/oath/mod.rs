@@ -102,6 +102,14 @@ pub enum HashFunction {
     Sha512 = 5,
     Sha512Trunc224 = 6,
     Sha512Trunc256 = 7,
+    Sha3_224 = 8,
+    Sha3_256 = 9,
+    Sha3_384 = 10,
+    Sha3_512 = 11,
+    Keccak224 = 12,
+    Keccak256 = 13,
+    Keccak384 = 14,
+    Keccak512 = 15,
 }
 
 /// Error codes used both in the rust and C interfaces.

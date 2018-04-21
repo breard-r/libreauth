@@ -82,7 +82,15 @@ typedef enum {
     LIBREAUTH_OATH_SHA_384              = 4,
     LIBREAUTH_OATH_SHA_512              = 5,
     LIBREAUTH_OATH_SHA_512_TRUNC_224    = 6,
-    LIBREAUTH_OATH_SHA_512_TRUN_256     = 7,
+    LIBREAUTH_OATH_SHA_512_TRUNC_256    = 7,
+    LIBREAUTH_OATH_SHA_3_224            = 8,
+    LIBREAUTH_OATH_SHA_3_256            = 9,
+    LIBREAUTH_OATH_SHA_3_384            = 10,
+    LIBREAUTH_OATH_SHA_3_512            = 11,
+    LIBREAUTH_OATH_KECCAK_224           = 12,
+    LIBREAUTH_OATH_KECCAK_256           = 13,
+    LIBREAUTH_OATH_KECCAK_384           = 14,
+    LIBREAUTH_OATH_KECCAK_512           = 15,
 } libreauth_oath_hash_function;
 
 typedef enum {

@@ -33,6 +33,7 @@
  */
 
 use super::{ErrorCode, HashFunction};
+use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha1::Sha1;
 use hmac::{Hmac, Mac};
@@ -122,6 +123,14 @@ impl HOTP {
             HashFunction::Sha512 => compute_hmac!(self, Sha512, msg),
             HashFunction::Sha512Trunc224 => compute_hmac!(self, Sha512Trunc224, msg),
             HashFunction::Sha512Trunc256 => compute_hmac!(self, Sha512Trunc256, msg),
+            HashFunction::Sha3_224 => compute_hmac!(self, Sha3_224, msg),
+            HashFunction::Sha3_256 => compute_hmac!(self, Sha3_256, msg),
+            HashFunction::Sha3_384 => compute_hmac!(self, Sha3_384, msg),
+            HashFunction::Sha3_512 => compute_hmac!(self, Sha3_512, msg),
+            HashFunction::Keccak224 => compute_hmac!(self, Keccak224, msg),
+            HashFunction::Keccak256 => compute_hmac!(self, Keccak256, msg),
+            HashFunction::Keccak384 => compute_hmac!(self, Keccak384, msg),
+            HashFunction::Keccak512 => compute_hmac!(self, Keccak512, msg),
         };
         let hs = result.as_slice();
         let nb = self.reduce_result(&hs);
@@ -181,6 +190,38 @@ impl HOTP {
             HashFunction::Sha512Trunc256 => (
                 compute_hmac!(self, Sha512Trunc256, code),
                 compute_hmac!(self, Sha512Trunc256, ref_code),
+            ),
+            HashFunction::Sha3_224 => (
+                compute_hmac!(self, Sha3_224, code),
+                compute_hmac!(self, Sha3_224, ref_code),
+            ),
+            HashFunction::Sha3_256 => (
+                compute_hmac!(self, Sha3_256, code),
+                compute_hmac!(self, Sha3_256, ref_code),
+            ),
+            HashFunction::Sha3_384 => (
+                compute_hmac!(self, Sha3_384, code),
+                compute_hmac!(self, Sha3_384, ref_code),
+            ),
+            HashFunction::Sha3_512 => (
+                compute_hmac!(self, Sha3_512, code),
+                compute_hmac!(self, Sha3_512, ref_code),
+            ),
+            HashFunction::Keccak224 => (
+                compute_hmac!(self, Keccak224, code),
+                compute_hmac!(self, Keccak224, ref_code),
+            ),
+            HashFunction::Keccak256 => (
+                compute_hmac!(self, Keccak256, code),
+                compute_hmac!(self, Keccak256, ref_code),
+            ),
+            HashFunction::Keccak384 => (
+                compute_hmac!(self, Keccak384, code),
+                compute_hmac!(self, Keccak384, ref_code),
+            ),
+            HashFunction::Keccak512 => (
+                compute_hmac!(self, Keccak512, code),
+                compute_hmac!(self, Keccak512, ref_code),
             ),
         };
         code == ref_code
@@ -998,6 +1039,110 @@ mod tests {
     }
 
     #[test]
+    fn test_valid_sha3_224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "228979".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha3_256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "170828".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha3_384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "133113".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_384)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_sha3_512_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "342230".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_512)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_keccak_224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "839246".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_keccak_256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "190777".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_keccak_384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "970541".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak384)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
+    fn test_valid_keccak_512_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "108634".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak512)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, true);
+    }
+
+    #[test]
     fn test_invalid_sha1_code() {
         let key_ascii = "12345678901234567890".to_owned();
         let user_code = "123456".to_owned();
@@ -1082,6 +1227,110 @@ mod tests {
         let valid = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .hash_function(HashFunction::Sha512Trunc256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha3_224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "128979".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha3_256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "170823".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha3_384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "133013".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_384)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_sha3_512_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "342931".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Sha3_512)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_keccak_224_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "839046".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak224)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_keccak_256_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "197777".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak256)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_keccak_384_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "970241".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak384)
+            .finalize()
+            .unwrap()
+            .is_valid(&user_code);
+        assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_invalid_keccak_512_code() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let user_code = "107634".to_owned();
+        let valid = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .hash_function(HashFunction::Keccak512)
             .finalize()
             .unwrap()
             .is_valid(&user_code);

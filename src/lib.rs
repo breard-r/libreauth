@@ -46,6 +46,7 @@ extern crate hmac;
 extern crate pbkdf2;
 extern crate sha1;
 extern crate sha2;
+extern crate sha3;
 
 extern crate base32;
 extern crate base64;
