@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased][unreleased]
+## [0.9.0] - 2018-04-22
 
 ### Added
 - OATH support for sha224, sha384, sha512 trunc 224 and sha512 trunc 256.
