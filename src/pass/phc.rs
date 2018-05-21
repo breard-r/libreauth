@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2017)
- * Author: Rodolphe Breard (2017)
+ * Copyright Rodolphe Breard (2017-2018)
+ * Author: Rodolphe Breard (2017-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -33,7 +33,7 @@
  */
 
 use std::collections::HashMap;
-use nom::IResult;
+use nom::types::CompleteByteSlice;
 use base64;
 
 fn from_b64(data: Option<Vec<u8>>) -> Option<Vec<u8>> {
@@ -85,19 +85,19 @@ fn is_param_value_char(chr: u8) -> bool {
 }
 
 named!(
-    get_id<String>,
+    get_id<CompleteByteSlice, String>,
     do_parse!(
         tag!("$") >> id: take_while1!(is_id_char) >> (String::from_utf8(id.to_vec()).unwrap())
     )
 );
 
 named!(
-    get_phc_part<Vec<u8>>,
+    get_phc_part<CompleteByteSlice, Vec<u8>>,
     do_parse!(tag!("$") >> data: take_while!(is_b64) >> (data.to_vec()))
 );
 
 named!(
-    get_param_elem<(String, String)>,
+    get_param_elem<CompleteByteSlice, (String, String)>,
     do_parse!(
         name: take_while1!(is_param_name_char) >> tag!("=")
             >> value: take_while1!(is_param_value_char) >> opt!(complete!(tag!(",")))
@@ -109,7 +109,7 @@ named!(
 );
 
 named!(
-    get_params<HashMap<String, String>>,
+    get_params<CompleteByteSlice, HashMap<String, String>>,
     fold_many0!(
         get_param_elem,
         HashMap::new(),
@@ -121,16 +121,18 @@ named!(
 );
 
 named!(
-    parse_params<HashMap<String, String>>,
+    parse_params<CompleteByteSlice, HashMap<String, String>>,
     do_parse!(tag!("$") >> params: get_params >> (params))
 );
 
 named!(
-    get_phc<PHCData>,
+    get_phc<CompleteByteSlice, PHCData>,
     do_parse!(
-        id: get_id >> parameters: opt!(complete!(parse_params))
-            >> salt: cond!(parameters.is_some(), complete!(get_phc_part))
-            >> hash: cond!(salt.is_some(), complete!(get_phc_part)) >> (PHCData {
+        id: get_id >>
+        parameters: opt!(parse_params) >>
+        salt: cond!(parameters.is_some(), get_phc_part) >>
+        hash: cond!(salt.is_some(), get_phc_part) >>
+        (PHCData {
             id: id,
             parameters: match parameters {
                 Some(p) => p,
@@ -151,12 +153,12 @@ pub struct PHCData {
 
 impl PHCData {
     pub fn from_bytes(s: &Vec<u8>) -> Result<PHCData, ()> {
-        match get_phc(s) {
-            IResult::Done(r, v) => match r.len() {
+        match get_phc(CompleteByteSlice(s.as_slice())) {
+            Ok((r, v)) => match r.len() {
                 0 => Ok(v),
                 _ => Err(()),
             },
-            _ => Err(()),
+            Err(_) => Err(()),
         }
     }
 
