@@ -65,11 +65,13 @@ help:
 	@echo
 	@echo "Available targets:"
 	@echo "   $(NAME)            create a release build"
+	@echo "   audit           audit dependencies"
 	@echo "   install         install $(NAME)"
 	@echo "   uninstall       uninstall $(NAME)"
 	@echo "   debug           create a debug build"
 	@echo "   test            run the tests"
 	@echo "   tests           alias for 'test'"
+	@echo "   test_nightly    run the tests against rust nightly"
 	@echo "   clean           remove compiled files"
 	@echo "   doc             generate the local documentation"
 	@echo "   help            print this message"
