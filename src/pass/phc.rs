@@ -87,24 +87,29 @@ fn is_param_value_char(chr: u8) -> bool {
 named!(
     get_id<CompleteByteSlice, String>,
     do_parse!(
-        tag!("$") >> id: take_while1!(is_id_char) >> (String::from_utf8(id.to_vec()).unwrap())
+        tag!("$") >>
+        id: take_while1!(is_id_char) >>
+        (String::from_utf8(id.to_vec()).unwrap())
     )
 );
 
 named!(
     get_phc_part<CompleteByteSlice, Vec<u8>>,
-    do_parse!(tag!("$") >> data: take_while!(is_b64) >> (data.to_vec()))
+    do_parse!(
+        tag!("$") >>
+        data: take_while!(is_b64) >>
+        (data.to_vec())
+    )
 );
 
 named!(
     get_param_elem<CompleteByteSlice, (String, String)>,
     do_parse!(
-        name: take_while1!(is_param_name_char) >> tag!("=")
-            >> value: take_while1!(is_param_value_char) >> opt!(complete!(tag!(",")))
-            >> (
-                String::from_utf8(name.to_vec()).unwrap(),
-                String::from_utf8(value.to_vec()).unwrap()
-            )
+        name: take_while1!(is_param_name_char) >>
+        tag!("=") >>
+        value: take_while1!(is_param_value_char) >>
+        opt!(complete!(tag!(","))) >>
+        (String::from_utf8(name.to_vec()).unwrap(), String::from_utf8(value.to_vec()).unwrap())
     )
 );
 
@@ -122,7 +127,11 @@ named!(
 
 named!(
     parse_params<CompleteByteSlice, HashMap<String, String>>,
-    do_parse!(tag!("$") >> params: get_params >> (params))
+    do_parse!(
+        tag!("$") >>
+        params: get_params >>
+        (params)
+    )
 );
 
 named!(
