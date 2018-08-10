@@ -153,6 +153,7 @@ macro_rules! set_normalization {
     };
 }
 
+mod std_default;
 mod std_nist;
 mod argon2;
 mod pbkdf2;
@@ -164,38 +165,6 @@ use sha2::Sha512;
 use hmac::{Hmac, Mac};
 use key::KeyBuilder;
 use self::phc::PHCData;
-
-/// The default algorithm used to hash the password.
-pub const DEFAULT_ALGORITHM: Algorithm = Algorithm::Argon2;
-/// The default method used to calculate the password's length.
-///
-/// The password being represented as a UTF-8 string, which means som characters may use more
-/// than one byte. This setting is used to determine whether the password length is defines as
-/// the number on bytes or the number of characters.
-pub const DEFAULT_LENGTH_CALCULATION: LengthCalculationMethod = LengthCalculationMethod::Characters;
-/// The default method used to normalize the password.
-pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
-/// The maximal accepted length for passwords.
-///
-/// A basic security advice is to use long password, therefore is may appear that limiting the
-/// maximal length is a bad idea. However, authorizing arbitrary size password leads to a DOS
-/// vulnerability: an attacker would submit excessively long passwords that would take ages to
-/// compute, exhausting the resources. Such vulnerabilities has already been reported, like
-/// CVE-2014-9016, CVE-2014-9034, CVE-2014-9218, and so on.
-pub const DEFAULT_PASSWORD_MAX_LEN: usize = 128;
-/// The minimal accepted length for passwords.
-pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;
-/// The default salt length, in bytes.
-pub const DEFAULT_SALT_LEN: usize = 16;
-/// The recommended length to reserve for password hash storage.
-///
-/// Most applications will store passwords hash within a database which requires a fixed space.
-/// This value represents the size such a fixed reserved space should be. It is intentionally
-/// higher than needed in order to accept future improvements.
-///
-/// ## C interface
-/// The C interface refers at this constant as `LIBREAUTH_PASSWORD_STORAGE_LEN`.
-pub const PASSWORD_STORAGE_LEN: usize = 2014;
 
 /// Algorithms available to hash the password.
 ///
@@ -524,7 +493,7 @@ impl Hasher {
         match self.ref_hash {
             Some(ref rh) => match self.do_hash(password) {
                 Ok(hash_duo) => {
-                    let salt = KeyBuilder::new().size(DEFAULT_SALT_LEN).as_vec();
+                    let salt = KeyBuilder::new().size(std_default::DEFAULT_SALT_LEN).as_vec();
 
                     let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
@@ -612,18 +581,7 @@ pub struct HashBuilder {
 impl HashBuilder {
     /// Create a new HashBuilder object with default parameters.
     pub fn new() -> HashBuilder {
-        HashBuilder {
-            standard: PasswordStorageStandard::NoStandard,
-            normalization: DEFAULT_NORMALIZATION,
-            min_len: DEFAULT_PASSWORD_MIN_LEN,
-            max_len: DEFAULT_PASSWORD_MAX_LEN,
-            algorithm: DEFAULT_ALGORITHM,
-            parameters: HashMap::new(),
-            ref_salt: None,
-            ref_hash: None,
-            salt_len: DEFAULT_SALT_LEN,
-            length_calculation: DEFAULT_LENGTH_CALCULATION,
-        }
+        HashBuilder::new_std(PasswordStorageStandard::NoStandard)
     }
 
     /// Create a new HashBuilder object with default parameters for a specific standard.
@@ -632,15 +590,15 @@ impl HashBuilder {
             PasswordStorageStandard::NoStandard => {
                 HashBuilder {
                     standard: PasswordStorageStandard::NoStandard,
-                    normalization: DEFAULT_NORMALIZATION,
-                    min_len: DEFAULT_PASSWORD_MIN_LEN,
-                    max_len: DEFAULT_PASSWORD_MAX_LEN,
-                    algorithm: DEFAULT_ALGORITHM,
+                    normalization: std_default::DEFAULT_NORMALIZATION,
+                    min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
+                    max_len: std_default::DEFAULT_PASSWORD_MAX_LEN,
+                    algorithm: std_default::DEFAULT_ALGORITHM,
                     parameters: HashMap::new(),
                     ref_salt: None,
                     ref_hash: None,
-                    salt_len: DEFAULT_SALT_LEN,
-                    length_calculation: DEFAULT_LENGTH_CALCULATION,
+                    salt_len: std_default::DEFAULT_SALT_LEN,
+                    length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
                 }
             },
             PasswordStorageStandard::Nist80063b => {
@@ -688,8 +646,8 @@ impl HashBuilder {
         let hash_builder = HashBuilder {
             standard: PasswordStorageStandard::NoStandard,
             normalization: norm,
-            min_len: DEFAULT_PASSWORD_MIN_LEN,
-            max_len: DEFAULT_PASSWORD_MAX_LEN,
+            min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
+            max_len: std_default::DEFAULT_PASSWORD_MAX_LEN,
             algorithm: match phc.id.as_str() {
                 "argon2" => Algorithm::Argon2,
                 "pbkdf2" => Algorithm::Pbkdf2,
@@ -699,7 +657,7 @@ impl HashBuilder {
             ref_hash: phc.hash,
             salt_len: match &phc.salt {
                 Some(ref s) => s.len(),
-                None => DEFAULT_SALT_LEN,
+                None => std_default::DEFAULT_SALT_LEN,
             },
             ref_salt: phc.salt,
             length_calculation: lc,
@@ -778,7 +736,7 @@ impl HashBuilder {
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{HashBuilder, ErrorCode, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, DEFAULT_ALGORITHM, DEFAULT_LENGTH_CALCULATION, DEFAULT_NORMALIZATION, DEFAULT_PASSWORD_MAX_LEN, DEFAULT_PASSWORD_MIN_LEN, DEFAULT_SALT_LEN, std_nist};
+    use super::{HashBuilder, ErrorCode, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, std_nist, std_default};
     use std::ffi::CStr;
     use libc;
     use std;
@@ -837,12 +795,12 @@ mod cbindings {
                 let c: &mut PassCfg = unsafe { &mut *cfg };
                 match std {
                     PasswordStorageStandard::NoStandard => {
-                        c.min_len = DEFAULT_PASSWORD_MIN_LEN;
-                        c.max_len = DEFAULT_PASSWORD_MAX_LEN;
-                        c.salt_len = DEFAULT_SALT_LEN;
-                        c.algorithm = DEFAULT_ALGORITHM;
-                        c.length_calculation = DEFAULT_LENGTH_CALCULATION;
-                        c.normalization = DEFAULT_NORMALIZATION;
+                        c.min_len = std_default::DEFAULT_PASSWORD_MIN_LEN;
+                        c.max_len = std_default::DEFAULT_PASSWORD_MAX_LEN;
+                        c.salt_len = std_default::DEFAULT_SALT_LEN;
+                        c.algorithm = std_default::DEFAULT_ALGORITHM;
+                        c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
+                        c.normalization = std_default::DEFAULT_NORMALIZATION;
                         c.standard = std;
                     },
                     PasswordStorageStandard::Nist80063b => {
@@ -949,13 +907,13 @@ pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{HashBuilder, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, DEFAULT_PASSWORD_MIN_LEN, DEFAULT_PASSWORD_MAX_LEN, std_nist};
+    use super::{HashBuilder, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, std_default, std_nist};
 
     #[test]
     fn test_default_hashbuilder() {
         let hb = HashBuilder::new();
-        assert_eq!(hb.min_len, DEFAULT_PASSWORD_MIN_LEN);
-        assert_eq!(hb.max_len, DEFAULT_PASSWORD_MAX_LEN);
+        assert_eq!(hb.min_len, std_default::DEFAULT_PASSWORD_MIN_LEN);
+        assert_eq!(hb.max_len, std_default::DEFAULT_PASSWORD_MAX_LEN);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         match hb.standard {

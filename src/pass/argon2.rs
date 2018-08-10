@@ -33,7 +33,7 @@
  */
 
 use std::collections::HashMap;
-use super::{ErrorCode, HashingFunction, Normalization, DEFAULT_SALT_LEN};
+use super::{ErrorCode, HashingFunction, Normalization, std_default};
 use key::KeyBuilder;
 use argon2;
 
@@ -83,7 +83,7 @@ impl Argon2Hash {
             mem_cost: DEFAULT_MEM_COST,
             lanes: DEFAULT_LANES,
             output_len: DEFAULT_OUTPUT_LEN,
-            salt: KeyBuilder::new().size(DEFAULT_SALT_LEN).as_vec(),
+            salt: KeyBuilder::new().size(std_default::DEFAULT_SALT_LEN).as_vec(),
             norm: Normalization::Nfkc,
         }
     }
