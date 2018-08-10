@@ -178,6 +178,16 @@ use sha2::Sha512;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
+/// The recommended length to reserve for password hash storage.
+///
+/// Most applications will store passwords hash within a database which requires a fixed space.
+/// This value represents the size such a fixed reserved space should be. It is intentionally
+/// higher than needed in order to accept future improvements.
+///
+/// ## C interface
+/// The C interface refers at this constant as `LIBREAUTH_PASSWORD_STORAGE_LEN`.
+pub const PASSWORD_STORAGE_LEN: usize = 1024;
+
 /// Algorithms available to hash the password.
 ///
 /// ## C interface
