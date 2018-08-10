@@ -783,11 +783,14 @@ mod cbindings {
         standard: PasswordStorageStandard,
     }
 
+    /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values.
     #[no_mangle]
     pub extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
         libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard)
     }
 
+    /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values for a given
+    /// standard.
     #[no_mangle]
     pub extern "C" fn libreauth_pass_init_std(cfg: *mut PassCfg, std: PasswordStorageStandard) -> ErrorCode {
         match cfg.is_null() {
@@ -819,6 +822,7 @@ mod cbindings {
         }
     }
 
+    /// [C binding] Initialize a `struct libreauth_pass_cfg` from a PHC string.
     #[no_mangle]
     pub extern "C" fn libreauth_pass_init_from_phc(cfg: *mut PassCfg, phc: *const libc::c_char) -> ErrorCode {
         let c: &mut PassCfg = get_cfg_mut!(cfg, ErrorCode::NullPtr);
@@ -839,6 +843,7 @@ mod cbindings {
         ErrorCode::Success
     }
 
+    /// [C binding] Hash a password according to the given configuration and stores it in the supplied buffer.
     #[no_mangle]
     pub extern "C" fn libreauth_pass_hash(cfg: *const PassCfg, pass: *const libc::c_char, dest: *mut libc::uint8_t, dest_len: libc::size_t) -> ErrorCode {
         let c: &PassCfg = get_cfg!(cfg, ErrorCode::NullPtr);
@@ -877,6 +882,7 @@ mod cbindings {
         }
     }
 
+    /// [C binding] Check whether or not the supplied password is valid.
     #[no_mangle]
     pub extern "C" fn libreauth_pass_is_valid(pass: *const libc::c_char, reference: *const libc::c_char) -> libc::int32_t {
         let p = get_string!(pass);
