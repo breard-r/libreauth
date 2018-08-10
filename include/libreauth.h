@@ -49,26 +49,56 @@ int32_t libreauth_keygen(void *buff, size_t buff_len);
  * PASS module
  */
 
-#define LIBREAUTH_PASSWORD_MIN_LEN          8
-#define LIBREAUTH_PASSWORD_MAX_LEN          128
 #define LIBREAUTH_PASSWORD_STORAGE_LEN      1024
+
+typedef enum {
+    LIBREAUTH_PASS_ARGON2   = 0,
+    LIBREAUTH_PASS_PBKDF2   = 1
+} libreauth_pass_algo;
 
 typedef enum {
     LIBREAUTH_PASS_SUCCESS                  = 0,
     LIBREAUTH_PASS_PASSWORD_TOO_SHORT       = 1,
     LIBREAUTH_PASS_PASSWORD_TOO_LONG        = 2,
     LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT  = 10,
-    LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20
+    LIBREAUTH_PASS_INCOMPATIBLE_OPTION      = 11,
+    LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20,
+    LIBREAUTH_PASS_NULL_PTR                 = 12
 } libreauth_pass_errno;
 
 typedef enum {
-    LIBREAUTH_PASS_NOSTANDARD               = 0,
-    LIBREAUTH_PASS_NIST80063B               = 1
+    LIBREAUTH_PASS_BYTES        = 0,
+    LIBREAUTH_PASS_CHARACTERS   = 1
+} libreauth_pass_len_calc;
+
+typedef enum {
+    LIBREAUTH_PASS_NO_NORMALIZATION = 0,
+    LIBREAUTH_PASS_NFD              = 1,
+    LIBREAUTH_PASS_NFKD             = 2,
+    LIBREAUTH_PASS_NFC              = 3,
+    LIBREAUTH_PASS_NFKC             = 4,
+} libreauth_pass_normalization;
+
+typedef enum {
+    LIBREAUTH_PASS_NOSTANDARD   = 0,
+    LIBREAUTH_PASS_NIST80063B   = 1
 } libreauth_pass_standard;
 
-libreauth_pass_errno    libreauth_password_hash(const void *password, void *storage, size_t storage_len);
-libreauth_pass_errno    libreauth_password_hash_standard(const void *password, void *storage, size_t storage_len, libreauth_pass_standard standard);
-int32_t                 libreauth_password_is_valid(const void *password, const void *reference);
+struct libreauth_pass_cfg {
+    size_t                          min_len;
+    size_t                          max_len;
+    size_t                          salt_len;
+    libreauth_pass_algo             algorithm;
+    libreauth_pass_len_calc         length_calculation;
+    libreauth_pass_normalization    normalization;
+    libreauth_pass_standard         standard;
+};
+
+libreauth_pass_errno    libreauth_pass_init(struct libreauth_pass_cfg *cfg);
+libreauth_pass_errno    libreauth_pass_init_std(struct libreauth_pass_cfg *cfg, libreauth_pass_standard std);
+libreauth_pass_errno    libreauth_pass_init_from_phc(struct libreauth_pass_cfg *cfg, const char *phc);
+libreauth_pass_errno    libreauth_pass_hash(const struct libreauth_pass_cfg *cfg, const char *pass, char *hash, size_t hash_len);
+int32_t                 libreauth_pass_is_valid(const char *pass, const char *ref);
 
 
 /*

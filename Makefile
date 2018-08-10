@@ -28,7 +28,7 @@ uninstall:
 debug:
 	@cargo build --features "cbindings"
 
-test:
+test: debug
 	@cargo test --features "cbindings"
 	@make -C tests clean test
 	@echo
@@ -64,7 +64,7 @@ help:
 	@echo "Default target: $(NAME)"
 	@echo
 	@echo "Available targets:"
-	@echo "   $(NAME)            create a release build"
+	@echo "   $(NAME)       create a release build"
 	@echo "   audit           audit dependencies"
 	@echo "   install         install $(NAME)"
 	@echo "   uninstall       uninstall $(NAME)"

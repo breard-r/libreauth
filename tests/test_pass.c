@@ -41,14 +41,36 @@
 static uint32_t test_valid_pass(void) {
     test_name("pass: test_valid_pass");
 
+    struct libreauth_pass_cfg   cfg1, cfg2;
     const char password[] = "correct horse battery staple",
           invalid_pass[] = "123456";
-    uint8_t storage[LIBREAUTH_PASSWORD_STORAGE_LEN];
+    char storage[LIBREAUTH_PASSWORD_STORAGE_LEN];
 
-    uint32_t ret = libreauth_password_hash(password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN);
+    uint32_t ret = libreauth_pass_init(&cfg1);
     assert(ret == LIBREAUTH_PASS_SUCCESS);
-    assert(libreauth_password_is_valid(password, storage));
-    assert(!libreauth_password_is_valid(invalid_pass, storage));
+    assert(cfg1.min_len == 8);
+    assert(cfg1.max_len == 128);
+    assert(cfg1.salt_len == 16);
+    assert(cfg1.algorithm == LIBREAUTH_PASS_ARGON2);
+    assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+    assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
+    assert(cfg1.standard == LIBREAUTH_PASS_NOSTANDARD);
+
+    ret = libreauth_pass_hash(&cfg1, password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+
+    ret = libreauth_pass_init_from_phc(&cfg2, storage);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    assert(cfg2.min_len == 8);
+    assert(cfg2.max_len == 128);
+    assert(cfg2.salt_len == 16);
+    assert(cfg2.algorithm == LIBREAUTH_PASS_ARGON2);
+    assert(cfg2.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+    assert(cfg2.normalization == LIBREAUTH_PASS_NFKC);
+    assert(cfg2.standard == LIBREAUTH_PASS_NOSTANDARD);
+
+    assert(libreauth_pass_is_valid(password, storage));
+    assert(!libreauth_pass_is_valid(invalid_pass, storage));
 
     return 1;
 }
@@ -56,14 +78,37 @@ static uint32_t test_valid_pass(void) {
 static uint32_t test_nist_pass(void) {
     test_name("pass: test_nist_pass");
 
+    struct libreauth_pass_cfg   cfg1, cfg2;
     const char password[] = "correct horse battery staple",
           invalid_pass[] = "123456";
-    uint8_t storage[LIBREAUTH_PASSWORD_STORAGE_LEN];
+    char storage[LIBREAUTH_PASSWORD_STORAGE_LEN];
 
-    uint32_t ret = libreauth_password_hash_standard(password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN, LIBREAUTH_PASS_NIST80063B);
+    uint32_t ret = libreauth_pass_init_std(&cfg1, LIBREAUTH_PASS_NIST80063B);
     assert(ret == LIBREAUTH_PASS_SUCCESS);
-    assert(libreauth_password_is_valid(password, storage));
-    assert(!libreauth_password_is_valid(invalid_pass, storage));
+    assert(cfg1.min_len == 8);
+    assert(cfg1.max_len == 128);
+    assert(cfg1.salt_len == 16);
+    assert(cfg1.algorithm == LIBREAUTH_PASS_PBKDF2);
+    assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+    assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
+    assert(cfg1.standard == LIBREAUTH_PASS_NIST80063B);
+
+    ret = libreauth_pass_hash(&cfg1, password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+
+    ret = libreauth_pass_init_from_phc(&cfg2, storage);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    assert(cfg2.min_len == 8);
+    assert(cfg2.max_len == 128);
+    assert(cfg2.salt_len == 16);
+    assert(cfg2.algorithm == LIBREAUTH_PASS_PBKDF2);
+    assert(cfg2.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+    assert(cfg2.normalization == LIBREAUTH_PASS_NFKC);
+    // If built from PHC, the standard is irrelevant.
+    assert(cfg2.standard == LIBREAUTH_PASS_NOSTANDARD);
+
+    assert(libreauth_pass_is_valid(password, storage));
+    assert(!libreauth_pass_is_valid(invalid_pass, storage));
 
     return 1;
 }
@@ -71,9 +116,21 @@ static uint32_t test_nist_pass(void) {
 static uint32_t test_invalid_pass(void) {
     test_name("pass: test_invalid_pass");
 
+    struct libreauth_pass_cfg   cfg;
     const char password[] = "invalid password",
           reference[] = "$pbkdf2$hash=sha256,iter=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk";
-    assert(!libreauth_password_is_valid(password, reference));
+
+    uint32_t ret = libreauth_pass_init_from_phc(&cfg, reference);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    assert(cfg.min_len == 8);
+    assert(cfg.max_len == 128);
+    assert(cfg.salt_len == 4);
+    assert(cfg.algorithm == LIBREAUTH_PASS_PBKDF2);
+    assert(cfg.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+    assert(cfg.normalization == LIBREAUTH_PASS_NFKC);
+    assert(cfg.standard == LIBREAUTH_PASS_NOSTANDARD);
+
+    assert(!libreauth_pass_is_valid(password, reference));
 
     return 1;
 }

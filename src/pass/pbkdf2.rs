@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2017)
- * Author: Rodolphe Breard (2017)
+ * Copyright Rodolphe Breard (2017-2018)
+ * Author: Rodolphe Breard (2017-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -33,10 +33,8 @@
  */
 
 use std::collections::HashMap;
-use super::{ErrorCode, HashingFunction, Normalization};
+use super::{ErrorCode, HashingFunction, Normalization, DEFAULT_SALT_LEN};
 use key::KeyBuilder;
-use unicode_normalization::UnicodeNormalization;
-
 use pbkdf2::pbkdf2;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha1::Sha1;
@@ -52,13 +50,12 @@ pub enum HashFunction {
     Sha512Trunc256,
 }
 
-const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha256;
-const DEFAULT_SALT_LENGTH: usize = 16; // in bytes
+pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
 const MIN_SALT_LENGTH: usize = 4; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
-const DEFAULT_ITER: usize = 45000;
 const MIN_ITER: usize = 10000;
 const MAX_ITER: usize = 200000;
+pub const DEFAULT_ITER: usize = 45000;
 
 macro_rules! process_pbkdf2 {
     ($obj: ident, $input: ident, $hash: ty, $len: expr) => {{
@@ -85,7 +82,7 @@ impl Pbkdf2Hash {
         Pbkdf2Hash {
             hash_function: DEFAULT_HASH_FUNCTION,
             nb_iter: DEFAULT_ITER,
-            salt: KeyBuilder::new().size(DEFAULT_SALT_LENGTH).as_vec(),
+            salt: KeyBuilder::new().size(DEFAULT_SALT_LEN).as_vec(),
             norm: Normalization::Nfkc,
         }
     }
@@ -117,7 +114,6 @@ impl HashingFunction for Pbkdf2Hash {
 
     fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode> {
         match name.as_str() {
-            "norm" => get_normalization!(self, norm, value),
             "iter" => match value.parse::<usize>() {
                 Ok(i) => match i {
                     MIN_ITER...MAX_ITER => {
@@ -177,16 +173,25 @@ impl HashingFunction for Pbkdf2Hash {
         }
     }
 
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode> {
+        let salt = KeyBuilder::new().size(salt_len).as_vec();
+        self.set_salt(salt)
+    }
+
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode> {
+        self.norm = norm;
+        Ok(())
+    }
+
     fn hash(&self, input: &Vec<u8>) -> Vec<u8> {
-        let pass = normalize!(self, norm, input);
         match self.hash_function {
-            HashFunction::Sha1 => process_pbkdf2!(self, pass, Sha1, 20),
-            HashFunction::Sha224 => process_pbkdf2!(self, pass, Sha224, 28),
-            HashFunction::Sha256 => process_pbkdf2!(self, pass, Sha256, 32),
-            HashFunction::Sha384 => process_pbkdf2!(self, pass, Sha384, 48),
-            HashFunction::Sha512 => process_pbkdf2!(self, pass, Sha512, 64),
-            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, pass, Sha512Trunc224, 28),
-            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, pass, Sha512Trunc256, 32),
+            HashFunction::Sha1 => process_pbkdf2!(self, input, Sha1, 20),
+            HashFunction::Sha224 => process_pbkdf2!(self, input, Sha224, 28),
+            HashFunction::Sha256 => process_pbkdf2!(self, input, Sha256, 32),
+            HashFunction::Sha384 => process_pbkdf2!(self, input, Sha384, 48),
+            HashFunction::Sha512 => process_pbkdf2!(self, input, Sha512, 64),
+            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, input, Sha512Trunc224, 28),
+            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, input, Sha512Trunc256, 32),
         }
     }
 }

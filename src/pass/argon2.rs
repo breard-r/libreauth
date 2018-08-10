@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2017)
- * Author: Rodolphe Breard (2017)
+ * Copyright Rodolphe Breard (2017-2018)
+ * Author: Rodolphe Breard (2017-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -33,26 +33,24 @@
  */
 
 use std::collections::HashMap;
-use super::{ErrorCode, HashingFunction, Normalization};
-use unicode_normalization::UnicodeNormalization;
+use super::{ErrorCode, HashingFunction, Normalization, DEFAULT_SALT_LEN};
 use key::KeyBuilder;
 use argon2;
 
-const DEFAULT_SALT_LENGTH: usize = 16; // in bytes
 const MIN_SALT_LENGTH: usize = 8; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
 const DEFAULT_PASSES: u32 = 3;
 const MIN_PASSES: u32 = 1;
 const MAX_PASSES: u32 = 1024;
-const DEFAULT_MEM_COST: u32 = 12;
-const MIN_MEM_COST: u32 = 7;
-const MAX_MEM_COST: u32 = 18;
+const DEFAULT_MEM_COST: u32 = 12; // 2^value KiB
+const MIN_MEM_COST: u32 = 7; // 2^value KiB
+const MAX_MEM_COST: u32 = 18; // 2^value KiB
 const DEFAULT_LANES: u32 = 4;
 const MIN_LANES: u32 = 1;
 const MAX_LANES: u32 = 128;
-const DEFAULT_OUTPUT_LEN: u32 = 32;
-const MIN_OUTPUT_LEN: u32 = 32;
-const MAX_OUTPUT_LEN: u32 = 256;
+const DEFAULT_OUTPUT_LEN: u32 = 128; // in bytes
+const MIN_OUTPUT_LEN: u32 = 32; // in bytes
+const MAX_OUTPUT_LEN: u32 = 256; // in bytes
 
 macro_rules! set_param {
     ($obj: ident, $attr: ident, $val: ident, $t: ty, $min: expr, $max: expr) => {{
@@ -85,7 +83,7 @@ impl Argon2Hash {
             mem_cost: DEFAULT_MEM_COST,
             lanes: DEFAULT_LANES,
             output_len: DEFAULT_OUTPUT_LEN,
-            salt: KeyBuilder::new().size(DEFAULT_SALT_LENGTH).as_vec(),
+            salt: KeyBuilder::new().size(DEFAULT_SALT_LEN).as_vec(),
             norm: Normalization::Nfkc,
         }
     }
@@ -108,7 +106,6 @@ impl HashingFunction for Argon2Hash {
 
     fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode> {
         match name.as_str() {
-            "norm" => get_normalization!(self, norm, value),
             "passes" => set_param!(self, passes, value, u32, MIN_PASSES, MAX_PASSES),
             "mem" => set_param!(self, mem_cost, value, u32, MIN_MEM_COST, MAX_MEM_COST),
             "lanes" => set_param!(self, lanes, value, u32, MIN_LANES, MAX_LANES),
@@ -131,8 +128,17 @@ impl HashingFunction for Argon2Hash {
         }
     }
 
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode> {
+        let salt = KeyBuilder::new().size(salt_len).as_vec();
+        self.set_salt(salt)
+    }
+
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode> {
+        self.norm = norm;
+        Ok(())
+    }
+
     fn hash(&self, input: &Vec<u8>) -> Vec<u8> {
-        let pass = normalize!(self, norm, input);
         let two: u32 = 2;
         let config = argon2::Config {
             ad: &[],
@@ -145,7 +151,7 @@ impl HashingFunction for Argon2Hash {
             variant: argon2::Variant::Argon2i,
             version: argon2::Version::Version13,
         };
-        argon2::hash_raw(&pass.as_slice(), &self.salt.as_slice(), &config).unwrap()
+        argon2::hash_raw(&input.as_slice(), &self.salt.as_slice(), &config).unwrap()
     }
 }
 

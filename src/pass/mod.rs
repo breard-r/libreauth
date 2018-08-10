@@ -1,6 +1,6 @@
 /*
- * Copyright Rodolphe Breard (2016-2017)
- * Author: Rodolphe Breard (2016-2017)
+ * Copyright Rodolphe Breard (2016-2018)
+ * Author: Rodolphe Breard (2016-2018)
  *
  * This software is a computer library whose purpose is to offer a
  * collection of tools for user authentication.
@@ -44,7 +44,9 @@
 //!
 //! By default, LibreAuth has security in mind and therefore provides a decent level of security.
 //!
-//! Sometimes, you may be required to use some approved items in order to comply with various standards. If you are in such a situation, LibreAuth can adapt to some well-known standards. Keep in mind that LibreAuth does only a part of the job, you may be required to implement additional components in order to comply with the minimal requirements of the selected standard.
+//! Sometimes, you may be required to comply with industry or government standards. To ease such
+//! requirements, LibreAuth is able to adapt itself to some standards. Please note such modes does
+//! not automatically guaranty you compliance, you may have other items to check.
 //!
 //! ## Storage format
 //!
@@ -52,13 +54,6 @@
 //!
 //! ## Supported identifiers and parameters
 //!
-//! <style>
-//! .vcentered_table th, .vcentered_table td {vertical-align: middle;}
-//! .vcentered_table > thead > tr > th {text-align: center;}
-//! .vcentered_table > tbody > tr > td:last-child {text-align: center;}
-//! .hash {text-align: center; vertical-align: middle;}
-//! .legend {font-style: italic; font-size: smaller; color: gray;}
-//! </style>
 //! <table class="vcentered_table">
 //!     <thead>
 //!         <tr>
@@ -71,7 +66,20 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="5" class="hash">argon2<br /><span class="legend">default</span></td>
+//!             <td rowspan="2" class="hash">Global parameters</td>
+//!             <td>norm</td>
+//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
+//!             <td>Unicode normalization.</td>
+//!             <td>nfkc</td>
+//!         </tr>
+//!         <tr>
+//!             <td>len-calc</td>
+//!             <td>string: bytes | chars</td>
+//!             <td>Unicode string length calculation method.</td>
+//!             <td>chars</td>
+//!         </tr>
+//!         <tr>
+//!             <td rowspan="4" class="hash">argon2</td>
 //!             <td>passes</td>
 //!             <td>integer</td>
 //!             <td>The number of block matrix iterations to perform.</td>
@@ -93,16 +101,10 @@
 //!             <td>len</td>
 //!             <td>integer</td>
 //!             <td>Output length, in bytes.</td>
-//!             <td>32</td>
+//!             <td>128</td>
 //!         </tr>
 //!         <tr>
-//!             <td>norm</td>
-//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
-//!             <td>Unicode normalization.</td>
-//!             <td>nfkc</td>
-//!         </tr>
-//!         <tr>
-//!             <td rowspan="3" class="hash">pbkdf2<br /><span class="legend">NIST SP 800-63B</span></td>
+//!             <td rowspan="2" class="hash">pbkdf2</td>
 //!             <td>iter</td>
 //!             <td>integer</td>
 //!             <td>Number of iterations.</td>
@@ -112,38 +114,67 @@
 //!             <td>hash</td>
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256</td>
 //!             <td>The hash function.</td>
-//!             <td>sha256</td>
-//!         </tr>
-//!         <tr>
-//!             <td>norm</td>
-//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
-//!             <td>Unicode normalization.</td>
-//!             <td>nfkc</td>
+//!             <td>sha512</td>
 //!         </tr>
 //!     </tbody>
 //! </table>
 //!
 //! ## Examples
 //! ```rust
-//! let password = "correct horse battery staple".to_string().into_bytes();
-//! let stored_password = libreauth::pass::password_hash(&password).unwrap().into_bytes();
-//! assert!(! libreauth::pass::is_valid(&"bad password".to_string().into_bytes(), &stored_password));
-//! assert!(libreauth::pass::is_valid(&password, &stored_password));
+//! use libreauth::pass::HashBuilder;
+//!
+//! // Hashing a password in order to store it.
+//! let password = "correct horse battery staple".to_string();
+//! let hasher = HashBuilder::new().finalize().unwrap();
+//! let stored_password = hasher.hash(&password).unwrap();
+//!
+//! // Checking a password against a previously hashed one.
+//! let checker = HashBuilder::from_phc(stored_password).unwrap();
+//! assert!(! checker.is_valid(&"bad password".to_string()));
+//! assert!(checker.is_valid(&password));
 //! ```
 //!
 //! [PHC]: https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
 //! [1]: https://en.wikipedia.org/wiki/Crypt_(C)#Key_Derivation_Functions_Supported_by_crypt
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
+macro_rules! set_normalization {
+    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
+        $val.insert(
+            $name,
+            match $obj.$attr {
+                Normalization::Nfd => "nfd".to_string(),
+                Normalization::Nfkd => "nfkd".to_string(),
+                Normalization::Nfc => "nfc".to_string(),
+                Normalization::Nfkc => "nfkc".to_string(),
+                Normalization::None => "none".to_string(),
+            },
+        );
+    };
+}
+
+mod std_nist;
+mod argon2;
+mod pbkdf2;
+mod phc;
+
+use unicode_normalization::UnicodeNormalization;
+use std::collections::HashMap;
 use sha2::Sha512;
 use hmac::{Hmac, Mac};
 use key::KeyBuilder;
+use self::phc::PHCData;
 
-/// The minimal accepted length for passwords.
+/// The default algorithm used to hash the password.
+pub const DEFAULT_ALGORITHM: Algorithm = Algorithm::Argon2;
+/// The default method used to calculate the password's length.
 ///
-/// ## C interface
-/// The C interface refers at this constant as `LIBREAUTH_PASSWORD_MIN_LEN`.
-pub const PASSWORD_MIN_LEN: usize = 8;
+/// The password being represented as a UTF-8 string, which means som characters may use more
+/// than one byte. This setting is used to determine whether the password length is defines as
+/// the number on bytes or the number of characters.
+pub const DEFAULT_LENGTH_CALCULATION: LengthCalculationMethod = LengthCalculationMethod::Characters;
+/// The default method used to normalize the password.
+pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
 /// The maximal accepted length for passwords.
 ///
 /// A basic security advice is to use long password, therefore is may appear that limiting the
@@ -151,10 +182,50 @@ pub const PASSWORD_MIN_LEN: usize = 8;
 /// vulnerability: an attacker would submit excessively long passwords that would take ages to
 /// compute, exhausting the resources. Such vulnerabilities has already been reported, like
 /// CVE-2014-9016, CVE-2014-9034, CVE-2014-9218, and so on.
+pub const DEFAULT_PASSWORD_MAX_LEN: usize = 128;
+/// The minimal accepted length for passwords.
+pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;
+/// The default salt length, in bytes.
+pub const DEFAULT_SALT_LEN: usize = 16;
+/// The recommended length to reserve for password hash storage.
+///
+/// Most applications will store passwords hash within a database which requires a fixed space.
+/// This value represents the size such a fixed reserved space should be. It is intentionally
+/// higher than needed in order to accept future improvements.
 ///
 /// ## C interface
-/// The C interface refers at this constant as `LIBREAUTH_PASSWORD_MAX_LEN`.
-pub const PASSWORD_MAX_LEN: usize = 128;
+/// The C interface refers at this constant as `LIBREAUTH_PASSWORD_STORAGE_LEN`.
+pub const PASSWORD_STORAGE_LEN: usize = 2014;
+
+/// Algorithms available to hash the password.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_pass_algo` and the members has been renamed
+/// as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Argon2</td>
+///             <td>LIBREAUTH_PASS_ARGON2</td>
+///         </tr>
+///         <tr>
+///             <td>Pbkdf2</td>
+///             <td>LIBREAUTH_PASS_PBKDF2</td>
+///         </tr>
+///     </tbody>
+/// </table>
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub enum Algorithm {
+    Argon2 = 0,
+    Pbkdf2 = 1,
+}
 
 /// Error codes used both in the rust and C interfaces.
 ///
@@ -186,8 +257,16 @@ pub const PASSWORD_MAX_LEN: usize = 128;
 ///             <td>LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT</td>
 ///         </tr>
 ///         <tr>
+///             <td>IncompatibleOption</td>
+///             <td>LIBREAUTH_PASS_INCOMPATIBLE_OPTION</td>
+///         </tr>
+///         <tr>
 ///             <td>NotEnoughSpace</td>
 ///             <td>LIBREAUTH_PASS_NOT_ENOUGH_SPACE</td>
+///         </tr>
+///         <tr>
+///             <td>NullPtr</td>
+///             <td>LIBREAUTH_PASS_NULL_PTR</td>
 ///         </tr>
 ///     </tbody>
 /// </table>
@@ -196,17 +275,99 @@ pub const PASSWORD_MAX_LEN: usize = 128;
 pub enum ErrorCode {
     /// Used in C-bindings to indicate the absence of errors.
     Success = 0,
-    /// The password is shorter than [PASSWORD_MIN_LEN][1].
-    /// [1]: constant.PASSWORD_MIN_LEN.html
+    /// The password is shorter than the miniimal length (default: [DEFAULT_PASSWORD_MIN_LEN][1]).
+    ///
+    /// [1]: constant.DEFAULT_PASSWORD_MIN_LEN.html
     PasswordTooShort = 1,
-    /// The password is longer than [PASSWORD_MAX_LEN][1].
-    /// [1]: constant.PASSWORD_MAX_LEN.html
+    /// The password is longer than the maximal length (default: [DEFAULT_PASSWORD_MAX_LEN][1]).
+    ///
+    /// [1]: constant.DEFAULT_PASSWORD_MAX_LEN.html
     PasswordTooLong = 2,
     /// The input does not respect the [storage format][1].
+    ///
     /// [1]: index.html#storage-format
     InvalidPasswordFormat = 10,
+    /// Some options you specified are incompatible.
+    IncompatibleOption = 11,
     /// Used in C-bindings to indicate the storage does not have enough space to store the data.
     NotEnoughSpace = 20,
+    /// Used in C-bindings to indicate a NULL pointer.
+    NullPtr = 21,
+}
+
+/// Available methods to calculate the length of a UTF-8 string.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_pass_len_calc` and the members has been renamed
+/// as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Bytes</td>
+///             <td>LIBREAUTH_PASS_BYTES</td>
+///         </tr>
+///         <tr>
+///             <td>Characters</td>
+///             <td>LIBREAUTH_PASS_CHARACTERS</td>
+///         </tr>
+///     </tbody>
+/// </table>
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LengthCalculationMethod {
+    Bytes = 0,
+    Characters = 1,
+}
+
+/// Available string normalization methods.
+///
+/// ## C interface
+/// The C interface uses an enum of type `libreauth_pass_normalization` and the members has been renamed
+/// as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>Nfd</td>
+///             <td>LIBREAUTH_PASS_NFD</td>
+///         </tr>
+///         <tr>
+///             <td>Nfkd</td>
+///             <td>LIBREAUTH_PASS_NFKD</td>
+///         </tr>
+///         <tr>
+///             <td>Nfc</td>
+///             <td>LIBREAUTH_PASS_NFC</td>
+///         </tr>
+///         <tr>
+///             <td>Nfkc</td>
+///             <td>LIBREAUTH_PASS_NFKC</td>
+///         </tr>
+///         <tr>
+///             <td>None</td>
+///             <td>LIBREAUTH_PASS_NO_NORMALIZATION</td>
+///         </tr>
+///     </tbody>
+/// </table>
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub enum Normalization {
+    Nfd = 1,
+    Nfkd = 2,
+    Nfc = 3,
+    Nfkc = 4,
+    None = 0,
 }
 
 /// Defines whether or not LibreAuth should comply with recommendations from a specific standard.
@@ -241,77 +402,137 @@ pub enum PasswordStorageStandard {
     Nist80063b = 1,
 }
 
-mod hash;
-mod phc;
-
-/// Hash a password and returns its string representation so it can be stored.
-///
-/// The algorithm is automatically chosen by LibreAuth depending on the current state of
-/// cryptography. This is why you should keep this crate up-to-date.
-///
-/// ## Examples
-/// ```rust
-/// let password = "1234567890".to_string().into_bytes();
-/// let stored_password = libreauth::pass::password_hash(&password).unwrap();
-/// ```
-pub fn password_hash(password: &Vec<u8>) -> Result<String, ErrorCode> {
-    password_hash_standard(password, PasswordStorageStandard::NoStandard)
+trait HashingFunction {
+    fn get_id(&self) -> String;
+    fn get_parameters(&self) -> HashMap<String, String>;
+    fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode>;
+    fn get_salt(&self) -> Option<Vec<u8>>;
+    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode>;
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode>;
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode>;
+    fn hash(&self, input: &Vec<u8>) -> Vec<u8>;
 }
 
-/// Hash a password and returns its string representation so it can be stored.
-///
-/// The algorithm is chosen by LibreAuth in accordance the recommendations of the specified standard.
-///
-/// ## Examples
-/// ```rust
-/// let password = "1234567890".to_string().into_bytes();
-/// let stored_password = libreauth::pass::password_hash_standard(&password, libreauth::pass::PasswordStorageStandard::Nist80063b).unwrap();
-/// ```
-pub fn password_hash_standard(
-    password: &Vec<u8>,
-    standard: PasswordStorageStandard,
-) -> Result<String, ErrorCode> {
-    match hash::PasswordHasher::new(standard).hash(password) {
-        Ok(s) => Ok(s.to_string().unwrap()),
-        Err(e) => Err(e),
+struct HashedDuo {
+    raw: Vec<u8>,
+    formated: String,
+}
+
+/// Hash a password and check a password against a previously hashed one.
+pub struct Hasher {
+    normalization: Normalization,
+    min_len: usize,
+    max_len: usize,
+    algorithm: Algorithm,
+    parameters: HashMap<String, String>,
+    ref_salt: Option<Vec<u8>>,
+    ref_hash: Option<Vec<u8>>,
+    salt_len: usize,
+    length_calculation: LengthCalculationMethod,
+}
+
+impl Hasher {
+    fn check_password(&self, password: &String) -> Result<(), ErrorCode> {
+        let pass_len = match self.length_calculation {
+            LengthCalculationMethod::Bytes => password.len(),
+            LengthCalculationMethod::Characters => {
+                let mut len = 0;
+                for _ in password.chars() {
+                    len = len + 1;
+                }
+                len
+            },
+        };
+        if pass_len < self.min_len {
+            return Err(ErrorCode::PasswordTooShort)
+        }
+        if pass_len > self.max_len {
+            return Err(ErrorCode::PasswordTooLong)
+        }
+        Ok(())
     }
-}
 
-/// Check whether or not a s supplied password matches the stored hash.
-///
-/// ## Examples
-/// ```rust
-/// let password = "correct horse battery staple".to_string().into_bytes();
-/// let stored_password = libreauth::pass::password_hash(&password).unwrap().into_bytes();
-/// assert!(! libreauth::pass::is_valid(&"bad password".to_string().into_bytes(), &stored_password));
-/// assert!(libreauth::pass::is_valid(&password, &stored_password));
-/// ```
-///
-/// ```rust
-/// let stored_reference = "$pbkdf2$hash=sha256,iter=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk".to_string().into_bytes();
-/// assert!(! libreauth::pass::is_valid(&"bad password".to_string().into_bytes(), &stored_reference));
-/// assert!(libreauth::pass::is_valid(&"password123".to_string().into_bytes(), &stored_reference));
-/// ```
-pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
-    match phc::PHCData::from_bytes(stored_hash) {
-        Ok(sh) => match hash::PasswordHasher::new_from_phc(&sh) {
-            Ok(hasher) => match hasher.hash(password) {
-                Ok(hashed_pass) => {
-                    let salt = KeyBuilder::new().size(32).as_vec();
+    fn normalize_password(&self, password: &String) -> String {
+        match self.normalization {
+            Normalization::Nfd => password.nfd().collect::<String>(),
+            Normalization::Nfkd => password.nfkd().collect::<String>(),
+            Normalization::Nfc => password.nfc().collect::<String>(),
+            Normalization::Nfkc => password.nfkc().collect::<String>(),
+            Normalization::None => password.clone(),
+        }
+    }
 
-                    let sh_value = match sh.hash {
-                        Some(v) => v,
-                        None => {
-                            return false;
-                        }
-                    };
+    fn get_hash_func(&self) -> Box<HashingFunction> {
+        let mut hash_func: Box<HashingFunction> = match self.algorithm {
+            Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
+            Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
+        };
+        hash_func.set_normalization(self.normalization).unwrap();
+        for (k, v) in self.parameters.iter() {
+            hash_func.set_parameter(k.to_string(), v.to_string()).unwrap();
+        }
+        match self.ref_salt {
+            Some(ref s) => {
+                hash_func.set_salt(s.to_vec()).unwrap();
+            },
+            None => {
+                hash_func.set_salt_len(self.salt_len).unwrap();
+            },
+        };
+        hash_func
+    }
+
+    fn do_hash(&self, password: &String) -> Result<HashedDuo, ErrorCode> {
+        let norm_pass = self.normalize_password(password);
+        match self.check_password(&norm_pass) {
+            Ok(_) => {},
+            Err(e) => {
+                return Err(e);
+            },
+        };
+        let hash_func = self.get_hash_func();
+        let hash = hash_func.hash(&norm_pass.into_bytes());
+        let lc = match self.length_calculation {
+            LengthCalculationMethod::Bytes => "bytes",
+            LengthCalculationMethod::Characters => "chars",
+        };
+        let mut params = hash_func.get_parameters();
+        params.insert("len-calc".to_string(), lc.to_string());
+        let phc = PHCData {
+            id: hash_func.get_id(),
+            parameters: params,
+            salt: hash_func.get_salt(),
+            hash: Some(hash.clone()),
+        };
+        match phc.to_string() {
+            Ok(formated) => Ok(HashedDuo {
+                raw: hash,
+                formated: formated,
+            }),
+            Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+        }
+    }
+
+    pub fn hash(&self, password: &String) -> Result<String, ErrorCode> {
+        match self.do_hash(password) {
+            Ok(hash_duo) => Ok(hash_duo.formated),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn is_valid(&self, password: &String) -> bool {
+        match self.ref_hash {
+            Some(ref rh) => match self.do_hash(password) {
+                Ok(hash_duo) => {
+                    let salt = KeyBuilder::new().size(DEFAULT_SALT_LEN).as_vec();
+
                     let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
                         Err(_) => {
                             return false;
                         }
                     };
-                    ref_hmac.input(sh_value.as_slice());
+                    ref_hmac.input(rh.as_slice());
 
                     let mut pass_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
@@ -319,198 +540,599 @@ pub fn is_valid(password: &Vec<u8>, stored_hash: &Vec<u8>) -> bool {
                             return false;
                         }
                     };
-                    pass_hmac.input(hashed_pass.hash.unwrap().as_slice());
+                    pass_hmac.input(hash_duo.raw.as_slice());
 
                     ref_hmac.result().code() == pass_hmac.result().code()
-                }
+                },
                 Err(_) => false,
             },
-            Err(_) => false,
-        },
-        Err(_) => false,
+            None => false,
+        }
+    }
+}
+
+/// Builds a Hasher object.
+///
+/// ## Examples
+///
+/// ```
+/// use libreauth::pass::HashBuilder;
+///
+/// // Hashing a password in order to store it.
+/// let password = "correct horse battery staple".to_string();
+/// let hasher = match HashBuilder::new().finalize() {
+///     Ok(h) => h,
+///     Err(e) => panic!("{:?}", e),
+/// };
+/// let stored_password = match hasher.hash(&password) {
+///     Ok(p) => p,
+///     Err(e) => panic!("{:?}", e),
+/// };
+///
+/// // Checking a password against a previously hashed one.
+/// let checker = HashBuilder::from_phc(stored_password).unwrap();
+/// assert!(! checker.is_valid(&"bad password".to_string()));
+/// assert!(checker.is_valid(&password));
+/// ```
+///
+/// Build a Hasher object with the default parameters to comply with the NIST Special Publication 800-63B. This object will be usable to hash a password.
+/// ```
+/// use libreauth::pass::{HashBuilder, PasswordStorageStandard};
+///
+/// let hasher = match HashBuilder::new_std(PasswordStorageStandard::Nist80063b).finalize() {
+///     Ok(h) => h,
+///     Err(e) => panic!("{:?}", e),
+/// };
+/// ```
+///
+/// Build a Hasher object with custom parameters. This object will be usable to hash a password.
+/// ```
+/// let hasher = match libreauth::pass::HashBuilder::new()
+///     .min_len(12).algorithm(libreauth::pass::Algorithm::Pbkdf2)
+///     .add_param("hash".to_string(), "sha512".to_string())
+///     .add_param("norm".to_string(), "nfkd".to_string())
+///     .finalize() {
+///     Ok(h) => h,
+///     Err(e) => panic!("{:?}", e),
+/// };
+/// ```
+pub struct HashBuilder {
+    standard: PasswordStorageStandard,
+    normalization: Normalization,
+    min_len: usize,
+    max_len: usize,
+    algorithm: Algorithm,
+    parameters: HashMap<String, String>,
+    ref_salt: Option<Vec<u8>>,
+    ref_hash: Option<Vec<u8>>,
+    salt_len: usize,
+    length_calculation: LengthCalculationMethod,
+}
+
+impl HashBuilder {
+    /// Create a new HashBuilder object with default parameters.
+    pub fn new() -> HashBuilder {
+        HashBuilder {
+            standard: PasswordStorageStandard::NoStandard,
+            normalization: DEFAULT_NORMALIZATION,
+            min_len: DEFAULT_PASSWORD_MIN_LEN,
+            max_len: DEFAULT_PASSWORD_MAX_LEN,
+            algorithm: DEFAULT_ALGORITHM,
+            parameters: HashMap::new(),
+            ref_salt: None,
+            ref_hash: None,
+            salt_len: DEFAULT_SALT_LEN,
+            length_calculation: DEFAULT_LENGTH_CALCULATION,
+        }
+    }
+
+    /// Create a new HashBuilder object with default parameters for a specific standard.
+    pub fn new_std(std: PasswordStorageStandard) -> HashBuilder {
+        match std {
+            PasswordStorageStandard::NoStandard => {
+                HashBuilder {
+                    standard: PasswordStorageStandard::NoStandard,
+                    normalization: DEFAULT_NORMALIZATION,
+                    min_len: DEFAULT_PASSWORD_MIN_LEN,
+                    max_len: DEFAULT_PASSWORD_MAX_LEN,
+                    algorithm: DEFAULT_ALGORITHM,
+                    parameters: HashMap::new(),
+                    ref_salt: None,
+                    ref_hash: None,
+                    salt_len: DEFAULT_SALT_LEN,
+                    length_calculation: DEFAULT_LENGTH_CALCULATION,
+                }
+            },
+            PasswordStorageStandard::Nist80063b => {
+                HashBuilder {
+                    standard: PasswordStorageStandard::Nist80063b,
+                    normalization: std_nist::DEFAULT_NORMALIZATION,
+                    min_len: std_nist::DEFAULT_PASSWORD_MIN_LEN,
+                    max_len: std_nist::DEFAULT_PASSWORD_MAX_LEN,
+                    algorithm: std_nist::DEFAULT_ALGORITHM,
+                    parameters: HashMap::new(),
+                    ref_salt: None,
+                    ref_hash: None,
+                    salt_len: std_nist::DEFAULT_SALT_LEN,
+                    length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
+                }
+            },
+        }
+    }
+
+    /// Create a new Hasher object from a PHC formatted string.
+    pub fn from_phc(data: String) -> Result<Hasher, ErrorCode> {
+        let mut phc = match PHCData::from_bytes(&data.into_bytes()) {
+            Ok(v) => v,
+            Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+        };
+        let norm = match phc.parameters.remove("norm") {
+            Some(v) => match v.as_str() {
+                "nfd" => Normalization::Nfd,
+                "nfkd" => Normalization::Nfkd,
+                "nfc" => Normalization::Nfc,
+                "nfkc" => Normalization::Nfkc,
+                "none" => Normalization::None,
+                _ => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => Normalization::Nfkc,
+        };
+        let lc = match phc.parameters.remove("len-calc") {
+            Some(v) => match v.as_str() {
+                "bytes" => LengthCalculationMethod::Bytes,
+                "chars" => LengthCalculationMethod::Characters,
+                _ => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => LengthCalculationMethod::Characters,
+        };
+        let hash_builder = HashBuilder {
+            standard: PasswordStorageStandard::NoStandard,
+            normalization: norm,
+            min_len: DEFAULT_PASSWORD_MIN_LEN,
+            max_len: DEFAULT_PASSWORD_MAX_LEN,
+            algorithm: match phc.id.as_str() {
+                "argon2" => Algorithm::Argon2,
+                "pbkdf2" => Algorithm::Pbkdf2,
+                _ => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            parameters: phc.parameters.clone(),
+            ref_hash: phc.hash,
+            salt_len: match &phc.salt {
+                Some(ref s) => s.len(),
+                None => DEFAULT_SALT_LEN,
+            },
+            ref_salt: phc.salt,
+            length_calculation: lc,
+        };
+        hash_builder.finalize()
+    }
+
+    /// Check the compatibility between options and create a Hasher object.
+    pub fn finalize(&self) -> Result<Hasher, ErrorCode> {
+        match self.standard {
+            PasswordStorageStandard::Nist80063b => {
+                if ! std_nist::is_valid(self) {
+                    return Err(ErrorCode::InvalidPasswordFormat);
+                }
+            },
+            PasswordStorageStandard::NoStandard => {},
+        }
+        Ok(Hasher {
+            normalization: self.normalization,
+            min_len: self.min_len,
+            max_len: self.max_len,
+            algorithm: self.algorithm,
+            parameters: self.parameters.clone(),
+            ref_salt: self.ref_salt.clone(),
+            ref_hash: self.ref_hash.clone(),
+            salt_len: self.salt_len,
+            length_calculation: self.length_calculation,
+        })
+    }
+
+    /// Set the way the password will be normalized.
+    pub fn normalization(&mut self, normalization: Normalization) -> &mut HashBuilder {
+        self.normalization = normalization;
+        self
+    }
+
+    /// Set the password hashing algorithm.
+    pub fn algorithm(&mut self, algorithm: Algorithm) -> &mut HashBuilder {
+        self.algorithm = algorithm;
+        self.parameters = HashMap::new();
+        self
+    }
+
+    /// Set the way the password length will be calculated.
+    pub fn length_calculation(&mut self, method: LengthCalculationMethod) -> &mut HashBuilder {
+        self.length_calculation = method;
+        self
+    }
+
+    /// Set the salt length.
+    ///
+    /// Unused if a salt is given.
+    pub fn salt_len(&mut self, len: usize) -> &mut HashBuilder {
+        self.salt_len = len;
+        self
+    }
+
+    /// Set the password minimal length.
+    pub fn min_len(&mut self, len: usize) -> &mut HashBuilder {
+        self.min_len = len;
+        self
+    }
+
+    /// Set the password maximal length.
+    pub fn max_len(&mut self, len: usize) -> &mut HashBuilder {
+        self.max_len = len;
+        self
+    }
+
+    /// Add a parameter that will be used by the password hashing algorithm.
+    pub fn add_param(&mut self, key: String, value: String) -> &mut HashBuilder {
+        self.parameters.insert(key.clone(), value.clone());
+        self
     }
 }
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::*;
+    use super::{HashBuilder, ErrorCode, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, DEFAULT_ALGORITHM, DEFAULT_LENGTH_CALCULATION, DEFAULT_NORMALIZATION, DEFAULT_PASSWORD_MAX_LEN, DEFAULT_PASSWORD_MIN_LEN, DEFAULT_SALT_LEN, std_nist};
+    use std::ffi::CStr;
     use libc;
     use std;
 
-    /// [C binding] Hash a password and returns its string representation so it can be stored.
-    ///
-    /// ## Examples
-    /// ```c
-    /// const char password[] = "correct horse battery staple";
-    /// uint8_t derived_password[LIBREAUTH_PASS_STORAGE_LEN];
-    ///
-    /// libreauth_pass_errno ret = libreauth_password_hash(password, derived_password, LIBREAUTH_PASS_STORAGE_LEN);
-    /// if (ret == LIBREAUTH_PASS_SUCCESS) {
-    ///     // Store derived_password.
-    /// } else {
-    ///     // Handle the error.
-    /// }
-    /// ```
-    #[no_mangle]
-    pub extern "C" fn libreauth_password_hash(
-        password: *const libc::c_char,
-        storage: *mut libc::uint8_t,
-        storage_len: libc::size_t,
-    ) -> ErrorCode {
-        libreauth_password_hash_standard(
-            password,
-            storage,
-            storage_len,
-            PasswordStorageStandard::NoStandard,
-        )
+    macro_rules! get_cfg {
+        ($cfg: ident, $ret: expr) => {{
+            match $cfg.is_null() {
+                false => unsafe { & *$cfg },
+                true => {
+                    return $ret;
+                },
+            }
+        }};
     }
 
-    /// [C binding] Hash a password and returns its string representation so it can be stored.
-    ///
-    /// ## Examples
-    /// ```c
-    /// const char password[] = "correct horse battery staple";
-    /// uint8_t derived_password[LIBREAUTH_PASS_STORAGE_LEN];
-    ///
-    /// libreauth_pass_errno ret = libreauth_password_hash_standard(password, derived_password, LIBREAUTH_PASS_STORAGE_LEN, LIBREAUTH_PASS_NIST80063B);
-    /// if (ret == LIBREAUTH_PASS_SUCCESS) {
-    ///     // Store derived_password.
-    /// } else {
-    ///     // Handle the error.
-    /// }
-    /// ```
-    #[no_mangle]
-    pub extern "C" fn libreauth_password_hash_standard(
-        password: *const libc::c_char,
-        storage: *mut libc::uint8_t,
-        storage_len: libc::size_t,
+    macro_rules! get_cfg_mut {
+        ($cfg: ident, $ret: expr) => {{
+            match $cfg.is_null() {
+                false => unsafe { &mut *$cfg },
+                true => {
+                    return $ret;
+                },
+            }
+        }};
+    }
+
+    macro_rules! get_string {
+        ($ptr: ident) => {{
+            unsafe {
+                String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap()
+            }
+        }};
+    }
+
+    /// [C binding] Password hasher configuration storage
+    #[repr(C)]
+    pub struct PassCfg {
+        min_len: libc::size_t,
+        max_len: libc::size_t,
+        salt_len: libc::size_t,
+        algorithm: Algorithm,
+        length_calculation: LengthCalculationMethod,
+        normalization: Normalization,
         standard: PasswordStorageStandard,
-    ) -> ErrorCode {
-        let r_storage = unsafe {
-            assert!(!storage.is_null());
-            std::slice::from_raw_parts_mut(storage, storage_len as usize)
-        };
-        let c_password = unsafe {
-            assert!(!password.is_null());
-            std::ffi::CStr::from_ptr(password)
-        };
-        let r_password = c_password.to_bytes().to_vec();
-        let r_derived_password = match password_hash_standard(&r_password, standard) {
-            Ok(some) => some,
-            Err(errno) => return errno,
-        };
-        let out_len = r_derived_password.len();
-        let pass_b = r_derived_password.into_bytes();
-        if out_len >= storage_len as usize {
-            return ErrorCode::NotEnoughSpace;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
+        libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn libreauth_pass_init_std(cfg: *mut PassCfg, std: PasswordStorageStandard) -> ErrorCode {
+        match cfg.is_null() {
+            false => {
+                let c: &mut PassCfg = unsafe { &mut *cfg };
+                match std {
+                    PasswordStorageStandard::NoStandard => {
+                        c.min_len = DEFAULT_PASSWORD_MIN_LEN;
+                        c.max_len = DEFAULT_PASSWORD_MAX_LEN;
+                        c.salt_len = DEFAULT_SALT_LEN;
+                        c.algorithm = DEFAULT_ALGORITHM;
+                        c.length_calculation = DEFAULT_LENGTH_CALCULATION;
+                        c.normalization = DEFAULT_NORMALIZATION;
+                        c.standard = std;
+                    },
+                    PasswordStorageStandard::Nist80063b => {
+                        c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
+                        c.max_len = std_nist::DEFAULT_PASSWORD_MAX_LEN;
+                        c.salt_len = std_nist::DEFAULT_SALT_LEN;
+                        c.algorithm = std_nist::DEFAULT_ALGORITHM;
+                        c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
+                        c.normalization = std_nist::DEFAULT_NORMALIZATION;
+                        c.standard = std;
+                    },
+                };
+                ErrorCode::Success
+            },
+            true => ErrorCode::NullPtr,
         }
-        for i in 0..out_len {
-            r_storage[i] = pass_b[i];
-        }
-        r_storage[out_len] = 0;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn libreauth_pass_init_from_phc(cfg: *mut PassCfg, phc: *const libc::c_char) -> ErrorCode {
+        let c: &mut PassCfg = get_cfg_mut!(cfg, ErrorCode::NullPtr);
+        let p = get_string!(phc);
+        let checker = match HashBuilder::from_phc(p) {
+            Ok(ch) => ch,
+            Err(e) => {
+                return e;
+            },
+        };
+        c.min_len = checker.min_len;
+        c.max_len = checker.max_len;
+        c.salt_len = checker.salt_len;
+        c.algorithm = checker.algorithm;
+        c.length_calculation = checker.length_calculation;
+        c.normalization = checker.normalization;
+        c.standard = PasswordStorageStandard::NoStandard;
         ErrorCode::Success
     }
 
-    /// [C binding] Check whether or not the password is valid.
-    ///
-    /// ## Examples
-    /// ```c
-    /// const char password[] = "correct horse battery staple",
-    ///       invalid_pass[] = "123456";
-    /// uint8_t storage[LIBREAUTH_PASS_STORAGE_LEN];
-    ///
-    /// libreauth_pass_errno ret = libreauth_password_password_hash(password, storage, LIBREAUTH_PASS_STORAGE_LEN);
-    /// assert(ret == LIBREAUTH_PASS_SUCCESS);
-    /// assert(libreauth_password_is_valid(password, storage));
-    /// assert(!libreauth_password_is_valid(invalid_pass, storage));
-    /// ```
     #[no_mangle]
-    pub extern "C" fn libreauth_password_is_valid(
-        password: *const libc::c_char,
-        reference: *const libc::c_char,
-    ) -> libc::int32_t {
-        let c_password = unsafe {
-            assert!(!password.is_null());
-            std::ffi::CStr::from_ptr(password)
+    pub extern "C" fn libreauth_pass_hash(cfg: *const PassCfg, pass: *const libc::c_char, dest: *mut libc::uint8_t, dest_len: libc::size_t) -> ErrorCode {
+        let c: &PassCfg = get_cfg!(cfg, ErrorCode::NullPtr);
+        let password = get_string!(pass);
+        if dest.is_null() {
+            return ErrorCode::NullPtr;
+        }
+        let buff = unsafe { std::slice::from_raw_parts_mut(dest, dest_len) };
+        let hasher = match HashBuilder::new()
+            .min_len(c.min_len)
+            .max_len(c.max_len)
+            .salt_len(c.salt_len)
+            .algorithm(c.algorithm)
+            .length_calculation(c.length_calculation)
+            .normalization(c.normalization)
+            .finalize() {
+            Ok(ch) => ch,
+            Err(e) => {
+                return e;
+            }
         };
-        let r_password = c_password.to_bytes().to_vec();
-        let c_reference = unsafe {
-            assert!(!reference.is_null());
-            std::ffi::CStr::from_ptr(reference)
+        match hasher.hash(&password) {
+            Ok(h) => {
+                let b = h.into_bytes();
+                let len = b.len();
+                if len >= dest_len {
+                    return ErrorCode::NotEnoughSpace;
+                }
+                for i in 0..len {
+                    buff[i] = b[i];
+                }
+                buff[len] = 0;
+                ErrorCode::Success
+            },
+            Err(e) => e,
+        }
+    }
+
+    #[no_mangle]
+    pub extern "C" fn libreauth_pass_is_valid(pass: *const libc::c_char, reference: *const libc::c_char) -> libc::int32_t {
+        let p = get_string!(pass);
+        let r = get_string!(reference);
+        let checker = match HashBuilder::from_phc(r) {
+            Ok(ch) => ch,
+            Err(_) => {
+                return 0;
+            },
         };
-        let r_reference = c_reference.to_bytes().to_vec();
-        is_valid(&r_password, &r_reference) as libc::int32_t
+        match checker.is_valid(&p) {
+            true => 1,
+            false => 0,
+        }
     }
 }
 
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_password_hash_standard;
+pub use self::cbindings::libreauth_pass_init;
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_password_hash;
+pub use self::cbindings::libreauth_pass_init_std;
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_password_is_valid;
+pub use self::cbindings::libreauth_pass_init_from_phc;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::libreauth_pass_hash;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{HashBuilder, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, DEFAULT_PASSWORD_MIN_LEN, DEFAULT_PASSWORD_MAX_LEN, std_nist};
 
-    /// This test does not guaranty the random is cryptographically safe. It only test whether or not it is not absolutely inefficient.
-    /// We generate 512 random 6 bytes salts. If there is any duplicate, the test fails.
     #[test]
-    fn test_salt_gen() {
-        let mut vec = Vec::new();
-        for _ in 0..512 {
-            let s = KeyBuilder::new().size(6).as_vec();
-            vec.push(s);
+    fn test_default_hashbuilder() {
+        let hb = HashBuilder::new();
+        assert_eq!(hb.min_len, DEFAULT_PASSWORD_MIN_LEN);
+        assert_eq!(hb.max_len, DEFAULT_PASSWORD_MAX_LEN);
+        assert_eq!(hb.ref_salt, None);
+        assert_eq!(hb.ref_hash, None);
+        match hb.standard {
+            PasswordStorageStandard::NoStandard => assert!(true),
+            _ => assert!(false),
         }
-        let l = vec.len();
-        vec.dedup();
-        assert_eq!(l, vec.len());
+        match hb.normalization {
+            Normalization::Nfkc => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.algorithm {
+            Algorithm::Argon2 => assert!(true),
+            _ => assert!(false),
+        }
     }
 
     #[test]
-    fn test_default_hash() {
-        let password = "correct horse battery staple".to_string().into_bytes();
-        let h = password_hash(&password).unwrap().into_bytes();
-        assert!(!is_valid(&"bad password".to_string().into_bytes(), &h));
-        assert!(is_valid(&password, &h));
+    fn test_nist_hashbuilder() {
+        let hb = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
+        assert_eq!(hb.min_len, std_nist::DEFAULT_PASSWORD_MIN_LEN);
+        assert_eq!(hb.max_len, std_nist::DEFAULT_PASSWORD_MAX_LEN);
+        assert_eq!(hb.ref_salt, None);
+        assert_eq!(hb.ref_hash, None);
+        match hb.length_calculation {
+            std_nist::DEFAULT_LENGTH_CALCULATION => assert!(true),
+            _ => assert!(false),
+        };
+        match hb.standard {
+            PasswordStorageStandard::Nist80063b => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.normalization {
+            Normalization::Nfkc => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.algorithm {
+            Algorithm::Pbkdf2 => assert!(true),
+            _ => assert!(false),
+        }
     }
 
     #[test]
-    fn test_default_normalization() {
-        let pass1 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
-            0x32,
-        ];
-        let pass2 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
-            0x31,
-        ];
-        let pass3 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xc3, 0x85, 0xce, 0xa9, 0x31, 0x32
-        ];
-        let h = password_hash(&pass1).unwrap().into_bytes();
-        assert!(!is_valid(&pass2, &h));
-        assert!(is_valid(&pass3, &h));
+    fn test_params() {
+        let mut b = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
+        let hb = b.min_len(42)
+            .max_len(256)
+            .length_calculation(LengthCalculationMethod::Characters)
+            .normalization(Normalization::Nfkd)
+            .algorithm(Algorithm::Pbkdf2)
+            .add_param("iter".to_string(), "80000".to_string())
+            .add_param("hash".to_string(), "sha512t256".to_string());
+        assert_eq!(hb.min_len, 42);
+        assert_eq!(hb.max_len, 256);
+        assert_eq!(hb.ref_salt, None);
+        assert_eq!(hb.ref_hash, None);
+        match hb.length_calculation {
+            LengthCalculationMethod::Characters => assert!(true),
+            _ => assert!(false),
+        };
+        match hb.standard {
+            PasswordStorageStandard::Nist80063b => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.normalization {
+            Normalization::Nfkd => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.algorithm {
+            Algorithm::Pbkdf2 => assert!(true),
+            _ => assert!(false),
+        }
+        match hb.parameters.get("hash") {
+            Some(h) => match h.as_str() {
+                "sha512t256" => assert!(true),
+                _ => assert!(false),
+            },
+            None => assert!(false),
+        }
+        match hb.parameters.get("iter") {
+            Some(i) => match i.as_str() {
+                "80000" => assert!(true),
+                _ => assert!(false),
+            },
+            None => assert!(false),
+        }
     }
 
     #[test]
-    fn test_std_nist_normalization() {
-        let pass1 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
-            0x32,
-        ];
-        let pass2 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xe2, 0x84, 0xab, 0xe2, 0x84, 0xa6, 0x31,
-            0x31,
-        ];
-        let pass3 = vec![
-            0x75, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0xc3, 0x85, 0xce, 0xa9, 0x31, 0x32
-        ];
-        let h = password_hash_standard(&pass1, PasswordStorageStandard::Nist80063b)
-            .unwrap()
-            .into_bytes();
-        assert!(!is_valid(&pass2, &h));
-        assert!(is_valid(&pass3, &h));
+    fn test_nfkc() {
+        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let hasher = HashBuilder::new().normalization(Normalization::Nfkc).finalize().unwrap();
+        let stored_password = hasher.hash(&s1).unwrap();
+        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        assert!(checker.is_valid(&s1));
+        assert!(! checker.is_valid(&s2));
+        assert!(checker.is_valid(&s3));
+        assert!(! checker.is_valid(&s4));
+    }
+
+    #[test]
+    fn test_nfkd() {
+        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let hasher = HashBuilder::new().normalization(Normalization::Nfkd).finalize().unwrap();
+        let stored_password = hasher.hash(&s1).unwrap();
+        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        assert!(checker.is_valid(&s1));
+        assert!(! checker.is_valid(&s2));
+        assert!(checker.is_valid(&s3));
+        assert!(! checker.is_valid(&s4));
+    }
+
+    #[test]
+    fn test_no_normalize() {
+        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
+        let hasher = HashBuilder::new().normalization(Normalization::None).finalize().unwrap();
+        let stored_password = hasher.hash(&s1).unwrap();
+        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        assert!(checker.is_valid(&s1));
+        assert!(! checker.is_valid(&s2));
+        assert!(! checker.is_valid(&s3));
+        assert!(! checker.is_valid(&s4));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_min_len() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).min_len(7).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_max_len() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).max_len(63).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_len_calc() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).length_calculation(LengthCalculationMethod::Bytes).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_normalization_nfc() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).normalization(Normalization::Nfc).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_normalization_nfd() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).normalization(Normalization::Nfd).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_algorithm() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).algorithm(Algorithm::Argon2).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_salt_len() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).salt_len(3).finalize().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_nist_invalid_iter() {
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).algorithm(Algorithm::Pbkdf2).add_param("iter".to_string(), "8000".to_string()).finalize().unwrap();
     }
 }
