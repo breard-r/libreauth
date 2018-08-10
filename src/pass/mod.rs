@@ -66,7 +66,7 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="2" class="hash">Global parameters</td>
+//!             <td rowspan="4" class="hash">Global parameters</td>
 //!             <td>norm</td>
 //!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
 //!             <td>Unicode normalization.</td>
@@ -77,6 +77,18 @@
 //!             <td>string: bytes | chars</td>
 //!             <td>Unicode string length calculation method.</td>
 //!             <td>chars</td>
+//!         </tr>
+//!         <tr>
+//!             <td>pmin</td>
+//!             <td>integer</td>
+//!             <td>Password minimal length.</td>
+//!             <td>8</td>
+//!         </tr>
+//!         <tr>
+//!             <td>pmax</td>
+//!             <td>integer</td>
+//!             <td>Password maximal length.</td>
+//!             <td>128</td>
 //!         </tr>
 //!         <tr>
 //!             <td rowspan="4" class="hash">argon2</td>
@@ -469,6 +481,8 @@ impl Hasher {
         };
         let mut params = hash_func.get_parameters();
         params.insert("len-calc".to_string(), lc.to_string());
+        params.insert("pmin".to_string(), format!("{}", self.min_len));
+        params.insert("pmax".to_string(), format!("{}", self.max_len));
         let phc = PHCData {
             id: hash_func.get_id(),
             parameters: params,
@@ -635,6 +649,20 @@ impl HashBuilder {
             },
             None => Normalization::Nfkc,
         };
+        let min_len = match phc.parameters.remove("pmin") {
+            Some(v) => match v.parse::<usize>() {
+                Ok(l) => l,
+                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => std_default::DEFAULT_PASSWORD_MIN_LEN,
+        };
+        let max_len = match phc.parameters.remove("pmax") {
+            Some(v) => match v.parse::<usize>() {
+                Ok(l) => l,
+                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => std_default::DEFAULT_PASSWORD_MAX_LEN,
+        };
         let lc = match phc.parameters.remove("len-calc") {
             Some(v) => match v.as_str() {
                 "bytes" => LengthCalculationMethod::Bytes,
@@ -646,8 +674,8 @@ impl HashBuilder {
         let hash_builder = HashBuilder {
             standard: PasswordStorageStandard::NoStandard,
             normalization: norm,
-            min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
-            max_len: std_default::DEFAULT_PASSWORD_MAX_LEN,
+            min_len: min_len,
+            max_len: max_len,
             algorithm: match phc.id.as_str() {
                 "argon2" => Algorithm::Argon2,
                 "pbkdf2" => Algorithm::Pbkdf2,
@@ -1025,6 +1053,17 @@ mod tests {
             },
             None => assert!(false),
         }
+    }
+
+    #[test]
+    fn test_phc_params() {
+        let password = "correct horse battery staple".to_string();
+        let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY".to_string();
+        let checker = HashBuilder::from_phc(reference).unwrap();
+
+        assert!(checker.is_valid(&password));
+        assert_eq!(checker.min_len, 10);
+        assert_eq!(checker.max_len, 42);
     }
 
     #[test]
