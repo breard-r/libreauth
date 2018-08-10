@@ -32,10 +32,10 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-use std::collections::HashMap;
-use super::{ErrorCode, HashingFunction, Normalization, std_default};
-use key::KeyBuilder;
+use super::{std_default, ErrorCode, HashingFunction, Normalization};
 use argon2;
+use key::KeyBuilder;
+use std::collections::HashMap;
 
 const MIN_SALT_LENGTH: usize = 8; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
@@ -53,7 +53,7 @@ const MIN_OUTPUT_LEN: u32 = 32; // in bytes
 const MAX_OUTPUT_LEN: u32 = 256; // in bytes
 
 macro_rules! set_param {
-    ($obj: ident, $attr: ident, $val: ident, $t: ty, $min: expr, $max: expr) => {{
+    ($obj:ident, $attr:ident, $val:ident, $t:ty, $min:expr, $max:expr) => {{
         match $val.parse::<$t>() {
             Ok(i) => match i {
                 $min...$max => {
@@ -83,7 +83,9 @@ impl Argon2Hash {
             mem_cost: DEFAULT_MEM_COST,
             lanes: DEFAULT_LANES,
             output_len: DEFAULT_OUTPUT_LEN,
-            salt: KeyBuilder::new().size(std_default::DEFAULT_SALT_LEN).as_vec(),
+            salt: KeyBuilder::new()
+                .size(std_default::DEFAULT_SALT_LEN)
+                .as_vec(),
             norm: Normalization::Nfkc,
         }
     }

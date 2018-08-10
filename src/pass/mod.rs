@@ -139,7 +139,7 @@
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 macro_rules! set_normalization {
-    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
+    ($obj:ident, $attr:ident, $val:ident, $name:expr) => {
         $val.insert(
             $name,
             match $obj.$attr {
@@ -153,18 +153,18 @@ macro_rules! set_normalization {
     };
 }
 
-mod std_default;
-mod std_nist;
 mod argon2;
 mod pbkdf2;
 mod phc;
+mod std_default;
+mod std_nist;
 
-use unicode_normalization::UnicodeNormalization;
-use std::collections::HashMap;
-use sha2::Sha512;
+use self::phc::PHCData;
 use hmac::{Hmac, Mac};
 use key::KeyBuilder;
-use self::phc::PHCData;
+use sha2::Sha512;
+use std::collections::HashMap;
+use unicode_normalization::UnicodeNormalization;
 
 /// Algorithms available to hash the password.
 ///
@@ -410,13 +410,13 @@ impl Hasher {
                     len = len + 1;
                 }
                 len
-            },
+            }
         };
         if pass_len < self.min_len {
-            return Err(ErrorCode::PasswordTooShort)
+            return Err(ErrorCode::PasswordTooShort);
         }
         if pass_len > self.max_len {
-            return Err(ErrorCode::PasswordTooLong)
+            return Err(ErrorCode::PasswordTooLong);
         }
         Ok(())
     }
@@ -438,15 +438,17 @@ impl Hasher {
         };
         hash_func.set_normalization(self.normalization).unwrap();
         for (k, v) in self.parameters.iter() {
-            hash_func.set_parameter(k.to_string(), v.to_string()).unwrap();
+            hash_func
+                .set_parameter(k.to_string(), v.to_string())
+                .unwrap();
         }
         match self.ref_salt {
             Some(ref s) => {
                 hash_func.set_salt(s.to_vec()).unwrap();
-            },
+            }
             None => {
                 hash_func.set_salt_len(self.salt_len).unwrap();
-            },
+            }
         };
         hash_func
     }
@@ -454,10 +456,10 @@ impl Hasher {
     fn do_hash(&self, password: &String) -> Result<HashedDuo, ErrorCode> {
         let norm_pass = self.normalize_password(password);
         match self.check_password(&norm_pass) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 return Err(e);
-            },
+            }
         };
         let hash_func = self.get_hash_func();
         let hash = hash_func.hash(&norm_pass.into_bytes());
@@ -493,7 +495,9 @@ impl Hasher {
         match self.ref_hash {
             Some(ref rh) => match self.do_hash(password) {
                 Ok(hash_duo) => {
-                    let salt = KeyBuilder::new().size(std_default::DEFAULT_SALT_LEN).as_vec();
+                    let salt = KeyBuilder::new()
+                        .size(std_default::DEFAULT_SALT_LEN)
+                        .as_vec();
 
                     let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
@@ -512,7 +516,7 @@ impl Hasher {
                     pass_hmac.input(hash_duo.raw.as_slice());
 
                     ref_hmac.result().code() == pass_hmac.result().code()
-                },
+                }
                 Err(_) => false,
             },
             None => false,
@@ -587,33 +591,29 @@ impl HashBuilder {
     /// Create a new HashBuilder object with default parameters for a specific standard.
     pub fn new_std(std: PasswordStorageStandard) -> HashBuilder {
         match std {
-            PasswordStorageStandard::NoStandard => {
-                HashBuilder {
-                    standard: PasswordStorageStandard::NoStandard,
-                    normalization: std_default::DEFAULT_NORMALIZATION,
-                    min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
-                    max_len: std_default::DEFAULT_PASSWORD_MAX_LEN,
-                    algorithm: std_default::DEFAULT_ALGORITHM,
-                    parameters: HashMap::new(),
-                    ref_salt: None,
-                    ref_hash: None,
-                    salt_len: std_default::DEFAULT_SALT_LEN,
-                    length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
-                }
+            PasswordStorageStandard::NoStandard => HashBuilder {
+                standard: PasswordStorageStandard::NoStandard,
+                normalization: std_default::DEFAULT_NORMALIZATION,
+                min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
+                max_len: std_default::DEFAULT_PASSWORD_MAX_LEN,
+                algorithm: std_default::DEFAULT_ALGORITHM,
+                parameters: HashMap::new(),
+                ref_salt: None,
+                ref_hash: None,
+                salt_len: std_default::DEFAULT_SALT_LEN,
+                length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
             },
-            PasswordStorageStandard::Nist80063b => {
-                HashBuilder {
-                    standard: PasswordStorageStandard::Nist80063b,
-                    normalization: std_nist::DEFAULT_NORMALIZATION,
-                    min_len: std_nist::DEFAULT_PASSWORD_MIN_LEN,
-                    max_len: std_nist::DEFAULT_PASSWORD_MAX_LEN,
-                    algorithm: std_nist::DEFAULT_ALGORITHM,
-                    parameters: HashMap::new(),
-                    ref_salt: None,
-                    ref_hash: None,
-                    salt_len: std_nist::DEFAULT_SALT_LEN,
-                    length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
-                }
+            PasswordStorageStandard::Nist80063b => HashBuilder {
+                standard: PasswordStorageStandard::Nist80063b,
+                normalization: std_nist::DEFAULT_NORMALIZATION,
+                min_len: std_nist::DEFAULT_PASSWORD_MIN_LEN,
+                max_len: std_nist::DEFAULT_PASSWORD_MAX_LEN,
+                algorithm: std_nist::DEFAULT_ALGORITHM,
+                parameters: HashMap::new(),
+                ref_salt: None,
+                ref_hash: None,
+                salt_len: std_nist::DEFAULT_SALT_LEN,
+                length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
             },
         }
     }
@@ -669,11 +669,11 @@ impl HashBuilder {
     pub fn finalize(&self) -> Result<Hasher, ErrorCode> {
         match self.standard {
             PasswordStorageStandard::Nist80063b => {
-                if ! std_nist::is_valid(self) {
+                if !std_nist::is_valid(self) {
                     return Err(ErrorCode::InvalidPasswordFormat);
                 }
-            },
-            PasswordStorageStandard::NoStandard => {},
+            }
+            PasswordStorageStandard::NoStandard => {}
         }
         Ok(Hasher {
             normalization: self.normalization,
@@ -736,38 +736,39 @@ impl HashBuilder {
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{HashBuilder, ErrorCode, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, std_nist, std_default};
-    use std::ffi::CStr;
+    use super::{
+        std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
+        Normalization, PasswordStorageStandard,
+    };
     use libc;
     use std;
+    use std::ffi::CStr;
 
     macro_rules! get_cfg {
-        ($cfg: ident, $ret: expr) => {{
+        ($cfg:ident, $ret:expr) => {{
             match $cfg.is_null() {
-                false => unsafe { & *$cfg },
+                false => unsafe { &*$cfg },
                 true => {
                     return $ret;
-                },
+                }
             }
         }};
     }
 
     macro_rules! get_cfg_mut {
-        ($cfg: ident, $ret: expr) => {{
+        ($cfg:ident, $ret:expr) => {{
             match $cfg.is_null() {
                 false => unsafe { &mut *$cfg },
                 true => {
                     return $ret;
-                },
+                }
             }
         }};
     }
 
     macro_rules! get_string {
-        ($ptr: ident) => {{
-            unsafe {
-                String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap()
-            }
+        ($ptr:ident) => {{
+            unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
         }};
     }
 
@@ -792,7 +793,10 @@ mod cbindings {
     /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values for a given
     /// standard.
     #[no_mangle]
-    pub extern "C" fn libreauth_pass_init_std(cfg: *mut PassCfg, std: PasswordStorageStandard) -> ErrorCode {
+    pub extern "C" fn libreauth_pass_init_std(
+        cfg: *mut PassCfg,
+        std: PasswordStorageStandard,
+    ) -> ErrorCode {
         match cfg.is_null() {
             false => {
                 let c: &mut PassCfg = unsafe { &mut *cfg };
@@ -805,7 +809,7 @@ mod cbindings {
                         c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_default::DEFAULT_NORMALIZATION;
                         c.standard = std;
-                    },
+                    }
                     PasswordStorageStandard::Nist80063b => {
                         c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
                         c.max_len = std_nist::DEFAULT_PASSWORD_MAX_LEN;
@@ -814,24 +818,27 @@ mod cbindings {
                         c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_nist::DEFAULT_NORMALIZATION;
                         c.standard = std;
-                    },
+                    }
                 };
                 ErrorCode::Success
-            },
+            }
             true => ErrorCode::NullPtr,
         }
     }
 
     /// [C binding] Initialize a `struct libreauth_pass_cfg` from a PHC string.
     #[no_mangle]
-    pub extern "C" fn libreauth_pass_init_from_phc(cfg: *mut PassCfg, phc: *const libc::c_char) -> ErrorCode {
+    pub extern "C" fn libreauth_pass_init_from_phc(
+        cfg: *mut PassCfg,
+        phc: *const libc::c_char,
+    ) -> ErrorCode {
         let c: &mut PassCfg = get_cfg_mut!(cfg, ErrorCode::NullPtr);
         let p = get_string!(phc);
         let checker = match HashBuilder::from_phc(p) {
             Ok(ch) => ch,
             Err(e) => {
                 return e;
-            },
+            }
         };
         c.min_len = checker.min_len;
         c.max_len = checker.max_len;
@@ -845,7 +852,12 @@ mod cbindings {
 
     /// [C binding] Hash a password according to the given configuration and stores it in the supplied buffer.
     #[no_mangle]
-    pub extern "C" fn libreauth_pass_hash(cfg: *const PassCfg, pass: *const libc::c_char, dest: *mut libc::uint8_t, dest_len: libc::size_t) -> ErrorCode {
+    pub extern "C" fn libreauth_pass_hash(
+        cfg: *const PassCfg,
+        pass: *const libc::c_char,
+        dest: *mut libc::uint8_t,
+        dest_len: libc::size_t,
+    ) -> ErrorCode {
         let c: &PassCfg = get_cfg!(cfg, ErrorCode::NullPtr);
         let password = get_string!(pass);
         if dest.is_null() {
@@ -859,7 +871,8 @@ mod cbindings {
             .algorithm(c.algorithm)
             .length_calculation(c.length_calculation)
             .normalization(c.normalization)
-            .finalize() {
+            .finalize()
+        {
             Ok(ch) => ch,
             Err(e) => {
                 return e;
@@ -877,21 +890,24 @@ mod cbindings {
                 }
                 buff[len] = 0;
                 ErrorCode::Success
-            },
+            }
             Err(e) => e,
         }
     }
 
     /// [C binding] Check whether or not the supplied password is valid.
     #[no_mangle]
-    pub extern "C" fn libreauth_pass_is_valid(pass: *const libc::c_char, reference: *const libc::c_char) -> libc::int32_t {
+    pub extern "C" fn libreauth_pass_is_valid(
+        pass: *const libc::c_char,
+        reference: *const libc::c_char,
+    ) -> libc::int32_t {
         let p = get_string!(pass);
         let r = get_string!(reference);
         let checker = match HashBuilder::from_phc(r) {
             Ok(ch) => ch,
             Err(_) => {
                 return 0;
-            },
+            }
         };
         match checker.is_valid(&p) {
             true => 1,
@@ -901,19 +917,22 @@ mod cbindings {
 }
 
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_pass_init;
+pub use self::cbindings::libreauth_pass_hash;
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_pass_init_std;
+pub use self::cbindings::libreauth_pass_init;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_init_from_phc;
 #[cfg(feature = "cbindings")]
-pub use self::cbindings::libreauth_pass_hash;
+pub use self::cbindings::libreauth_pass_init_std;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{HashBuilder, PasswordStorageStandard, Normalization, Algorithm, LengthCalculationMethod, std_default, std_nist};
+    use super::{
+        std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
+        PasswordStorageStandard,
+    };
 
     #[test]
     fn test_default_hashbuilder() {
@@ -964,7 +983,8 @@ mod tests {
     #[test]
     fn test_params() {
         let mut b = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
-        let hb = b.min_len(42)
+        let hb = b
+            .min_len(42)
             .max_len(256)
             .length_calculation(LengthCalculationMethod::Characters)
             .normalization(Normalization::Nfkd)
@@ -1009,94 +1029,158 @@ mod tests {
 
     #[test]
     fn test_nfkc() {
-        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let hasher = HashBuilder::new().normalization(Normalization::Nfkc).finalize().unwrap();
+        let s1 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ]).unwrap();
+        let s3 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            98,
+        ]).unwrap();
+        let hasher = HashBuilder::new()
+            .normalization(Normalization::Nfkc)
+            .finalize()
+            .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
         let checker = HashBuilder::from_phc(stored_password).unwrap();
         assert!(checker.is_valid(&s1));
-        assert!(! checker.is_valid(&s2));
+        assert!(!checker.is_valid(&s2));
         assert!(checker.is_valid(&s3));
-        assert!(! checker.is_valid(&s4));
+        assert!(!checker.is_valid(&s4));
     }
 
     #[test]
     fn test_nfkd() {
-        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let hasher = HashBuilder::new().normalization(Normalization::Nfkd).finalize().unwrap();
+        let s1 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ]).unwrap();
+        let s3 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            98,
+        ]).unwrap();
+        let hasher = HashBuilder::new()
+            .normalization(Normalization::Nfkd)
+            .finalize()
+            .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
         let checker = HashBuilder::from_phc(stored_password).unwrap();
         assert!(checker.is_valid(&s1));
-        assert!(! checker.is_valid(&s2));
+        assert!(!checker.is_valid(&s2));
         assert!(checker.is_valid(&s3));
-        assert!(! checker.is_valid(&s4));
+        assert!(!checker.is_valid(&s4));
     }
 
     #[test]
     fn test_no_normalize() {
-        let s1 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s2 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let s3 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 97]).unwrap(); // "test nfkd ä P  ̈a"
-        let s4 = String::from_utf8(vec![116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136, 98]).unwrap();
-        let hasher = HashBuilder::new().normalization(Normalization::None).finalize().unwrap();
+        let s1 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s2 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ]).unwrap();
+        let s3 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            97,
+        ]).unwrap(); // "test nfkd ä P  ̈a"
+        let s4 = String::from_utf8(vec![
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
+            98,
+        ]).unwrap();
+        let hasher = HashBuilder::new()
+            .normalization(Normalization::None)
+            .finalize()
+            .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
         let checker = HashBuilder::from_phc(stored_password).unwrap();
         assert!(checker.is_valid(&s1));
-        assert!(! checker.is_valid(&s2));
-        assert!(! checker.is_valid(&s3));
-        assert!(! checker.is_valid(&s4));
+        assert!(!checker.is_valid(&s2));
+        assert!(!checker.is_valid(&s3));
+        assert!(!checker.is_valid(&s4));
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_min_len() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).min_len(7).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .min_len(7)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_max_len() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).max_len(63).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .max_len(63)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_len_calc() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).length_calculation(LengthCalculationMethod::Bytes).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .length_calculation(LengthCalculationMethod::Bytes)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_normalization_nfc() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).normalization(Normalization::Nfc).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .normalization(Normalization::Nfc)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_normalization_nfd() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).normalization(Normalization::Nfd).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .normalization(Normalization::Nfd)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_algorithm() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).algorithm(Algorithm::Argon2).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .algorithm(Algorithm::Argon2)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_salt_len() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).salt_len(3).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .salt_len(3)
+            .finalize()
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_nist_invalid_iter() {
-        HashBuilder::new_std(PasswordStorageStandard::Nist80063b).algorithm(Algorithm::Pbkdf2).add_param("iter".to_string(), "8000".to_string()).finalize().unwrap();
+        HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
+            .algorithm(Algorithm::Pbkdf2)
+            .add_param("iter".to_string(), "8000".to_string())
+            .finalize()
+            .unwrap();
     }
 }

@@ -351,7 +351,7 @@ macro_rules! otp_init {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_errno {
-    ($val: expr) => {{
+    ($val:expr) => {{
         match $val {
             Ok(v) => v,
             Err(errno) => return errno,
@@ -361,7 +361,7 @@ macro_rules! get_value_or_errno {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_false {
-    ($val: expr) => {{
+    ($val:expr) => {{
         match $val {
             Ok(v) => v,
             Err(_) => return 0,
@@ -370,25 +370,25 @@ macro_rules! get_value_or_false {
 }
 
 mod hotp;
-pub use self::hotp::HOTP;
-pub use self::hotp::HOTPBuilder;
-#[cfg(feature = "cbindings")]
-pub use self::hotp::cbindings::HOTPcfg;
-#[cfg(feature = "cbindings")]
-pub use self::hotp::cbindings::libreauth_hotp_init;
 #[cfg(feature = "cbindings")]
 pub use self::hotp::cbindings::libreauth_hotp_generate;
 #[cfg(feature = "cbindings")]
+pub use self::hotp::cbindings::libreauth_hotp_init;
+#[cfg(feature = "cbindings")]
 pub use self::hotp::cbindings::libreauth_hotp_is_valid;
+#[cfg(feature = "cbindings")]
+pub use self::hotp::cbindings::HOTPcfg;
+pub use self::hotp::HOTPBuilder;
+pub use self::hotp::HOTP;
 
 mod totp;
-pub use self::totp::TOTP;
-pub use self::totp::TOTPBuilder;
-#[cfg(feature = "cbindings")]
-pub use self::totp::cbindings::TOTPcfg;
-#[cfg(feature = "cbindings")]
-pub use self::totp::cbindings::libreauth_totp_init;
 #[cfg(feature = "cbindings")]
 pub use self::totp::cbindings::libreauth_totp_generate;
 #[cfg(feature = "cbindings")]
+pub use self::totp::cbindings::libreauth_totp_init;
+#[cfg(feature = "cbindings")]
 pub use self::totp::cbindings::libreauth_totp_is_valid;
+#[cfg(feature = "cbindings")]
+pub use self::totp::cbindings::TOTPcfg;
+pub use self::totp::TOTPBuilder;
+pub use self::totp::TOTP;

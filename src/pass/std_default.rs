@@ -32,7 +32,7 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-use super::{Algorithm, Normalization, LengthCalculationMethod};
+use super::{Algorithm, LengthCalculationMethod, Normalization};
 
 pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
 pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;

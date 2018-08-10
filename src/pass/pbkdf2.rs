@@ -32,13 +32,13 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-use std::collections::HashMap;
-use super::{ErrorCode, HashingFunction, Normalization, std_default};
+use super::{std_default, ErrorCode, HashingFunction, Normalization};
+use hmac::Hmac;
 use key::KeyBuilder;
 use pbkdf2::pbkdf2;
-use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha1::Sha1;
-use hmac::Hmac;
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use std::collections::HashMap;
 
 pub enum HashFunction {
     Sha1,
@@ -58,7 +58,7 @@ const MAX_ITER: usize = 200000;
 pub const DEFAULT_ITER: usize = 45000;
 
 macro_rules! process_pbkdf2 {
-    ($obj: ident, $input: ident, $hash: ty, $len: expr) => {{
+    ($obj:ident, $input:ident, $hash:ty, $len:expr) => {{
         let mut out = [0u8; $len];
         pbkdf2::<Hmac<$hash>>(
             $input.as_slice(),
@@ -82,7 +82,9 @@ impl Pbkdf2Hash {
         Pbkdf2Hash {
             hash_function: DEFAULT_HASH_FUNCTION,
             nb_iter: DEFAULT_ITER,
-            salt: KeyBuilder::new().size(std_default::DEFAULT_SALT_LEN).as_vec(),
+            salt: KeyBuilder::new()
+                .size(std_default::DEFAULT_SALT_LEN)
+                .as_vec(),
             norm: Normalization::Nfkc,
         }
     }

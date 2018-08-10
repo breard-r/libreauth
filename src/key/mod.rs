@@ -70,11 +70,11 @@
 //! assert!(k1 != k2);
 //! ```
 
+use base32;
+use base64;
+use hex;
 use rand::os::OsRng;
 use rand::Rng;
-use base64;
-use base32;
-use hex;
 
 /// Random key builder.
 pub struct KeyBuilder {

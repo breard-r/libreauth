@@ -32,8 +32,10 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 
-use super::{HashBuilder, Algorithm, Normalization, LengthCalculationMethod};
-use super::pbkdf2::{HashFunction, DEFAULT_ITER as PBKDF2_DEF_ITER, DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH};
+use super::pbkdf2::{
+    HashFunction, DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH, DEFAULT_ITER as PBKDF2_DEF_ITER,
+};
+use super::{Algorithm, HashBuilder, LengthCalculationMethod, Normalization};
 
 pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
 pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;
@@ -49,10 +51,10 @@ pub const NB_ITER_MIN: usize = 10000;
 pub fn is_valid(h: &HashBuilder) -> bool {
     // Length calculation
     match h.length_calculation {
-        LengthCalculationMethod::Characters => {},
+        LengthCalculationMethod::Characters => {}
         LengthCalculationMethod::Bytes => {
             return false;
-        },
+        }
     }
 
     // Salt length.
@@ -76,7 +78,7 @@ pub fn is_valid(h: &HashBuilder) -> bool {
     match h.algorithm {
         Algorithm::Argon2 => {
             return false;
-        },
+        }
         Algorithm::Pbkdf2 => {
             match h.parameters.get("iter") {
                 Some(si) => match si.parse::<usize>() {
@@ -84,41 +86,41 @@ pub fn is_valid(h: &HashBuilder) -> bool {
                         if i < NB_ITER_MIN {
                             return false;
                         }
-                    },
+                    }
                     Err(_) => {
                         return false;
-                    },
+                    }
                 },
                 None => {
                     if PBKDF2_DEF_ITER < NB_ITER_MIN {
                         return false;
                     }
-                },
+                }
             };
             match h.parameters.get("hash") {
                 Some(h) => match h.as_str() {
-                    "sha1" => {},
-                    "sha224" => {},
-                    "sha256" => {},
-                    "sha384" => {},
-                    "sha512" => {},
-                    "sha512t224" => {},
-                    "sha512t256" => {},
+                    "sha1" => {}
+                    "sha224" => {}
+                    "sha256" => {}
+                    "sha384" => {}
+                    "sha512" => {}
+                    "sha512t224" => {}
+                    "sha512t256" => {}
                     _ => {
                         return false;
                     }
                 },
                 None => match PBKDF2_DEF_HASH {
-                    HashFunction::Sha1 => {},
-                    HashFunction::Sha224 => {},
-                    HashFunction::Sha256 => {},
-                    HashFunction::Sha384 => {},
-                    HashFunction::Sha512 => {},
-                    HashFunction::Sha512Trunc224 => {},
-                    HashFunction::Sha512Trunc256 => {},
+                    HashFunction::Sha1 => {}
+                    HashFunction::Sha224 => {}
+                    HashFunction::Sha256 => {}
+                    HashFunction::Sha384 => {}
+                    HashFunction::Sha512 => {}
+                    HashFunction::Sha512Trunc224 => {}
+                    HashFunction::Sha512Trunc256 => {}
                 },
             };
-        },
+        }
     };
 
     // Normalization

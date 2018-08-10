@@ -33,10 +33,10 @@
  */
 
 use super::{ErrorCode, HOTPBuilder, HashFunction};
-use base64;
 use base32;
-use time;
+use base64;
 use hex;
+use time;
 
 /// Generates and checks TOTP codes.
 pub struct TOTP {
@@ -279,10 +279,10 @@ impl TOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::TOTPBuilder;
-    use oath::{c, ErrorCode, HashFunction};
     use libc;
-    use time;
+    use oath::{c, ErrorCode, HashFunction};
     use std;
+    use time;
 
     /// [C binding] TOTP configuration storage
     #[repr(C)]
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn test_totp_key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new().key(&key).finalize().unwrap();
@@ -469,7 +469,7 @@ mod tests {
     #[test]
     fn test_totp_keu_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new()
@@ -494,7 +494,7 @@ mod tests {
     fn test_totp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -514,7 +514,7 @@ mod tests {
     fn test_totp_asciikeu_full() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new()
@@ -539,7 +539,7 @@ mod tests {
     fn test_totp_kexkey_simple() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new().hex_key(&key_hex).finalize().unwrap();
@@ -559,7 +559,7 @@ mod tests {
     fn test_totp_hexkey_full() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let totp = TOTPBuilder::new()
@@ -583,7 +583,7 @@ mod tests {
     #[test]
     fn test_totp_base32key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -606,7 +606,7 @@ mod tests {
     #[test]
     fn test_totp_base32key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -631,7 +631,7 @@ mod tests {
     #[test]
     fn test_totp_base64key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 
@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn test_totp_base64key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 

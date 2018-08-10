@@ -33,16 +33,16 @@
  */
 
 use super::{ErrorCode, HashFunction};
-use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
-use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
-use sha1::Sha1;
-use hmac::{Hmac, Mac};
-use base64;
 use base32;
+use base64;
 use hex;
+use hmac::{Hmac, Mac};
+use sha1::Sha1;
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 
 macro_rules! compute_hmac {
-    ($obj: ident, $hash: ty, $input: ident) => {{
+    ($obj:ident, $hash:ty, $input:ident) => {{
         let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
         hmac.input($input.as_slice());
         hmac.result().code().to_vec()
@@ -62,8 +62,10 @@ impl HOTP {
     fn reduce_result(&self, hs: &[u8]) -> u32 {
         let offset = (hs[hs.len() - 1] & 0xf) as usize;
         let hash = hs[offset..offset + 4].to_vec();
-        let snum: u32 = ((hash[0] as u32 & 0x7f) << 24) | ((hash[1] as u32 & 0xff) << 16)
-            | ((hash[2] as u32 & 0xff) << 8) | (hash[3] as u32 & 0xff);
+        let snum: u32 = ((hash[0] as u32 & 0x7f) << 24)
+            | ((hash[1] as u32 & 0xff) << 16)
+            | ((hash[2] as u32 & 0xff) << 8)
+            | (hash[3] as u32 & 0xff);
 
         let base = self.output_base.len() as u32;
         snum % base.pow(self.output_len as u32)
@@ -334,8 +336,8 @@ impl HOTPBuilder {
 #[cfg(feature = "cbindings")]
 pub mod cbindings {
     use super::HOTPBuilder;
-    use oath::{c, ErrorCode, HashFunction};
     use libc;
+    use oath::{c, ErrorCode, HashFunction};
     use std;
 
     /// [C binding] HOTP configuration storage
@@ -481,7 +483,7 @@ mod tests {
     #[test]
     fn test_hotp_key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new().key(&key).finalize().unwrap();
@@ -502,7 +504,7 @@ mod tests {
     #[test]
     fn test_hotp_key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new()
@@ -530,7 +532,7 @@ mod tests {
     fn test_hotp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -552,7 +554,7 @@ mod tests {
     fn test_hotp_asciikey_full() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new()
@@ -580,7 +582,7 @@ mod tests {
     fn test_hotp_hexkey_simple() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new().hex_key(&key_hex).finalize().unwrap();
@@ -602,7 +604,7 @@ mod tests {
     fn test_hotp_hexkey_full() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
 
         let hotp = HOTPBuilder::new()
@@ -629,7 +631,7 @@ mod tests {
     #[test]
     fn test_hotp_base32key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -654,7 +656,7 @@ mod tests {
     #[test]
     fn test_hotp_base32key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -682,7 +684,7 @@ mod tests {
     #[test]
     fn test_hotp_base64key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 
@@ -707,7 +709,7 @@ mod tests {
     #[test]
     fn test_hotp_base64key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 
@@ -899,7 +901,7 @@ mod tests {
     fn test_rfc4226_examples() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
         let hex_base = "0123456789ABCDEF".to_owned().into_bytes();
 

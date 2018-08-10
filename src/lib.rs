@@ -57,9 +57,9 @@ extern crate unicode_normalization;
 #[macro_use]
 extern crate nom;
 
+pub mod key;
 pub mod oath;
 pub mod pass;
-pub mod key;
 
 #[cfg(feature = "cbindings")]
 extern crate libc;
