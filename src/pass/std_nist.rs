@@ -106,10 +106,10 @@ pub fn is_valid(h: &HashBuilder) -> bool {
                     "sha512" => {}
                     "sha512t224" => {}
                     "sha512t256" => {}
-                    "sha3-224" => {},
-                    "sha3-256" => {},
-                    "sha3-384" => {},
-                    "sha3-512" => {},
+                    "sha3-224" => {}
+                    "sha3-256" => {}
+                    "sha3-384" => {}
+                    "sha3-512" => {}
                     _ => {
                         return false;
                     }
