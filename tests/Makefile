@@ -19,8 +19,10 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS)
 
+test_valgrind: cc_version $(NAME)
+	LD_LIBRARY_PATH=$(LIBDIR) valgrind ./$(NAME)
+
 test: cc_version $(NAME)
-	@(hash valgrind 2>/dev/null && LD_LIBRARY_PATH=$(LIBDIR) valgrind ./$(NAME))
 	@LD_LIBRARY_PATH=$(LIBDIR) ./$(NAME)
 
 tests: test
