@@ -73,8 +73,8 @@
 use base32;
 use base64;
 use hex;
-use rand::os::OsRng;
-use rand::Rng;
+use rand::rngs::OsRng;
+use rand::RngCore;
 
 /// Random key builder.
 pub struct KeyBuilder {
