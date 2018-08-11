@@ -106,6 +106,10 @@ pub fn is_valid(h: &HashBuilder) -> bool {
                     "sha512" => {}
                     "sha512t224" => {}
                     "sha512t256" => {}
+                    "sha3-224" => {},
+                    "sha3-256" => {},
+                    "sha3-384" => {},
+                    "sha3-512" => {},
                     _ => {
                         return false;
                     }
@@ -118,6 +122,13 @@ pub fn is_valid(h: &HashBuilder) -> bool {
                     HashFunction::Sha512 => {}
                     HashFunction::Sha512Trunc224 => {}
                     HashFunction::Sha512Trunc256 => {}
+                    HashFunction::Sha3_224 => {}
+                    HashFunction::Sha3_256 => {}
+                    HashFunction::Sha3_384 => {}
+                    HashFunction::Sha3_512 => {}
+                    _ => {
+                        return false;
+                    }
                 },
             };
         }

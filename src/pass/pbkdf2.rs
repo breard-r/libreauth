@@ -38,6 +38,7 @@ use key::KeyBuilder;
 use pbkdf2::pbkdf2;
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
 
 pub enum HashFunction {
@@ -48,6 +49,14 @@ pub enum HashFunction {
     Sha512,
     Sha512Trunc224,
     Sha512Trunc256,
+    Keccak224,
+    Keccak256,
+    Keccak384,
+    Keccak512,
+    Sha3_224,
+    Sha3_256,
+    Sha3_384,
+    Sha3_512,
 }
 
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
@@ -109,6 +118,14 @@ impl HashingFunction for Pbkdf2Hash {
                 HashFunction::Sha512 => "sha512".to_string(),
                 HashFunction::Sha512Trunc224 => "sha512t224".to_string(),
                 HashFunction::Sha512Trunc256 => "sha512t256".to_string(),
+                HashFunction::Keccak224 => "keccak224".to_string(),
+                HashFunction::Keccak256 => "keccak256".to_string(),
+                HashFunction::Keccak384 => "keccak384".to_string(),
+                HashFunction::Keccak512 => "keccak512".to_string(),
+                HashFunction::Sha3_224 => "sha3-224".to_string(),
+                HashFunction::Sha3_256 => "sha3-256".to_string(),
+                HashFunction::Sha3_384 => "sha3-384".to_string(),
+                HashFunction::Sha3_512 => "sha3-512".to_string(),
             },
         );
         params
@@ -155,6 +172,38 @@ impl HashingFunction for Pbkdf2Hash {
                     self.hash_function = HashFunction::Sha512Trunc256;
                     Ok(())
                 }
+                "keccak224" => {
+                    self.hash_function = HashFunction::Keccak224;
+                    Ok(())
+                }
+                "keccak256" => {
+                    self.hash_function = HashFunction::Keccak256;
+                    Ok(())
+                }
+                "keccak384" => {
+                    self.hash_function = HashFunction::Keccak384;
+                    Ok(())
+                }
+                "keccak512" => {
+                    self.hash_function = HashFunction::Keccak512;
+                    Ok(())
+                }
+                "sha3-224" => {
+                    self.hash_function = HashFunction::Sha3_224;
+                    Ok(())
+                }
+                "sha3-256" => {
+                    self.hash_function = HashFunction::Sha3_256;
+                    Ok(())
+                }
+                "sha3-384" => {
+                    self.hash_function = HashFunction::Sha3_384;
+                    Ok(())
+                }
+                "sha3-512" => {
+                    self.hash_function = HashFunction::Sha3_512;
+                    Ok(())
+                }
                 _ => Err(ErrorCode::InvalidPasswordFormat),
             },
             _ => Err(ErrorCode::InvalidPasswordFormat),
@@ -194,6 +243,14 @@ impl HashingFunction for Pbkdf2Hash {
             HashFunction::Sha512 => process_pbkdf2!(self, input, Sha512, 64),
             HashFunction::Sha512Trunc224 => process_pbkdf2!(self, input, Sha512Trunc224, 28),
             HashFunction::Sha512Trunc256 => process_pbkdf2!(self, input, Sha512Trunc256, 32),
+            HashFunction::Keccak224 => process_pbkdf2!(self, input, Keccak224, 32),
+            HashFunction::Keccak256 => process_pbkdf2!(self, input, Keccak256, 32),
+            HashFunction::Keccak384 => process_pbkdf2!(self, input, Keccak384, 32),
+            HashFunction::Keccak512 => process_pbkdf2!(self, input, Keccak512, 32),
+            HashFunction::Sha3_224 => process_pbkdf2!(self, input, Sha3_224, 28),
+            HashFunction::Sha3_256 => process_pbkdf2!(self, input, Sha3_256, 32),
+            HashFunction::Sha3_384 => process_pbkdf2!(self, input, Sha3_384, 48),
+            HashFunction::Sha3_512 => process_pbkdf2!(self, input, Sha3_512, 64),
         }
     }
 }
@@ -435,6 +492,14 @@ mod tests {
                     "sha512" => HashFunction::Sha512,
                     "sha512t224" => HashFunction::Sha512Trunc224,
                     "sha512t256" => HashFunction::Sha512Trunc256,
+                    "keccak224" => HashFunction::Keccak224,
+                    "keccak256" => HashFunction::Keccak256,
+                    "keccak384" => HashFunction::Keccak384,
+                    "keccak512" => HashFunction::Keccak512,
+                    "sha3-224" => HashFunction::Sha3_224,
+                    "sha3-256" => HashFunction::Sha3_256,
+                    "sha3-384" => HashFunction::Sha3_384,
+                    "sha3-512" => HashFunction::Sha3_512,
                     _ => {
                         panic!();
                     }
