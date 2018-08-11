@@ -186,7 +186,7 @@ use unicode_normalization::UnicodeNormalization;
 ///
 /// ## C interface
 /// The C interface refers at this constant as `LIBREAUTH_PASSWORD_STORAGE_LEN`.
-pub const PASSWORD_STORAGE_LEN: usize = 1024;
+pub const PASSWORD_STORAGE_LEN: usize = 512;
 
 /// Algorithms available to hash the password.
 ///

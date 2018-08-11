@@ -49,7 +49,7 @@ int32_t libreauth_keygen(void *buff, size_t buff_len);
  * PASS module
  */
 
-#define LIBREAUTH_PASSWORD_STORAGE_LEN      1024
+#define LIBREAUTH_PASSWORD_STORAGE_LEN  512
 
 typedef enum {
     LIBREAUTH_PASS_ARGON2   = 0,
