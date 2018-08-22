@@ -46,7 +46,7 @@ pub const DEFAULT_SALT_LEN: usize = 16; // In bytes
 pub const MIN_SALT_LEN: usize = 4; // In bytes
 pub const PASS_MIN_MIN_LEN: usize = 8;
 pub const PASS_MIN_MAX_LEN: usize = 64;
-pub const NB_ITER_MIN: usize = 10000;
+pub const NB_ITER_MIN: usize = 10_000;
 
 pub fn is_valid(h: &HashBuilder) -> bool {
     // Length calculation

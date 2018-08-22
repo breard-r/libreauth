@@ -195,7 +195,7 @@ macro_rules! builder_common {
     ($t:ty) => {
         /// Sets the shared secret.
         pub fn key(&mut self, key: &Vec<u8>) -> &mut $t {
-            self.key = Some(key.clone());
+            self.key = Some(key.to_owned());
             self
         }
 

@@ -429,7 +429,7 @@ impl Hasher {
             LengthCalculationMethod::Characters => {
                 let mut len = 0;
                 for _ in password.chars() {
-                    len = len + 1;
+                    len += 1;
                 }
                 len
             }
@@ -459,7 +459,7 @@ impl Hasher {
             Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
         };
         hash_func.set_normalization(self.normalization).unwrap();
-        for (k, v) in self.parameters.iter() {
+        for (k, v) in &self.parameters {
             hash_func
                 .set_parameter(k.to_string(), v.to_string())
                 .unwrap();
@@ -500,9 +500,9 @@ impl Hasher {
             hash: Some(hash.clone()),
         };
         match phc.to_string() {
-            Ok(formated) => Ok(HashedDuo {
+            Ok(fmtd) => Ok(HashedDuo {
                 raw: hash,
-                formated: formated,
+                formated: fmtd,
             }),
             Err(_) => Err(ErrorCode::InvalidPasswordFormat),
         }
@@ -606,6 +606,12 @@ pub struct HashBuilder {
     length_calculation: LengthCalculationMethod,
 }
 
+impl Default for HashBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HashBuilder {
     /// Create a new HashBuilder object with default parameters.
     pub fn new() -> HashBuilder {
@@ -659,14 +665,14 @@ impl HashBuilder {
             },
             None => Normalization::Nfkc,
         };
-        let min_len = match phc.parameters.remove("pmin") {
+        let min_l = match phc.parameters.remove("pmin") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
                 Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
             },
             None => std_default::DEFAULT_PASSWORD_MIN_LEN,
         };
-        let max_len = match phc.parameters.remove("pmax") {
+        let max_l = match phc.parameters.remove("pmax") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
                 Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
@@ -684,8 +690,8 @@ impl HashBuilder {
         let hash_builder = HashBuilder {
             standard: PasswordStorageStandard::NoStandard,
             normalization: norm,
-            min_len: min_len,
-            max_len: max_len,
+            min_len: min_l,
+            max_len: max_l,
             algorithm: match phc.id.as_str() {
                 "argon2" => Algorithm::Argon2,
                 "pbkdf2" => Algorithm::Pbkdf2,

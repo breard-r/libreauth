@@ -58,7 +58,7 @@ impl TOTP {
         if timestamp < self.initial_time {
             panic!("The current Unix time is below the initial time.");
         }
-        (timestamp - self.initial_time) / self.period as u64
+        (timestamp - self.initial_time) / u64::from(self.period)
     }
 
     /// Generate the current TOTP value.
@@ -184,6 +184,12 @@ pub struct TOTPBuilder {
     runtime_error: Option<ErrorCode>,
 }
 
+impl Default for TOTPBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TOTPBuilder {
     /// Generates the base configuration for TOTP code generation.
     pub fn new() -> TOTPBuilder {
@@ -250,13 +256,12 @@ impl TOTPBuilder {
 
     /// Returns the finalized TOTP object.
     pub fn finalize(&self) -> Result<TOTP, ErrorCode> {
-        match self.runtime_error {
-            Some(e) => return Err(e),
-            None => (),
+        if let Some(e) = self.runtime_error {
+            return Err(e);
         }
         match self.code_length() {
-            n if n < 1000000 => return Err(ErrorCode::CodeTooSmall),
-            n if n > 2147483648 => return Err(ErrorCode::CodeTooBig),
+            n if n < 1_000_000 => return Err(ErrorCode::CodeTooSmall),
+            n if n > 2_147_483_648 => return Err(ErrorCode::CodeTooBig),
             _ => (),
         }
         match self.key {

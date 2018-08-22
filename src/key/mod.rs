@@ -77,6 +77,7 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 
 /// Random key builder.
+#[derive(Default)]
 pub struct KeyBuilder {
     size: usize,
     key: Option<Vec<u8>>,
@@ -93,12 +94,11 @@ impl KeyBuilder {
 
     /// Set the key size (in bytes).
     pub fn size(mut self, size: usize) -> Self {
-        match size != self.size {
-            true => {
-                self.size = size;
-                self.generate()
-            }
-            false => self,
+        if size != self.size {
+            self.size = size;
+            self.generate()
+        } else {
+            self
         }
     }
 

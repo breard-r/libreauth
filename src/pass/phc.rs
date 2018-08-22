@@ -172,13 +172,13 @@ impl PHCData {
     }
 
     pub fn to_string(&self) -> Result<String, ()> {
-        if self.id.len() <= 0 {
+        if self.id.is_empty() {
             return Err(());
         }
         let mut res = String::from("$");
         res += self.id.as_str();
 
-        if self.parameters.len() <= 0 && self.salt.is_none() {
+        if self.parameters.is_empty() && self.salt.is_none() {
             return Ok(res);
         }
         res += "$";

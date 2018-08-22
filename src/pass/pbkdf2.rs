@@ -62,9 +62,9 @@ pub enum HashFunction {
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
 const MIN_SALT_LENGTH: usize = 4; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
-const MIN_ITER: usize = 10000;
-const MAX_ITER: usize = 200000;
-pub const DEFAULT_ITER: usize = 45000;
+const MIN_ITER: usize = 10_000;
+const MAX_ITER: usize = 200_000;
+pub const DEFAULT_ITER: usize = 45_000;
 
 macro_rules! process_pbkdf2 {
     ($obj:ident, $input:ident, $hash:ty, $len:expr) => {{
@@ -482,7 +482,7 @@ mod tests {
                 ],
             ),
         ];
-        for &(func, nb_iter, salt, key, ref result) in lst.iter() {
+        for &(func, nbi, salt, key, ref result) in lst.iter() {
             let h = Pbkdf2Hash {
                 hash_function: match func {
                     "sha1" => HashFunction::Sha1,
@@ -504,7 +504,7 @@ mod tests {
                         panic!();
                     }
                 },
-                nb_iter: nb_iter,
+                nb_iter: nbi,
                 salt: salt.to_string().into_bytes(),
                 norm: Normalization::Nfkc,
             };
