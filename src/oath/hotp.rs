@@ -44,7 +44,7 @@ use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_
 macro_rules! compute_hmac {
     ($obj:ident, $hash:ty, $input:ident) => {{
         let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
-        hmac.input($input.as_slice());
+        hmac.input(&$input);
         hmac.result().code().to_vec()
     }};
 }
@@ -107,7 +107,7 @@ impl HOTP {
     /// assert_eq!(code, "287082");
     /// ```
     pub fn generate(&self) -> String {
-        let msg = vec![
+        let msg = [
             ((self.counter >> 56) & 0xff) as u8,
             ((self.counter >> 48) & 0xff) as u8,
             ((self.counter >> 40) & 0xff) as u8,
@@ -158,12 +158,13 @@ impl HOTP {
     ///     .is_valid(&user_code);
     /// assert!(valid);
     /// ```
-    pub fn is_valid(&self, code: &String) -> bool {
+    pub fn is_valid(&self, code: &str) -> bool {
         if code.len() != self.output_len {
             return false;
         }
-        let ref_code = self.generate().into_bytes();
-        let code = code.clone().into_bytes();
+        let r1 = self.generate();
+        let ref_code = r1.as_str().as_bytes();
+        let code = code.as_bytes();
         let (code, ref_code) = match self.hash_function {
             HashFunction::Sha1 => (
                 compute_hmac!(self, Sha1, code),

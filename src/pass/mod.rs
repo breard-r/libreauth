@@ -141,7 +141,7 @@
 //! let stored_password = hasher.hash(&password).unwrap();
 //!
 //! // Checking a password against a previously hashed one.
-//! let checker = HashBuilder::from_phc(stored_password).unwrap();
+//! let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
 //! assert!(! checker.is_valid(&"bad password".to_string()));
 //! assert!(checker.is_valid(&password));
 //! ```
@@ -396,12 +396,12 @@ pub enum PasswordStorageStandard {
 trait HashingFunction {
     fn get_id(&self) -> String;
     fn get_parameters(&self) -> HashMap<String, String>;
-    fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode>;
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode>;
     fn get_salt(&self) -> Option<Vec<u8>>;
     fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode>;
     fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode>;
     fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode>;
-    fn hash(&self, input: &Vec<u8>) -> Vec<u8>;
+    fn hash(&self, input: &[u8]) -> Vec<u8>;
 }
 
 struct HashedDuo {
@@ -423,7 +423,7 @@ pub struct Hasher {
 }
 
 impl Hasher {
-    fn check_password(&self, password: &String) -> Result<(), ErrorCode> {
+    fn check_password(&self, password: &str) -> Result<(), ErrorCode> {
         let pass_len = match self.length_calculation {
             LengthCalculationMethod::Bytes => password.len(),
             LengthCalculationMethod::Characters => {
@@ -443,13 +443,13 @@ impl Hasher {
         Ok(())
     }
 
-    fn normalize_password(&self, password: &String) -> String {
+    fn normalize_password(&self, password: &str) -> String {
         match self.normalization {
             Normalization::Nfd => password.nfd().collect::<String>(),
             Normalization::Nfkd => password.nfkd().collect::<String>(),
             Normalization::Nfc => password.nfc().collect::<String>(),
             Normalization::Nfkc => password.nfkc().collect::<String>(),
-            Normalization::None => password.clone(),
+            Normalization::None => password.to_string(),
         }
     }
 
@@ -460,9 +460,7 @@ impl Hasher {
         };
         hash_func.set_normalization(self.normalization).unwrap();
         for (k, v) in &self.parameters {
-            hash_func
-                .set_parameter(k.to_string(), v.to_string())
-                .unwrap();
+            hash_func.set_parameter(k, v).unwrap();
         }
         match self.ref_salt {
             Some(ref s) => {
@@ -475,7 +473,7 @@ impl Hasher {
         hash_func
     }
 
-    fn do_hash(&self, password: &String) -> Result<HashedDuo, ErrorCode> {
+    fn do_hash(&self, password: &str) -> Result<HashedDuo, ErrorCode> {
         let norm_pass = self.normalize_password(password);
         match self.check_password(&norm_pass) {
             Ok(_) => {}
@@ -508,14 +506,14 @@ impl Hasher {
         }
     }
 
-    pub fn hash(&self, password: &String) -> Result<String, ErrorCode> {
+    pub fn hash(&self, password: &str) -> Result<String, ErrorCode> {
         match self.do_hash(password) {
             Ok(hash_duo) => Ok(hash_duo.formated),
             Err(e) => Err(e),
         }
     }
 
-    pub fn is_valid(&self, password: &String) -> bool {
+    pub fn is_valid(&self, password: &str) -> bool {
         match self.ref_hash {
             Some(ref rh) => match self.do_hash(password) {
                 Ok(hash_duo) => {
@@ -567,7 +565,7 @@ impl Hasher {
 /// };
 ///
 /// // Checking a password against a previously hashed one.
-/// let checker = HashBuilder::from_phc(stored_password).unwrap();
+/// let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
 /// assert!(! checker.is_valid(&"bad password".to_string()));
 /// assert!(checker.is_valid(&password));
 /// ```
@@ -586,8 +584,8 @@ impl Hasher {
 /// ```
 /// let hasher = match libreauth::pass::HashBuilder::new()
 ///     .min_len(12).algorithm(libreauth::pass::Algorithm::Pbkdf2)
-///     .add_param("hash".to_string(), "sha512".to_string())
-///     .add_param("norm".to_string(), "nfkd".to_string())
+///     .add_param(&"hash", &"sha512")
+///     .add_param(&"norm", &"nfkd")
 ///     .finalize() {
 ///     Ok(h) => h,
 ///     Err(e) => panic!("{:?}", e),
@@ -649,8 +647,8 @@ impl HashBuilder {
     }
 
     /// Create a new Hasher object from a PHC formatted string.
-    pub fn from_phc(data: String) -> Result<Hasher, ErrorCode> {
-        let mut phc = match PHCData::from_bytes(&data.into_bytes()) {
+    pub fn from_phc(data: &str) -> Result<Hasher, ErrorCode> {
+        let mut phc = match PHCData::from_bytes(data.as_bytes()) {
             Ok(v) => v,
             Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
         };
@@ -772,8 +770,8 @@ impl HashBuilder {
     }
 
     /// Add a parameter that will be used by the password hashing algorithm.
-    pub fn add_param(&mut self, key: String, value: String) -> &mut HashBuilder {
-        self.parameters.insert(key.clone(), value.clone());
+    pub fn add_param(&mut self, key: &str, value: &str) -> &mut HashBuilder {
+        self.parameters.insert(key.to_string(), value.to_string());
         self
     }
 }
@@ -878,7 +876,7 @@ mod cbindings {
     ) -> ErrorCode {
         let c: &mut PassCfg = get_cfg_mut!(cfg, ErrorCode::NullPtr);
         let p = get_string!(phc);
-        let checker = match HashBuilder::from_phc(p) {
+        let checker = match HashBuilder::from_phc(p.as_str()) {
             Ok(ch) => ch,
             Err(e) => {
                 return e;
@@ -947,7 +945,7 @@ mod cbindings {
     ) -> libc::int32_t {
         let p = get_string!(pass);
         let r = get_string!(reference);
-        let checker = match HashBuilder::from_phc(r) {
+        let checker = match HashBuilder::from_phc(r.as_str()) {
             Ok(ch) => ch,
             Err(_) => {
                 return 0;
@@ -1033,8 +1031,8 @@ mod tests {
             .length_calculation(LengthCalculationMethod::Characters)
             .normalization(Normalization::Nfkd)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param("iter".to_string(), "80000".to_string())
-            .add_param("hash".to_string(), "sha512t256".to_string());
+            .add_param(&"iter", &"80000")
+            .add_param(&"hash", &"sha512t256");
         assert_eq!(hb.min_len, 42);
         assert_eq!(hb.max_len, 256);
         assert_eq!(hb.ref_salt, None);
@@ -1075,7 +1073,7 @@ mod tests {
     fn test_phc_params() {
         let password = "correct horse battery staple".to_string();
         let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY".to_string();
-        let checker = HashBuilder::from_phc(reference).unwrap();
+        let checker = HashBuilder::from_phc(reference.as_str()).unwrap();
 
         assert!(checker.is_valid(&password));
         assert_eq!(checker.min_len, 10);
@@ -1103,7 +1101,7 @@ mod tests {
             .finalize()
             .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
-        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
         assert!(checker.is_valid(&s1));
         assert!(!checker.is_valid(&s2));
         assert!(checker.is_valid(&s3));
@@ -1131,7 +1129,7 @@ mod tests {
             .finalize()
             .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
-        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
         assert!(checker.is_valid(&s1));
         assert!(!checker.is_valid(&s2));
         assert!(checker.is_valid(&s3));
@@ -1159,7 +1157,7 @@ mod tests {
             .finalize()
             .unwrap();
         let stored_password = hasher.hash(&s1).unwrap();
-        let checker = HashBuilder::from_phc(stored_password).unwrap();
+        let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
         assert!(checker.is_valid(&s1));
         assert!(!checker.is_valid(&s2));
         assert!(!checker.is_valid(&s3));
@@ -1234,7 +1232,7 @@ mod tests {
     fn test_nist_invalid_iter() {
         HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param("iter".to_string(), "8000".to_string())
+            .add_param(&"iter", &"8000")
             .finalize()
             .unwrap();
     }

@@ -161,8 +161,8 @@ pub struct PHCData {
 }
 
 impl PHCData {
-    pub fn from_bytes(s: &Vec<u8>) -> Result<PHCData, ()> {
-        match get_phc(CompleteByteSlice(s.as_slice())) {
+    pub fn from_bytes(s: &[u8]) -> Result<PHCData, ()> {
+        match get_phc(CompleteByteSlice(s)) {
             Ok((r, v)) => match r.len() {
                 0 => Ok(v),
                 _ => Err(()),

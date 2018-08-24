@@ -106,8 +106,8 @@ impl HashingFunction for Argon2Hash {
         params
     }
 
-    fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode> {
-        match name.as_str() {
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode> {
+        match name {
             "passes" => set_param!(self, passes, value, u32, MIN_PASSES, MAX_PASSES),
             "mem" => set_param!(self, mem_cost, value, u32, MIN_MEM_COST, MAX_MEM_COST),
             "lanes" => set_param!(self, lanes, value, u32, MIN_LANES, MAX_LANES),
@@ -140,7 +140,7 @@ impl HashingFunction for Argon2Hash {
         Ok(())
     }
 
-    fn hash(&self, input: &Vec<u8>) -> Vec<u8> {
+    fn hash(&self, input: &[u8]) -> Vec<u8> {
         let two: u32 = 2;
         let config = argon2::Config {
             ad: &[],
@@ -153,7 +153,7 @@ impl HashingFunction for Argon2Hash {
             variant: argon2::Variant::Argon2i,
             version: argon2::Version::Version13,
         };
-        argon2::hash_raw(&input.as_slice(), &self.salt.as_slice(), &config).unwrap()
+        argon2::hash_raw(input, &self.salt.as_slice(), &config).unwrap()
     }
 }
 

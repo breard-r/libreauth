@@ -101,7 +101,7 @@ impl TOTP {
     ///     .unwrap()
     ///     .is_valid(&user_code);
     /// ```
-    pub fn is_valid(&self, code: &String) -> bool {
+    pub fn is_valid(&self, code: &str) -> bool {
         let base_counter = self.get_counter();
         for counter in
             (base_counter - self.negative_tolerance)..(base_counter + self.positive_tolerance + 1)

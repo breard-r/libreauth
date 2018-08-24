@@ -69,12 +69,7 @@ pub const DEFAULT_ITER: usize = 45_000;
 macro_rules! process_pbkdf2 {
     ($obj:ident, $input:ident, $hash:ty, $len:expr) => {{
         let mut out = [0u8; $len];
-        pbkdf2::<Hmac<$hash>>(
-            $input.as_slice(),
-            $obj.salt.as_slice(),
-            $obj.nb_iter,
-            &mut out[..$len],
-        );
+        pbkdf2::<Hmac<$hash>>($input, $obj.salt.as_slice(), $obj.nb_iter, &mut out[..$len]);
         out.to_vec()
     }};
 }
@@ -131,8 +126,8 @@ impl HashingFunction for Pbkdf2Hash {
         params
     }
 
-    fn set_parameter(&mut self, name: String, value: String) -> Result<(), ErrorCode> {
-        match name.as_str() {
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode> {
+        match name {
             "iter" => match value.parse::<usize>() {
                 Ok(i) => match i {
                     MIN_ITER...MAX_ITER => {
@@ -143,7 +138,7 @@ impl HashingFunction for Pbkdf2Hash {
                 },
                 Err(_) => Err(ErrorCode::InvalidPasswordFormat),
             },
-            "hash" => match value.as_str() {
+            "hash" => match value {
                 "sha1" => {
                     self.hash_function = HashFunction::Sha1;
                     Ok(())
@@ -234,7 +229,7 @@ impl HashingFunction for Pbkdf2Hash {
         Ok(())
     }
 
-    fn hash(&self, input: &Vec<u8>) -> Vec<u8> {
+    fn hash(&self, input: &[u8]) -> Vec<u8> {
         match self.hash_function {
             HashFunction::Sha1 => process_pbkdf2!(self, input, Sha1, 20),
             HashFunction::Sha224 => process_pbkdf2!(self, input, Sha224, 28),

@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased][unreleased]
+
+### Changed
+- API for the pass and oath module have slightly changed.
+
+
 ## [0.10.0] - 2018-08-11
 
 ### Changed
