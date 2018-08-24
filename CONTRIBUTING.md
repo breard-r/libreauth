@@ -16,14 +16,6 @@ When submitting code, please follow the following guidelines:
 - for bug-fixes, write unit tests showing the corrected bug ;
 - for new features, do not forget to create the C-bindings ;
 - yes, unit tests have to be written for C-bindings too ;
+- format your code using [rustfmt](https://github.com/rust-lang-nursery/rustfmt) ;
+- use [clippy](https://github.com/rust-lang-nursery/rust-clippy) to detect common mistakes ;
 - **launch the test suite before submitting your code**, obviously every single test have to pass.
-
-## Coding style
-
-- Indent code with 4 spaces ;
-- no trailing whitespace at the end of lines ;
-- use descriptive variable names ;
-- functions should be as short as possible, do only one thing and do it well ;
-- prefer `match` over `if`.
-
-In a more general way, if you feel your code doesn't look like the project's one, fix it.
