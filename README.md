@@ -4,7 +4,7 @@
 [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
 [![LibreAuth on docs.rs](https://docs.rs/libreauth/badge.svg)](https://docs.rs/libreauth/)
 [![License: CeCILL-C](https://img.shields.io/badge/license-CeCILL--C-green.svg)](http://cecill.info/licences/Licence_CeCILL-C_V1-en.html)
-[![License: CeCILL-2.1](https://img.shields.io/badge/license-CeCILL 2.1-blue.svg)](http://cecill.info/licences/Licence_CeCILL_V2.1-en.html)
+[![License: CeCILL-2.1](https://img.shields.io/badge/license-CeCILL%202.1-blue.svg)](http://cecill.info/licences/Licence_CeCILL_V2.1-en.html)
 
 
 LibreAuth is a collection of tools for user authentication.
