@@ -7,8 +7,8 @@ keywords = ["authentication", "password", "oath", "hotp", "totp"]
 documentation = "https://docs.rs/libreauth/"
 repository = "https://github.com/breard-r/libreauth"
 readme = "README.md"
-license = "CECILL-2.1"
-include = ["src/**/*", "Cargo.toml", "LICENSE-*.txt"]
+license = "CECILL-C OR CECILL-2.1"
+include = ["src/**/*", "Cargo.toml", "Licence_*.txt"]
 
 [package.metadata.docs.rs]
 features = ["cbindings"]

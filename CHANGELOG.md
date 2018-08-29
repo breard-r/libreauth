@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Added
+- In addition to the previous CeCILL license, LibreAuth can now also be used under the CeCILL-C license.
+
 ### Changed
 - API for the pass and oath module have slightly changed.
 

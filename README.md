@@ -3,6 +3,8 @@
 [![Build Status](https://api.travis-ci.org/breard-r/libreauth.svg?branch=master)](https://travis-ci.org/breard-r/libreauth)
 [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
 [![LibreAuth on docs.rs](https://docs.rs/libreauth/badge.svg)](https://docs.rs/libreauth/)
+[![License: CeCILL-C](https://img.shields.io/badge/license-CeCILL--C-green.svg)](http://cecill.info/licences/Licence_CeCILL-C_V1-en.html)
+[![License: CeCILL 2.1](https://img.shields.io/badge/license-CeCILL 2.1-blue.svg)](http://cecill.info/licences/Licence_CeCILL_V2.1-en.html)
 
 
 LibreAuth is a collection of tools for user authentication.
@@ -133,3 +135,10 @@ $ ./totp
 ### Python
 
 Python bindings are available. See the [Python LibreAuth](https://github.com/breard-r/py-libreauth) project.
+
+
+## License
+
+LibreAuth is a free software available either under the CeCILL-C or the CeCILL 2.1 license. For a quick summary of those licenses, you can read the [frequently asked questions](http://cecill.info/faq.en.html) on the licenses' website. A full copy of those licenses are available in this repository both in english and french.
+
+While the CeCILL 2.1 is the original LibreAuth license, future versions may be published only under the CeCILL-C license. This change occurs because CeCILL 2.1 isn't really suited for a library since it is a "viral" license.
