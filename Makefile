@@ -1,7 +1,7 @@
 DOC_PATH   = target/doc/
 CARGO_CNF  = Cargo.toml
-NAME       = $(shell cat $(CARGO_CNF) | grep name | head -n1 | cut -d '"' -f2)
-VERSION    = $(shell cat $(CARGO_CNF) | grep version | head -n1 | cut -d '"' -f2)
+NAME       = $(shell grep name $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
+VERSION    = $(shell grep version $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
 TAG_NAME   = v$(VERSION)
 LIBDIR     = ./target/release/
 INCDIR     = ./include/
