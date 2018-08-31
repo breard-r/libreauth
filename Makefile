@@ -20,6 +20,7 @@ audit:
 install:
 	@install -d $(prefix)/include $(prefix)/lib
 	@install --mode=0644 $(INCDIR)$(NAME).h $(prefix)/include
+	@install --mode=0755 $(LIBDIR)lib$(NAME).a $(prefix)/lib
 	@install --mode=0755 $(LIBDIR)lib$(NAME).so $(prefix)/lib
 
 uninstall:

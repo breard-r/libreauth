@@ -15,7 +15,7 @@ features = ["cbindings"]
 
 [lib]
 name = "libreauth"
-crate-type = ["rlib", "dylib"]
+crate-type = ["rlib", "staticlib", "dylib"]
 
 [features]
 cbindings = ["libc"]
