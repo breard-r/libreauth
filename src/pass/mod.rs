@@ -32,7 +32,7 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="4" class="hash">Global parameters</td>
+//!             <td rowspan="5" class="hash">Global parameters</td>
 //!             <td>norm</td>
 //!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
 //!             <td>Unicode normalization.</td>
@@ -55,6 +55,12 @@
 //!             <td>integer</td>
 //!             <td>Password maximal length.</td>
 //!             <td>128</td>
+//!         </tr>
+//!         <tr>
+//!             <td>ver</td>
+//!             <td>integer</td>
+//!             <td>The password hashing version.</td>
+//!             <td>1</td>
 //!         </tr>
 //!         <tr>
 //!             <td rowspan="4" class="hash">argon2</td>
@@ -101,15 +107,22 @@
 //! ```rust
 //! use libreauth::pass::HashBuilder;
 //!
-//! // Hashing a password in order to store it.
+//! const PWD_SCHEME_VERSION: usize = 1;
+//!
+//! // Hashing a password.
 //! let password = "correct horse battery staple".to_string();
-//! let hasher = HashBuilder::new().finalize().unwrap();
+//! let hasher = HashBuilder::new().version(PWD_SCHEME_VERSION).finalize().unwrap();
 //! let stored_password = hasher.hash(&password).unwrap();
+//! // Store the result in the database.
 //!
 //! // Checking a password against a previously hashed one.
 //! let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-//! assert!(! checker.is_valid(&"bad password".to_string()));
+//! assert!(!checker.is_valid(&"bad password".to_string()));
 //! assert!(checker.is_valid(&password));
+//! if checker.is_valid(&password) && checker.needs_update(PWD_SCHEME_VERSION) {
+//!   // The password hashing scheme has been updated since we stored this
+//!   // password. Hence, We should hash it again and update the database.
+//! }
 //! ```
 //!
 //! [PHC]: https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md
@@ -143,6 +156,8 @@ use key::KeyBuilder;
 use sha2::Sha512;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
+
+const DEFAULT_VERSION: usize = 1;
 
 /// The recommended length to reserve for password hash storage.
 ///
@@ -386,6 +401,7 @@ pub struct Hasher {
     ref_hash: Option<Vec<u8>>,
     salt_len: usize,
     length_calculation: LengthCalculationMethod,
+    version: usize,
 }
 
 impl Hasher {
@@ -457,6 +473,7 @@ impl Hasher {
         params.insert("len-calc".to_string(), lc.to_string());
         params.insert("pmin".to_string(), format!("{}", self.min_len));
         params.insert("pmax".to_string(), format!("{}", self.max_len));
+        params.insert("ver".to_string(), format!("{}", self.version));
         let phc = PHCData {
             id: hash_func.get_id(),
             parameters: params,
@@ -510,6 +527,10 @@ impl Hasher {
             None => false,
         }
     }
+
+    pub fn needs_update(&self, current_version: usize) -> bool {
+        self.version < current_version
+    }
 }
 
 /// Builds a Hasher object.
@@ -532,7 +553,7 @@ impl Hasher {
 ///
 /// // Checking a password against a previously hashed one.
 /// let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-/// assert!(! checker.is_valid(&"bad password".to_string()));
+/// assert!(!checker.is_valid(&"bad password".to_string()));
 /// assert!(checker.is_valid(&password));
 /// ```
 ///
@@ -568,6 +589,7 @@ pub struct HashBuilder {
     ref_hash: Option<Vec<u8>>,
     salt_len: usize,
     length_calculation: LengthCalculationMethod,
+    version: usize,
 }
 
 impl Default for HashBuilder {
@@ -596,6 +618,7 @@ impl HashBuilder {
                 ref_hash: None,
                 salt_len: std_default::DEFAULT_SALT_LEN,
                 length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
+                version: DEFAULT_VERSION,
             },
             PasswordStorageStandard::Nist80063b => HashBuilder {
                 standard: PasswordStorageStandard::Nist80063b,
@@ -608,6 +631,7 @@ impl HashBuilder {
                 ref_hash: None,
                 salt_len: std_nist::DEFAULT_SALT_LEN,
                 length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
+                version: DEFAULT_VERSION,
             },
         }
     }
@@ -628,6 +652,13 @@ impl HashBuilder {
                 _ => return Err(ErrorCode::InvalidPasswordFormat),
             },
             None => Normalization::Nfkc,
+        };
+        let version = match phc.parameters.remove("ver") {
+            Some(v) => match v.parse::<usize>() {
+                Ok(l) => l,
+                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => DEFAULT_VERSION,
         };
         let min_l = match phc.parameters.remove("pmin") {
             Some(v) => match v.parse::<usize>() {
@@ -669,6 +700,7 @@ impl HashBuilder {
             },
             ref_salt: phc.salt,
             length_calculation: lc,
+            version: version,
         };
         hash_builder.finalize()
     }
@@ -693,6 +725,7 @@ impl HashBuilder {
             ref_hash: self.ref_hash.clone(),
             salt_len: self.salt_len,
             length_calculation: self.length_calculation,
+            version: self.version,
         })
     }
 
@@ -740,13 +773,19 @@ impl HashBuilder {
         self.parameters.insert(key.to_string(), value.to_string());
         self
     }
+
+    /// Set the hashing scheme version number.
+    pub fn version(&mut self, version: usize) -> &mut HashBuilder {
+        self.version = version;
+        self
+    }
 }
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
     use super::{
         std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-        Normalization, PasswordStorageStandard,
+        Normalization, PasswordStorageStandard, DEFAULT_VERSION,
     };
     use libc;
     use std;
@@ -790,6 +829,7 @@ mod cbindings {
         length_calculation: LengthCalculationMethod,
         normalization: Normalization,
         standard: PasswordStorageStandard,
+        version: libc::size_t,
     }
 
     /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values.
@@ -817,6 +857,7 @@ mod cbindings {
                         c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_default::DEFAULT_NORMALIZATION;
                         c.standard = std;
+                        c.version = DEFAULT_VERSION;
                     }
                     PasswordStorageStandard::Nist80063b => {
                         c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
@@ -826,6 +867,7 @@ mod cbindings {
                         c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_nist::DEFAULT_NORMALIZATION;
                         c.standard = std;
+                        c.version = DEFAULT_VERSION;
                     }
                 };
                 ErrorCode::Success
@@ -855,6 +897,7 @@ mod cbindings {
         c.length_calculation = checker.length_calculation;
         c.normalization = checker.normalization;
         c.standard = PasswordStorageStandard::NoStandard;
+        c.version = checker.version;
         ErrorCode::Success
     }
 
@@ -879,6 +922,7 @@ mod cbindings {
             .algorithm(c.algorithm)
             .length_calculation(c.length_calculation)
             .normalization(c.normalization)
+            .version(c.version)
             .finalize()
         {
             Ok(ch) => ch,
@@ -939,7 +983,7 @@ pub use self::cbindings::libreauth_pass_is_valid;
 mod tests {
     use super::{
         std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
-        PasswordStorageStandard,
+        PasswordStorageStandard, DEFAULT_VERSION,
     };
 
     #[test]
@@ -947,6 +991,7 @@ mod tests {
         let hb = HashBuilder::new();
         assert_eq!(hb.min_len, std_default::DEFAULT_PASSWORD_MIN_LEN);
         assert_eq!(hb.max_len, std_default::DEFAULT_PASSWORD_MAX_LEN);
+        assert_eq!(hb.version, DEFAULT_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         match hb.standard {
@@ -968,6 +1013,7 @@ mod tests {
         let hb = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
         assert_eq!(hb.min_len, std_nist::DEFAULT_PASSWORD_MIN_LEN);
         assert_eq!(hb.max_len, std_nist::DEFAULT_PASSWORD_MAX_LEN);
+        assert_eq!(hb.version, DEFAULT_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         match hb.length_calculation {
@@ -994,6 +1040,7 @@ mod tests {
         let hb = b
             .min_len(42)
             .max_len(256)
+            .version(5)
             .length_calculation(LengthCalculationMethod::Characters)
             .normalization(Normalization::Nfkd)
             .algorithm(Algorithm::Pbkdf2)
@@ -1003,6 +1050,7 @@ mod tests {
         assert_eq!(hb.max_len, 256);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
+        assert_eq!(hb.version, 5);
         match hb.length_calculation {
             LengthCalculationMethod::Characters => assert!(true),
             _ => assert!(false),
@@ -1033,6 +1081,19 @@ mod tests {
             },
             None => assert!(false),
         }
+    }
+
+    #[test]
+    fn test_version() {
+        let data = "$argon2$passes=3,len-calc=chars,lanes=4,mem=12,pmax=128,len=128,pmin=8,ver=5,norm=nfkc$F3rmE8Z867gmmeJJ+LfJJQ$/VuD5U8nEqLR+j87PH0b1uBvri2Zu5O+C6juhFZ8BYbjt5ZLuhQz91uMEqyvzMaKtJCeoMpWwi4xvXbYGomdlQw3ETqq6tA4UKiT5cjcmwm4yLwm6S5H/b04XcxIAbvhLfthIq6IRX1YRWQyVce8TVpz4McI40dbruE/7r9EwhM";
+        let c = HashBuilder::from_phc(data).unwrap();
+        assert_eq!(c.version, 5);
+        assert!(c.needs_update(42));
+        assert!(c.needs_update(6));
+        assert!(!c.needs_update(5));
+        assert!(!c.needs_update(4));
+        assert!(!c.needs_update(1));
+        assert!(!c.needs_update(0));
     }
 
     #[test]

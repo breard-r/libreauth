@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - In addition to the previous CeCILL license, LibreAuth can now also be used under the CeCILL-C license.
 - The build system now also builds a static library.
+- A hashing scheme can now be tagged with a version number.
 
 ### Changed
 - API for the pass and oath module have slightly changed.

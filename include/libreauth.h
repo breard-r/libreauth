@@ -92,6 +92,7 @@ struct libreauth_pass_cfg {
     libreauth_pass_len_calc         length_calculation;
     libreauth_pass_normalization    normalization;
     libreauth_pass_standard         standard;
+    size_t                          version;
 };
 
 libreauth_pass_errno    libreauth_pass_init(struct libreauth_pass_cfg *cfg);
