@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased][unreleased]
+## [0.11.0] - 2018-09-08
 
 ### Added
 - In addition to the previous CeCILL license, LibreAuth can now also be used under the CeCILL-C license.
