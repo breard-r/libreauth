@@ -198,16 +198,11 @@ impl HOTP {
     /// Returns the Key Uri Format according to the Google authenticator specification.
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// WARNING: This value contains the secret key of the authentication process.
-    pub fn key_uri_format(&self, issuer: Option<&str>, username: Option<&str>) -> String {
+    pub fn key_uri_format(&self, issuer: &str, username: &str) -> String {
         // The label is used to identify which account a key is associated with. It contains an
         // account name, which is a URI-encoded string, optionally prefixed by an issuer string
         // identifying the provider or service managing that account. 
-        let label = issuer
-            .and_then(|i| {
-                username
-                    .and_then(|u| Some(format!("{}:{}?", i, u))) // ISSUER:USERNAME
-            })
-            .unwrap_or(String::new());
+        let label = format!("{}:{}?", issuer, username);
 
         // REQUIRED: The secret parameter is an arbitrary key value encoded in Base32
         let secret = base32::encode(
@@ -219,9 +214,7 @@ impl HOTP {
         // or service this account is associated with. If the issuer parameter is absent, issuer
         // information may be taken from the issuer prefix of the label. If both issuer parameter
         // and issuer label prefix are present, they should be equal.
-        let issuer_param = issuer
-            .and_then(|i| Some("&issuer=".to_owned() + i))
-            .unwrap_or(String::new());
+        let issuer_param = format!("&issuer={}", issuer);
 
         // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
         use super::HashFunction::*;
@@ -247,8 +240,8 @@ impl HOTP {
         format!(
             "otpauth://{key_type}/{label}{params}",
             key_type = "hotp",
-            label = label,
-            params = secret + &issuer_param + algo + &digits + &counter,
+            label = &label,
+            params = secret + &issuer_param + &algo + &digits + &counter,
         )
     }
 }
