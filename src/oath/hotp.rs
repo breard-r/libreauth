@@ -199,11 +199,11 @@ impl HOTP {
     /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format)
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// WARNING: This value contains the secret key of the authentication process.
-    pub fn key_uri_format(&self, issuer: &str, username: &str) -> String {
+    pub fn key_uri_format(&self, issuer: &str, accountname: &str) -> String {
         // The label is used to identify which account a key is associated with. It contains an
         // account name, which is a URI-encoded string, optionally prefixed by an issuer string
         // identifying the provider or service managing that account. 
-        let label = format!("{}:{}?", issuer, username);
+        let label = format!("{}:{}?", issuer, accountname);
 
         // REQUIRED: The secret parameter is an arbitrary key value encoded in Base32
         let secret = base32::encode(
