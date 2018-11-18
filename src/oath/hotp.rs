@@ -195,6 +195,74 @@ impl HOTP {
         };
         code == ref_code
     }
+
+    /// Returns the Key Uri Format according to the [Google authenticator
+    /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format).
+    /// This value can be used to generete QR codes which allow easy scanning by the end user.
+    /// Passing a issuer value and prefixing the label with that value is highly recommended.
+    ///
+    /// **WARNING**: The return value contains the secret key of the authentication process and
+    /// should only be displayed to the corresponding user.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut hotp = libreauth::oath::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+    /// assert_eq!(
+    ///     uri,
+    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
+    /// );
+    /// ```
+    pub fn key_uri_format(&self, label: &str, issuer: Option<&str>) -> String {
+        let secret = base32::encode(
+            base32::Alphabet::RFC4648 { padding: false },
+            self.key.as_slice(),
+        );
+
+        // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the 
+        // provider or service this account is associated with. If the issuer parameter
+        // is absent, issuer information may be taken from the issuer prefix of the label.
+        // If both issuer parameter and issuer label prefix are present, they should be equal.
+        let mut issuer_param = String::new();
+        if issuer.is_some() {
+            issuer_param = format!("&issuer={}", issuer.unwrap());
+        }
+
+        // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
+        use super::HashFunction::*;
+        let algo = match self.hash_function {
+            Sha1 => "&algorithm=SHA1",
+            Sha256 => "&algorithm=SHA256",
+            Sha512 => "&algorithm=SHA512",
+            _ => "",
+        };
+
+        // OPTIONAL: The digits parameter may have the values 6 or 8, and determines how
+        // long of a one-time passcode to display to the user. The default is 6.
+        let out_len = self.output_len;
+        let mut digits = String::new();
+        if out_len == 6 || out_len == 8 {
+            digits = format!("&digits={}", out_len);
+        }
+
+        // REQUIRED if type is hotp: The counter parameter is required when provisioning 
+        // a key for use with HOTP. It will set the initial counter value.
+        let counter = format!("&counter={}", self.counter);
+
+        format!(
+            "otpauth://{key_type}/{label}?secret={secret}{params}",
+            key_type = "hotp",
+            label = label,
+            secret = secret,
+            params =  issuer_param + &counter + &algo + &digits,
+        )
+    }
 }
 
 /// Builds an HOTP object.
@@ -1333,5 +1401,35 @@ mod tests {
             .unwrap()
             .is_valid(&user_code);
         assert_eq!(valid, false);
+    }
+
+    #[test]
+    fn test_key_uri_format() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_empty_values() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp.key_uri_format("", None);
+        assert_eq!(
+            uri,
+            "otpauth://hotp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0&algorithm=SHA1&digits=6"
+        );
     }
 }
