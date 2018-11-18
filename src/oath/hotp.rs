@@ -198,8 +198,58 @@ impl HOTP {
     /// Returns the Key Uri Format according to the Google authenticator specification.
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// WARNING: This value contains the secret key of the authentication process.
-    pub fn key_uri_format(&self) -> String {
-        
+    pub fn key_uri_format(&self, issuer: Option<&str>, username: Option<&str>) -> String {
+        // The label is used to identify which account a key is associated with. It contains an
+        // account name, which is a URI-encoded string, optionally prefixed by an issuer string
+        // identifying the provider or service managing that account. 
+        let label = issuer
+            .and_then(|i| {
+                username
+                    .and_then(|u| Some(format!("{}:{}?", i, u))) // ISSUER:USERNAME
+            })
+            .unwrap_or(String::new());
+
+        // REQUIRED: The secret parameter is an arbitrary key value encoded in Base32
+        let secret = base32::encode(
+            base32::Alphabet::RFC4648 { padding: false },
+            self.key.as_slice(),
+        );
+
+        // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the provider
+        // or service this account is associated with. If the issuer parameter is absent, issuer
+        // information may be taken from the issuer prefix of the label. If both issuer parameter
+        // and issuer label prefix are present, they should be equal.
+        let issuer_param = issuer
+            .and_then(|i| Some("&issuer=".to_owned() + i))
+            .unwrap_or(String::new());
+
+        // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
+        use super::HashFunction::*;
+        let algo = match self.hash_function {
+            Sha1 => "&algorithm=SHA1",
+            Sha256 => "&algorithm=SHA256",
+            Sha512 => "&algorithm=SHA512",
+            _ => "",
+        };
+
+        // OPTIONAL: The digits parameter may have the values 6 or 8, and determines how
+        // long of a one-time passcode to display to the user. The default is 6.
+        let out_len = self.output_len;
+        let mut digits = String::new();
+        if out_len == 6 || out_len == 8 {
+            digits = format!("&digits={}", out_len);
+        }
+
+        // REQUIRED if type is hotp: The counter parameter is required when provisioning 
+        // a key for use with HOTP. It will set the initial counter value.
+        let counter = format!("&counter={}", self.counter);
+
+        format!(
+            "otpauth://{key_type}/{label}{params}",
+            key_type = "hotp",
+            label = label,
+            params = secret + &issuer_param + algo + &digits + &counter,
+        )
     }
 }
 
