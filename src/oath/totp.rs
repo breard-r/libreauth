@@ -99,12 +99,12 @@ impl TOTP {
     ///
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
-    /// let mut hotp = libreauth::oath::TOTPBuilder::new()
+    /// let mut totp = libreauth::oath::TOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap();
     ///
-    /// let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+    /// let uri = totp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
     /// assert_eq!(
     ///     uri,
     ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
