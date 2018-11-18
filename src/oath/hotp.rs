@@ -195,8 +195,9 @@ impl HOTP {
         };
         code == ref_code
     }
+
     /// Returns the Key Uri Format according to the [Google authenticator
-    /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format)
+    /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format).
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// Passing a issuer value and prefixing the label with that value is highly recommended.
     /// **WARNING**: This value contains the secret key of the authentication process.
@@ -205,7 +206,7 @@ impl HOTP {
     ///
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
-    /// let mut hotp = HOTPBuilder::new()
+    /// let mut hotp = libreauth::oath::HOTPBuilder::new()
     ///     .ascii_key(&key_ascii)
     ///     .finalize()
     ///     .unwrap();
@@ -213,7 +214,7 @@ impl HOTP {
     /// let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
     /// );
     /// ```
     pub fn key_uri_format(&self, label: &str, issuer: Option<&str>) -> String {
@@ -257,7 +258,7 @@ impl HOTP {
             key_type = "hotp",
             label = label,
             secret = secret,
-            params =  issuer_param + algo + &digits + &counter,
+            params =  issuer_param + &counter + &algo + &digits,
         )
     }
 }
@@ -1411,7 +1412,7 @@ mod tests {
         let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
         assert_eq!(
             uri,
-            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
         );
     }
 
@@ -1426,7 +1427,7 @@ mod tests {
         let uri = hotp.key_uri_format("", None);
         assert_eq!(
             uri,
-            "otpauth://hotp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=SHA1&digits=6&counter=0"
+            "otpauth://hotp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0&algorithm=SHA1&digits=6"
         );
     }
 }
