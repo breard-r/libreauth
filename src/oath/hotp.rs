@@ -198,7 +198,20 @@ impl HOTP {
     /// Returns the Key Uri Format according to the [Google authenticator
     /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format)
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
-    /// WARNING: This value contains the secret key of the authentication process.
+    /// **WARNING**: This value contains the secret key of the authentication process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// let key = vec![49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48];
+    /// let mut hotp = libreauth::oath::HOTPBuilder::new()
+    ///     .key(&key)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let uri = hotp.key_uri_format("Provider1", "alice@gmail.com");
+    /// assert_eq!(uri, "");
+    /// ```
     pub fn key_uri_format(&self, issuer: &str, accountname: &str) -> String {
         let secret = base32::encode(
             base32::Alphabet::RFC4648 { padding: false },
