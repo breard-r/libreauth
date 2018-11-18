@@ -200,22 +200,10 @@ impl HOTP {
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// WARNING: This value contains the secret key of the authentication process.
     pub fn key_uri_format(&self, issuer: &str, accountname: &str) -> String {
-        // The label is used to identify which account a key is associated with. It contains an
-        // account name, which is a URI-encoded string, optionally prefixed by an issuer string
-        // identifying the provider or service managing that account. 
-        let label = format!("{}:{}?", issuer, accountname);
-
-        // REQUIRED: The secret parameter is an arbitrary key value encoded in Base32
         let secret = base32::encode(
             base32::Alphabet::RFC4648 { padding: false },
             self.key.as_slice(),
         );
-
-        // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the provider
-        // or service this account is associated with. If the issuer parameter is absent, issuer
-        // information may be taken from the issuer prefix of the label. If both issuer parameter
-        // and issuer label prefix are present, they should be equal.
-        let issuer_param = format!("&issuer={}", issuer);
 
         // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
         use super::HashFunction::*;
@@ -239,10 +227,12 @@ impl HOTP {
         let counter = format!("&counter={}", self.counter);
 
         format!(
-            "otpauth://{key_type}/{label}{params}",
+            "otpauth://{key_type}/{issuer}:{name}?secret={secret}&issuer={issuer}{params}",
             key_type = "hotp",
-            label = &label,
-            params = secret + &issuer_param + &algo + &digits + &counter,
+            issuer = issuer,
+            name = accountname,
+            secret = secret,
+            params =  algo.to_owned() + &digits + &counter,
         )
     }
 }
