@@ -1387,4 +1387,19 @@ mod tests {
             .is_valid(&user_code);
         assert_eq!(valid, false);
     }
+
+    #[test]
+    fn test_key_uri_format() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com");
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+        );
+    }
 }
