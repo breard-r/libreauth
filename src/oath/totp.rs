@@ -93,7 +93,9 @@ impl TOTP {
     /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format).
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// Passing a issuer value and prefixing the label with that value is highly recommended.
-    /// **WARNING**: This value contains the secret key of the authentication process.
+    ///
+    /// **WARNING**: The return value contains the secret key of the authentication process and
+    /// should only be displayed to the corresponding user.
     ///
     /// ## Examples
     ///
