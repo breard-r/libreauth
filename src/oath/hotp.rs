@@ -209,17 +209,26 @@ impl HOTP {
     ///     .finalize()
     ///     .unwrap();
     ///
-    /// let uri = hotp.key_uri_format("Provider1", "alice@gmail.com");
+    /// let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
     /// assert_eq!(
     ///     uri,
     ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
-    pub fn key_uri_format(&self, issuer: &str, accountname: &str) -> String {
+    pub fn key_uri_format(&self, label: &str, issuer: Option<&str>) -> String {
         let secret = base32::encode(
             base32::Alphabet::RFC4648 { padding: false },
             self.key.as_slice(),
         );
+
+        // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the 
+        // provider or service this account is associated with. If the issuer parameter
+        // is absent, issuer information may be taken from the issuer prefix of the label.
+        // If both issuer parameter and issuer label prefix are present, they should be equal.
+        let mut issuer_param = String::new();
+        if issuer.is_some() {
+            issuer_param = format!("&issuer={}", issuer.unwrap());
+        }
 
         // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
         use super::HashFunction::*;
@@ -243,12 +252,11 @@ impl HOTP {
         let counter = format!("&counter={}", self.counter);
 
         format!(
-            "otpauth://{key_type}/{issuer}:{name}?secret={secret}&issuer={issuer}{params}",
+            "otpauth://{key_type}/{label}?secret={secret}{params}",
             key_type = "hotp",
-            issuer = issuer,
-            name = accountname,
+            label = label,
             secret = secret,
-            params =  algo.to_owned() + &digits + &counter,
+            params =  issuer_param + algo + &digits + &counter,
         )
     }
 }
@@ -1399,7 +1407,7 @@ mod tests {
             .finalize()
             .unwrap();
 
-        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com");
+        let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
         assert_eq!(
             uri,
             "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
