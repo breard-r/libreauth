@@ -195,7 +195,8 @@ impl HOTP {
         };
         code == ref_code
     }
-    /// Returns the Key Uri Format according to the Google authenticator specification.
+    /// Returns the Key Uri Format according to the [Google authenticator
+    /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format)
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
     /// WARNING: This value contains the secret key of the authentication process.
     pub fn key_uri_format(&self, issuer: &str, username: &str) -> String {
