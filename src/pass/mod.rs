@@ -130,7 +130,7 @@
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 macro_rules! set_normalization {
-    ($obj:ident, $attr:ident, $val:ident, $name:expr) => {
+    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
         $val.insert(
             $name,
             match $obj.$attr {
@@ -152,7 +152,7 @@ mod std_nist;
 
 use self::phc::PHCData;
 use hmac::{Hmac, Mac};
-use key::KeyBuilder;
+use crate::key::KeyBuilder;
 use sha2::Sha512;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
@@ -700,7 +700,7 @@ impl HashBuilder {
             },
             ref_salt: phc.salt,
             length_calculation: lc,
-            version: version,
+            version,
         };
         hash_builder.finalize()
     }
@@ -783,16 +783,14 @@ impl HashBuilder {
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{
-        std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-        Normalization, PasswordStorageStandard, DEFAULT_VERSION,
-    };
+    use super::{std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
+                Normalization, PasswordStorageStandard, DEFAULT_VERSION};
     use libc;
     use std;
     use std::ffi::CStr;
 
     macro_rules! get_cfg {
-        ($cfg:ident, $ret:expr) => {{
+        ($cfg: ident, $ret: expr) => {{
             match $cfg.is_null() {
                 false => unsafe { &*$cfg },
                 true => {
@@ -803,7 +801,7 @@ mod cbindings {
     }
 
     macro_rules! get_cfg_mut {
-        ($cfg:ident, $ret:expr) => {{
+        ($cfg: ident, $ret: expr) => {{
             match $cfg.is_null() {
                 false => unsafe { &mut *$cfg },
                 true => {
@@ -814,7 +812,7 @@ mod cbindings {
     }
 
     macro_rules! get_string {
-        ($ptr:ident) => {{
+        ($ptr: ident) => {{
             unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
         }};
     }
@@ -981,10 +979,8 @@ pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
-        PasswordStorageStandard, DEFAULT_VERSION,
-    };
+    use super::{std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod,
+                Normalization, PasswordStorageStandard, DEFAULT_VERSION};
 
     #[test]
     fn test_default_hashbuilder() {
@@ -1037,8 +1033,7 @@ mod tests {
     #[test]
     fn test_params() {
         let mut b = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
-        let hb = b
-            .min_len(42)
+        let hb = b.min_len(42)
             .max_len(256)
             .version(5)
             .length_calculation(LengthCalculationMethod::Characters)
@@ -1110,10 +1105,10 @@ mod tests {
     #[test]
     fn test_nfkc() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
@@ -1138,10 +1133,10 @@ mod tests {
     #[test]
     fn test_nfkd() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
@@ -1166,10 +1161,10 @@ mod tests {
     #[test]
     fn test_no_normalize() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,

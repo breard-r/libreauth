@@ -7,22 +7,6 @@
 //!
 //!
 
-extern crate argon2;
-extern crate hmac;
-extern crate pbkdf2;
-extern crate sha1;
-extern crate sha2;
-extern crate sha3;
-
-extern crate base32;
-extern crate base64;
-extern crate hex;
-extern crate rand;
-extern crate time;
-extern crate unicode_normalization;
-#[macro_use]
-extern crate nom;
-
 pub mod key;
 pub mod oath;
 pub mod pass;

@@ -1,6 +1,6 @@
 use super::{std_default, ErrorCode, HashingFunction, Normalization};
 use argon2;
-use key::KeyBuilder;
+use crate::key::KeyBuilder;
 use std::collections::HashMap;
 
 const MIN_SALT_LENGTH: usize = 8; // in bytes
@@ -19,7 +19,7 @@ const MIN_OUTPUT_LEN: u32 = 32; // in bytes
 const MAX_OUTPUT_LEN: u32 = 256; // in bytes
 
 macro_rules! set_param {
-    ($obj:ident, $attr:ident, $val:ident, $t:ty, $min:expr, $max:expr) => {{
+    ($obj: ident, $attr: ident, $val: ident, $t: ty, $min: expr, $max: expr) => {{
         match $val.parse::<$t>() {
             Ok(i) => match i {
                 $min...$max => {

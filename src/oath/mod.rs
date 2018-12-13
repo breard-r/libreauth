@@ -317,7 +317,7 @@ macro_rules! otp_init {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_errno {
-    ($val:expr) => {{
+    ($val: expr) => {{
         match $val {
             Ok(v) => v,
             Err(errno) => return errno,
@@ -327,7 +327,7 @@ macro_rules! get_value_or_errno {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_false {
-    ($val:expr) => {{
+    ($val: expr) => {{
         match $val {
             Ok(v) => v,
             Err(_) => return 0,
