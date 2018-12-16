@@ -281,16 +281,18 @@ impl<'a> KeyUriBuilder<'a> {
             HOTP => "hotp".to_string(),
         };
 
+        // Create the label according to the recommendations,
+        // unless a custom label was set (overwritten).
         let label_final = match self.label {
-            Some(label) => label.to_string(),
+            Some(label) => label.to_string(), // Custom label
             None => format!("{}:{}", self.issuer, self.account_name),
         };
 
         // Create the parameters structure according to the specification,
-        // unless custom parameters set (overwritten).
+        // unless custom parameters were set (overwritten).
         let parameters_final = match self.parameters {
-            Some(parameters) => parameters.to_string(), // Custom
-            None => { // Default
+            Some(parameters) => parameters.to_string(), // Custom parameters
+            None => {
                 // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the
                 // provider or service this account is associated with. If the issuer parameter
                 // is absent, issuer information may be taken from the issuer prefix of the label.
