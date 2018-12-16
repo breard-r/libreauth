@@ -157,6 +157,7 @@ pub enum ErrorCode {
     CodeInvalidUTF8 = 30,
 }
 
+#[derive(Eq, PartialEq)]
 enum UriType {
     TOTP,
     HOTP,
@@ -164,18 +165,27 @@ enum UriType {
 
 pub struct KeyUriBuilder<'a> {
     uri_type: UriType,
+    key: Vec<u8>,
     issuer: &'a str,
+    issuer_param: bool, // add issuer to parameters?
     account_name: &'a str,
     label: Option<&'a str>,
+    parameters: Option<&'a str>,
     algo: Option<HashFunction>,
     digits: Option<usize>,
-    counter: usize,
+    counter: Option<usize>,
     period: Option<usize>,
 }
 
 impl<'a> KeyUriBuilder<'a> {
-    pub fn set_label(&mut self, label: &'a str) {
+    pub fn overwrite_label(&mut self, label: &'a str) {
         self.label = Some(label);
+    }
+    pub fn overwrite_parameters(&mut self, parameters: &'a str) {
+        self.parameters = Some(parameters);
+    }
+    pub fn disable_issuer(&mut self) {
+        self.issuer_param = false;
     }
     pub fn disable_algorithm(&mut self) {
         self.algo = None;
@@ -186,8 +196,89 @@ impl<'a> KeyUriBuilder<'a> {
     pub fn disable_period(&mut self) {
         self.period = None;
     }
-    pub fn finalize() -> String {
-        format!("")
+    pub fn finalize(&self) -> String {
+        let secret_final = base32::encode(
+            base32::Alphabet::RFC4648 { padding: false },
+            self.key.as_slice(),
+        );
+
+        use self::UriType::*;
+        let uri_type_final = match self.uri_type {
+            TOTP => "totp".to_string(),
+            HOTP => "hotp".to_string(),
+        };
+
+        let label_final = match self.label {
+            Some(label) => label.to_string(),
+            None => format!("{}:{}", self.issuer, self.account_name),
+        };
+
+        // Create the parameters structure according to the specification,
+        // unless custom parameters set (overwritten).
+        let parameters_final = match self.parameters {
+            Some(parameters) => parameters.to_string(), // Custom
+            None => { // Default
+                // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the
+                // provider or service this account is associated with. If the issuer parameter
+                // is absent, issuer information may be taken from the issuer prefix of the label.
+                // If both issuer parameter and issuer label prefix are present, they should be equal.
+                let mut issuer_final = String::new();
+                if self.issuer_param {
+                    issuer_final = format!("&issuer={}", self.issuer);
+                }
+
+                // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
+                let mut algo_final = String::new();
+                if let Some(algo) = self.algo {
+                    algo_final = match algo {
+                        Sha1 => "&algorithm=SHA1".to_string(),
+                        Sha256 => "&algorithm=SHA256".to_string(),
+                        Sha512 => "&algorithm=SHA512".to_string(),
+                        _ => "".to_string(),
+                    };
+                }
+
+                // OPTIONAL: The digits parameter may have the values 6 or 8, and determines how
+                // long of a one-time passcode to display to the user. The default is 6.
+                let mut digits_final = String::new();
+                if let Some(digits) = self.digits {
+                    digits_final = format!("&digits={}", digits);
+                }
+
+                // REQUIRED if type is hotp: The counter parameter is required when provisioning
+                // a key for use with HOTP. It will set the initial counter value.
+                let mut counter_final = String::new();
+                if self.uri_type == HOTP {
+                    // Unwraping here is safe, since the counter is required for HOTP.
+                    // Panicing would indicate a bug in `HOTP.key_uri_format()`.
+                    counter_final = format!("&counter={}", self.counter.unwrap());
+                }
+
+                // OPTIONAL only if type is totp: The period parameter defines a period that a
+                // TOTP code will be valid for, in seconds. The default value is 30.
+                let mut period_final = String::new();
+                if let Some(period) = self.period {
+                    period_final = format!("&period={}", period);
+                }
+
+                format!(
+                    "{issuer}{algo}{digits}{counter}{period}",
+                    issuer = issuer_final,
+                    algo = algo_final,
+                    digits = digits_final,
+                    counter = counter_final,
+                    period = period_final,
+                )
+            }
+        };
+
+        format!(
+            "otpauth://{uri_type}/{label}?secret={secret}{params}",
+            uri_type = uri_type_final,
+            label = label_final,
+            secret = secret_final,
+            params = parameters_final,
+        )
     }
 }
 
