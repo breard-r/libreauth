@@ -163,6 +163,32 @@ enum UriType {
     HOTP,
 }
 
+/// Creates the Key Uri Format according to the [Google authenticator
+/// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format) by calling
+/// `key_uri_format()` on [`HOTP`] or [`TOTP`]. This value can be used to generete QR
+/// codes which allow easy scanning by the end user.
+///
+/// **WARNING**: The finalized value contains the secret key of the authentication process and
+/// should only be displayed to the corresponding user!
+///
+/// ## Example
+///
+/// ```
+/// let key_ascii = "12345678901234567890".to_owned();
+/// let mut totp = libreauth::oath::TOTPBuilder::new()
+///     .ascii_key(&key_ascii)
+///     .finalize()
+///     .unwrap();
+///
+/// let uri = totp
+///     .key_uri_format("Provider1", "alice@gmail.com")
+///     .finalize()
+///
+/// assert_eq!(
+///     uri,
+///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+/// );
+/// ```
 pub struct KeyUriBuilder<'a> {
     uri_type: UriType,
     key: &'a Vec<u8>,
@@ -178,24 +204,71 @@ pub struct KeyUriBuilder<'a> {
 }
 
 impl<'a> KeyUriBuilder<'a> {
-    pub fn overwrite_label(&mut self, label: &'a str) {
-        self.label = Some(label);
-    }
-    pub fn overwrite_parameters(&mut self, parameters: &'a str) {
-        self.parameters = Some(parameters);
-    }
+    /// Do not append the issuer to the parameters section.
     pub fn disable_issuer(&mut self) {
         self.issuer_param = false;
     }
-    pub fn disable_algorithm(&mut self) {
+    /// Do not append the hash function to the parameters section.
+    pub fn disable_hash_function(&mut self) {
         self.algo = None;
     }
+    /// Do not append digits to the parameters section.
     pub fn disable_digits(&mut self) {
         self.digits = None;
     }
+    /// Do not append the period to the parameters section.
     pub fn disable_period(&mut self) {
         self.period = None;
     }
+    /// Completely overwrite the default `{issuer}:{account_name}` label with a custom one.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut totp = libreauth::oath::TOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let uri = totp
+    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .overwrite_label("Provider1Label")
+    ///     .finalize()
+    ///
+    /// assert_eq!(
+    ///     uri,
+    ///     "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+    /// );
+    /// ```
+    pub fn overwrite_label(&mut self, label: &'a str) {
+        self.label = Some(label);
+    }
+    /// Completely overwrite the default parameters section with a custom one.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut totp = libreauth::oath::TOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let uri = totp
+    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .overwrite_parameters("Provider1Parameters")
+    ///     .finalize()
+    ///
+    /// assert_eq!(
+    ///     uri,
+    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
+    /// );
+    /// ```
+    pub fn overwrite_parameters(&mut self, parameters: &'a str) {
+        self.parameters = Some(parameters);
+    }
+    /// Generate the final format.
     pub fn finalize(&self) -> String {
         let secret_final = base32::encode(
             base32::Alphabet::RFC4648 { padding: false },
@@ -224,7 +297,7 @@ impl<'a> KeyUriBuilder<'a> {
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
                 let mut issuer_final = String::new();
                 if self.issuer_param {
-                    issuer_final = format!("&issuer={}", self.issuer);
+                    issuer_final = format!("issuer={}", self.issuer);
                 }
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
@@ -274,7 +347,7 @@ impl<'a> KeyUriBuilder<'a> {
 
         url_encode(
             &format!(
-                "otpauth://{uri_type}/{label}?secret={secret}{params}",
+                "otpauth://{uri_type}/{label}?secret={secret}&{params}",
                 uri_type = uri_type_final,
                 label = label_final,
                 secret = secret_final,

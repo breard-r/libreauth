@@ -89,15 +89,15 @@ impl TOTP {
         false
     }
 
-    /// Returns the Key Uri Format according to the [Google authenticator
+    /// Creates the Key Uri Format according to the [Google authenticator
     /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format).
     /// This value can be used to generete QR codes which allow easy scanning by the end user.
-    /// Passing a issuer value and prefixing the label with that value is highly recommended.
+    /// The returned [`KeyUriBuilder`] allows for additional customizations.
     ///
-    /// **WARNING**: The return value contains the secret key of the authentication process and
-    /// should only be displayed to the corresponding user.
+    /// **WARNING**: The finalized value contains the secret key of the authentication process and
+    /// should only be displayed to the corresponding user!
     ///
-    /// ## Examples
+    /// ## Example
     ///
     /// ```
     /// let key_ascii = "12345678901234567890".to_owned();
@@ -106,7 +106,10 @@ impl TOTP {
     ///     .finalize()
     ///     .unwrap();
     ///
-    /// let uri = totp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+    /// let uri = totp
+    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .finalize()
+    ///
     /// assert_eq!(
     ///     uri,
     ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
