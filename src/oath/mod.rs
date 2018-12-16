@@ -291,7 +291,15 @@ impl<'a> KeyUriBuilder<'a> {
         // Create the parameters structure according to the specification,
         // unless custom parameters were set (overwritten).
         let parameters_final = match self.parameters {
-            Some(parameters) => parameters.to_string(), // Custom parameters
+            Some(parameters) => { // Custom parameters
+                // Make sure the parameters section starts with `&`
+                let mut prefix = String::new();
+                if !parameters.starts_with('&') {
+                    prefix.push('&');
+                }
+                prefix.push_str(parameters);
+                prefix
+            },
             None => {
                 // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the
                 // provider or service this account is associated with. If the issuer parameter
@@ -299,7 +307,7 @@ impl<'a> KeyUriBuilder<'a> {
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
                 let mut issuer_final = String::new();
                 if self.issuer_param {
-                    issuer_final = format!("issuer={}", self.issuer);
+                    issuer_final = format!("&issuer={}", self.issuer);
                 }
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
@@ -349,7 +357,7 @@ impl<'a> KeyUriBuilder<'a> {
 
         url_encode(
             &format!(
-                "otpauth://{uri_type}/{label}?secret={secret}&{params}",
+                "otpauth://{uri_type}/{label}?secret={secret}{params}",
                 uri_type = uri_type_final,
                 label = label_final,
                 secret = secret_final,
