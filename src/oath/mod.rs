@@ -182,11 +182,11 @@ enum UriType {
 ///
 /// let uri = totp
 ///     .key_uri_format("Provider1", "alice@gmail.com")
-///     .finalize()
+///     .finalize();
 ///
 /// assert_eq!(
 ///     uri,
-///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
 /// );
 /// ```
 pub struct KeyUriBuilder<'a> {
@@ -197,6 +197,7 @@ pub struct KeyUriBuilder<'a> {
     account_name: &'a str,
     label: Option<&'a str>,
     parameters: Option<&'a str>,
+    parameters_encode: bool, // URL-encode custom parameter?
     algo: Option<HashFunction>,
     digits: Option<usize>,
     counter: Option<u64>,
@@ -205,20 +206,24 @@ pub struct KeyUriBuilder<'a> {
 
 impl<'a> KeyUriBuilder<'a> {
     /// Do not append the issuer to the parameters section.
-    pub fn disable_issuer(&mut self) {
+    pub fn disable_issuer(mut self) -> Self {
         self.issuer_param = false;
+        self
     }
     /// Do not append the hash function to the parameters section.
-    pub fn disable_hash_function(&mut self) {
+    pub fn disable_hash_function(mut self) -> Self {
         self.algo = None;
+        self
     }
     /// Do not append digits to the parameters section.
-    pub fn disable_digits(&mut self) {
+    pub fn disable_digits(mut self) -> Self {
         self.digits = None;
+        self
     }
     /// Do not append the period to the parameters section.
-    pub fn disable_period(&mut self) {
+    pub fn disable_period(mut self) -> Self{
         self.period = None;
+        self
     }
     /// Completely overwrite the default `{issuer}:{account_name}` label with a custom one.
     ///
@@ -234,15 +239,16 @@ impl<'a> KeyUriBuilder<'a> {
     /// let uri = totp
     ///     .key_uri_format("Provider1", "alice@gmail.com")
     ///     .overwrite_label("Provider1Label")
-    ///     .finalize()
+    ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
     ///     "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
     /// );
     /// ```
-    pub fn overwrite_label(&mut self, label: &'a str) {
+    pub fn overwrite_label(mut self, label: &'a str) -> Self {
         self.label = Some(label);
+        self
     }
     /// Completely overwrite the default parameters section with a custom one.
     ///
@@ -257,16 +263,18 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// let uri = totp
     ///     .key_uri_format("Provider1", "alice@gmail.com")
-    ///     .overwrite_parameters("Provider1Parameters")
-    ///     .finalize()
+    ///     .overwrite_parameters("Provider1Parameters", false)
+    ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
+    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
     /// );
     /// ```
-    pub fn overwrite_parameters(&mut self, parameters: &'a str) {
+    pub fn overwrite_parameters(mut self, parameters: &'a str, url_encode: bool) -> Self {
         self.parameters = Some(parameters);
+        self.parameters_encode = url_encode;
+        self
     }
     /// Generate the final format.
     pub fn finalize(&self) -> String {
@@ -285,7 +293,7 @@ impl<'a> KeyUriBuilder<'a> {
         // unless a custom label was set (overwritten).
         let label_final = match self.label {
             Some(label) => label.to_string(), // Custom label
-            None => format!("{}:{}", self.issuer, self.account_name),
+            None => format!("{}:{}", url_encode(self.issuer), url_encode(self.account_name)),
         };
 
         // Create the parameters structure according to the specification,
@@ -297,7 +305,12 @@ impl<'a> KeyUriBuilder<'a> {
                 if !parameters.starts_with('&') {
                     prefix.push('&');
                 }
-                prefix.push_str(parameters);
+
+                if self.parameters_encode {
+                    prefix.push_str(&url_encode(parameters));
+                } else {
+                    prefix.push_str(parameters);
+                }
                 prefix
             },
             None => {
@@ -307,7 +320,7 @@ impl<'a> KeyUriBuilder<'a> {
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
                 let mut issuer_final = String::new();
                 if self.issuer_param {
-                    issuer_final = format!("&issuer={}", self.issuer);
+                    issuer_final = format!("&issuer={}", url_encode(self.issuer));
                 }
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
@@ -355,15 +368,13 @@ impl<'a> KeyUriBuilder<'a> {
             }
         };
 
-        url_encode(
-            &format!(
-                "otpauth://{uri_type}/{label}?secret={secret}{params}",
-                uri_type = uri_type_final,
-                label = label_final,
-                secret = secret_final,
-                params = parameters_final,
-            )
-        ).to_string()
+        format!(
+            "otpauth://{uri_type}/{label}?secret={secret}{params}",
+            uri_type = uri_type_final,
+            label = label_final,
+            secret = secret_final,
+            params = parameters_final,
+        )
     }
 }
 

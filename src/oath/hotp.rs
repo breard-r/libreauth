@@ -215,11 +215,11 @@ impl HOTP {
     ///
     /// let uri = hotp
     ///     .key_uri_format("Provider1", "alice@gmail.com")
-    ///     .finalize()
+    ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
+    ///     "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
     pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
@@ -231,6 +231,7 @@ impl HOTP {
             account_name: account_name,
             label: None,
             parameters: None,
+            parameters_encode: false,
             algo: Some(self.hash_function),
             digits: Some(self.output_len),
             counter: Some(self.counter), // Required!
@@ -1385,25 +1386,111 @@ mod tests {
             .finalize()
             .unwrap();
 
-        let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .finalize();
+
         assert_eq!(
             uri,
-            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&algorithm=SHA1&digits=6"
+            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
         );
     }
 
     #[test]
-    fn test_key_uri_format_empty_values() {
+    fn test_key_uri_format_disable_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
         let mut hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
 
-        let uri = hotp.key_uri_format("", None);
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .disable_issuer()
+            .disable_hash_function()
+            .disable_digits()
+            .finalize();
+
         assert_eq!(
             uri,
-            "otpauth://hotp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0&algorithm=SHA1&digits=6"
+            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_overwrite_label() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .overwrite_label("Provider1Label")
+            .finalize();
+
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_overwrite_parameters() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .overwrite_parameters("Provider1Parameters and more", false)
+            .finalize();
+
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters and more"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_overwrite_both() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .overwrite_label("Provider1Label")
+            .overwrite_parameters("Provider1Parameters", false)
+            .finalize();
+
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_overwrite_parameters_encoded() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = HOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .overwrite_parameters("Provider1Parameters and more", true) // true => URL-encode
+            .finalize();
+
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters%20and%20more"
         );
     }
 }
