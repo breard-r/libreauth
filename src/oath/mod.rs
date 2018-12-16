@@ -251,6 +251,7 @@ impl<'a> KeyUriBuilder<'a> {
         self
     }
     /// Completely overwrite the default parameters section with a custom one.
+    /// Set `url_encode` to `true` to have it URL-encoded.
     ///
     /// ## Example
     ///
