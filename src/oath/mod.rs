@@ -157,6 +157,41 @@ pub enum ErrorCode {
     CodeInvalidUTF8 = 30,
 }
 
+enum UriType {
+    TOTP,
+    HOTP,
+}
+
+pub struct KeyUriBuilder<'a> {
+    uri_type: UriType,
+    label: Option<&'a str>,
+    algo: HashFunction,
+    digits: usize,
+    counter: usize,
+    period: usize,
+}
+
+impl<'a> KeyUriBuilder<'a> {
+    pub fn set_label(label: &str) {
+        
+    }
+    pub fn set_algorithm(algo: HashFunction) {
+        
+    }
+    pub fn set_digits(digits: usize) {
+        
+    }
+    pub fn set_counter(counter: usize) {
+        
+    }
+    pub fn set_period(period: usize) {
+        
+    }
+    pub fn finalize() -> String {
+        format!("")
+    }
+}
+
 macro_rules! builder_common {
     ($t:ty) => {
         /// Sets the shared secret.
