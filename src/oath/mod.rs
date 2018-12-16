@@ -165,7 +165,7 @@ enum UriType {
 
 pub struct KeyUriBuilder<'a> {
     uri_type: UriType,
-    key: Vec<u8>,
+    key: &'a Vec<u8>,
     issuer: &'a str,
     issuer_param: bool, // add issuer to parameters?
     account_name: &'a str,
@@ -173,8 +173,8 @@ pub struct KeyUriBuilder<'a> {
     parameters: Option<&'a str>,
     algo: Option<HashFunction>,
     digits: Option<usize>,
-    counter: Option<usize>,
-    period: Option<usize>,
+    counter: Option<u64>,
+    period: Option<u32>,
 }
 
 impl<'a> KeyUriBuilder<'a> {

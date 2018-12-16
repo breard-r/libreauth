@@ -1,4 +1,4 @@
-use super::{ErrorCode, HOTPBuilder, HashFunction};
+use super::{ErrorCode, HOTPBuilder, HashFunction, KeyUriBuilder, UriType};
 use base32;
 use base64;
 use hex;
@@ -112,49 +112,20 @@ impl TOTP {
     ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
     /// );
     /// ```
-    pub fn key_uri_format(&self, label: &str, issuer: Option<&str>) -> String {
-        let secret = base32::encode(
-            base32::Alphabet::RFC4648 { padding: false },
-            self.key.as_slice(),
-        );
-
-        // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the 
-        // provider or service this account is associated with. If the issuer parameter
-        // is absent, issuer information may be taken from the issuer prefix of the label.
-        // If both issuer parameter and issuer label prefix are present, they should be equal.
-        let mut issuer_param = String::new();
-        if issuer.is_some() {
-            issuer_param = format!("&issuer={}", issuer.unwrap());
+    pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
+        KeyUriBuilder {
+            uri_type: UriType::TOTP,
+            key: &self.key,
+            issuer: issuer,
+            issuer_param: true, // add issuer to parameters?
+            account_name: account_name,
+            label: None,
+            parameters: None,
+            algo: Some(self.hash_function),
+            digits: Some(self.output_len),
+            counter: None,
+            period: Some(self.period),
         }
-
-        // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512
-        use super::HashFunction::*;
-        let algo = match self.hash_function {
-            Sha1 => "&algorithm=SHA1",
-            Sha256 => "&algorithm=SHA256",
-            Sha512 => "&algorithm=SHA512",
-            _ => "",
-        };
-
-        // OPTIONAL: The digits parameter may have the values 6 or 8, and determines how
-        // long of a one-time passcode to display to the user. The default is 6.
-        let out_len = self.output_len;
-        let mut digits = String::new();
-        if out_len == 6 || out_len == 8 {
-            digits = format!("&digits={}", out_len);
-        }
-
-        // OPTIONAL only if type is totp: The period parameter defines a period that a
-        // TOTP code will be valid for, in seconds. The default value is 30.
-        let period = format!("&period={}", self.period);
-
-        format!(
-            "otpauth://{key_type}/{label}?secret={secret}{params}",
-            key_type = "totp",
-            label = label,
-            secret = secret,
-            params =  issuer_param + algo + &digits + &period,
-        )
     }
 }
 
