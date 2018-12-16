@@ -164,28 +164,27 @@ enum UriType {
 
 pub struct KeyUriBuilder<'a> {
     uri_type: UriType,
+    issuer: &'a str,
+    account_name: &'a str,
     label: Option<&'a str>,
-    algo: HashFunction,
-    digits: usize,
+    algo: Option<HashFunction>,
+    digits: Option<usize>,
     counter: usize,
-    period: usize,
+    period: Option<usize>,
 }
 
 impl<'a> KeyUriBuilder<'a> {
-    pub fn set_label(label: &str) {
-        
+    pub fn set_label(&mut self, label: &'a str) {
+        self.label = Some(label);
     }
-    pub fn set_algorithm(algo: HashFunction) {
-        
+    pub fn disable_algorithm(&mut self) {
+        self.algo = None;
     }
-    pub fn set_digits(digits: usize) {
-        
+    pub fn disable_digits(&mut self) {
+        self.digits = None;
     }
-    pub fn set_counter(counter: usize) {
-        
-    }
-    pub fn set_period(period: usize) {
-        
+    pub fn disable_period(&mut self) {
+        self.period = None;
     }
     pub fn finalize() -> String {
         format!("")
