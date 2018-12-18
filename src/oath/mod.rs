@@ -221,7 +221,7 @@ impl<'a> KeyUriBuilder<'a> {
         self
     }
     /// Do not append the period to the parameters section.
-    pub fn disable_period(mut self) -> Self{
+    pub fn disable_period(mut self) -> Self {
         self.period = None;
         self
     }
@@ -294,13 +294,18 @@ impl<'a> KeyUriBuilder<'a> {
         // unless a custom label was set (overwritten).
         let label_final = match self.label {
             Some(label) => label.to_string(), // Custom label
-            None => format!("{}:{}", url_encode(self.issuer), url_encode(self.account_name)),
+            None => format!(
+                "{}:{}",
+                url_encode(self.issuer),
+                url_encode(self.account_name)
+            ),
         };
 
         // Create the parameters structure according to the specification,
         // unless custom parameters were set (overwritten).
         let parameters_final = match self.parameters {
-            Some(parameters) => { // Custom parameters
+            Some(parameters) => {
+                // Custom parameters
                 // Make sure the parameters section starts with `&`
                 let mut prefix = String::new();
                 if !parameters.starts_with('&') {
@@ -313,7 +318,7 @@ impl<'a> KeyUriBuilder<'a> {
                     prefix.push_str(parameters);
                 }
                 prefix
-            },
+            }
             None => {
                 // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the
                 // provider or service this account is associated with. If the issuer parameter
@@ -414,7 +419,6 @@ fn url_encode(data: &str) -> String {
     }
     return escaped;
 }
-
 
 macro_rules! builder_common {
     ($t:ty) => {

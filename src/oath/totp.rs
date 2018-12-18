@@ -115,7 +115,11 @@ impl TOTP {
     ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
     /// );
     /// ```
-    pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
+    pub fn key_uri_format<'a>(
+        &'a self,
+        issuer: &'a str,
+        account_name: &'a str,
+    ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
             uri_type: UriType::TOTP,
             key: &self.key,
@@ -1031,7 +1035,7 @@ mod tests {
         assert_eq!(valid, false);
     }
 
-/*
+    /*
     #[test]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();

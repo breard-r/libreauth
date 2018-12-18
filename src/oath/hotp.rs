@@ -221,7 +221,11 @@ impl HOTP {
     ///     "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
-    pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
+    pub fn key_uri_format<'a>(
+        &'a self,
+        issuer: &'a str,
+        account_name: &'a str,
+    ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
             uri_type: UriType::HOTP,
             key: &self.key,
@@ -1380,13 +1384,9 @@ mod tests {
     #[test]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .finalize();
 
         assert_eq!(
@@ -1398,13 +1398,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_disable_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .disable_issuer()
             .disable_hash_function()
             .disable_digits()
@@ -1419,13 +1415,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_label() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let mut hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_label("Provider1Label")
             .finalize();
 
@@ -1438,13 +1430,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_parameters("Provider1Parameters and more", false)
             .finalize();
 
@@ -1457,13 +1445,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_both() {
         let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_label("Provider1Label")
             .overwrite_parameters("Provider1Parameters", false)
             .finalize();
@@ -1477,10 +1461,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters_encoded() {
         let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
             .key_uri_format("Provider1", "alice@gmail.com")
