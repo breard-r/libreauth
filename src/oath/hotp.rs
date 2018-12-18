@@ -1380,7 +1380,7 @@ mod tests {
     #[test]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -1398,7 +1398,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_disable_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -1438,7 +1438,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -1457,7 +1457,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_both() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();
@@ -1477,7 +1477,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters_encoded() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
+        let hotp = HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .finalize()
             .unwrap();

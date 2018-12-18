@@ -328,9 +328,9 @@ impl<'a> KeyUriBuilder<'a> {
                 let mut algo_final = String::new();
                 if let Some(algo) = self.algo {
                     algo_final = match algo {
-                        Sha1 => "&algorithm=SHA1".to_string(),
-                        Sha256 => "&algorithm=SHA256".to_string(),
-                        Sha512 => "&algorithm=SHA512".to_string(),
+                        HashFunction::Sha1 => "&algorithm=SHA1".to_string(),
+                        HashFunction::Sha256 => "&algorithm=SHA256".to_string(),
+                        HashFunction::Sha512 => "&algorithm=SHA512".to_string(),
                         _ => "".to_string(),
                     };
                 }
