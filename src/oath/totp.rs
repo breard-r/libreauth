@@ -1,4 +1,4 @@
-use super::{ErrorCode, HOTPBuilder, HashFunction};
+use super::{ErrorCode, HOTPBuilder, HashFunction, KeyUriBuilder, UriType};
 use base32;
 use base64;
 use hex;
@@ -87,6 +87,49 @@ impl TOTP {
             }
         }
         false
+    }
+
+    /// Creates the Key Uri Format according to the [Google authenticator
+    /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format).
+    /// This value can be used to generete QR codes which allow easy scanning by the end user.
+    /// The returned [`KeyUriBuilder`] allows for additional customizations.
+    ///
+    /// **WARNING**: The finalized value contains the secret key of the authentication process and
+    /// should only be displayed to the corresponding user!
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut totp = libreauth::oath::TOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let uri = totp
+    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .finalize();
+    ///
+    /// assert_eq!(
+    ///     uri,
+    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+    /// );
+    /// ```
+    pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
+        KeyUriBuilder {
+            uri_type: UriType::TOTP,
+            key: &self.key,
+            issuer: issuer,
+            issuer_param: true, // add issuer to parameters?
+            account_name: account_name,
+            label: None,
+            parameters: None,
+            parameters_encode: false,
+            algo: Some(self.hash_function),
+            digits: Some(self.output_len),
+            counter: None,
+            period: Some(self.period),
+        }
     }
 }
 
@@ -987,4 +1030,36 @@ mod tests {
             .is_valid(&user_code);
         assert_eq!(valid, false);
     }
+
+/*
+    #[test]
+    fn test_key_uri_format() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
+        assert_eq!(
+            uri,
+            "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_empty_values() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let mut hotp = TOTPBuilder::new()
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp.key_uri_format("", None);
+        assert_eq!(
+            uri,
+            "otpauth://totp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=SHA1&digits=6&period=30"
+        );
+    }
+    */
 }
