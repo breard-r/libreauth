@@ -22,7 +22,7 @@ crate-type = ["rlib", "staticlib", "dylib"]
 cbindings = ["libc"]
 
 [dependencies]
-rust-argon2 = "^0.3"
+rust-argon2 = "^0.4"
 pbkdf2 = "^0.3"
 hmac = "^0.7"
 sha-1 = "^0.8"
