@@ -229,9 +229,9 @@ impl HOTP {
         KeyUriBuilder {
             uri_type: UriType::HOTP,
             key: &self.key,
-            issuer: issuer,
+            issuer,
             issuer_param: true, // add issuer to parameters?
-            account_name: account_name,
+            account_name,
             label: None,
             parameters: None,
             parameters_encode: false,
@@ -1415,7 +1415,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_label() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_label("Provider1Label")

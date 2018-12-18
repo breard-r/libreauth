@@ -123,9 +123,9 @@ impl TOTP {
         KeyUriBuilder {
             uri_type: UriType::TOTP,
             key: &self.key,
-            issuer: issuer,
+            issuer,
             issuer_param: true, // add issuer to parameters?
-            account_name: account_name,
+            account_name,
             label: None,
             parameters: None,
             parameters_encode: false,

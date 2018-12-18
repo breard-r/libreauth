@@ -324,10 +324,11 @@ impl<'a> KeyUriBuilder<'a> {
                 // provider or service this account is associated with. If the issuer parameter
                 // is absent, issuer information may be taken from the issuer prefix of the label.
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
-                let mut issuer_final = String::new();
-                if self.issuer_param {
-                    issuer_final = format!("&issuer={}", url_encode(self.issuer));
-                }
+                let issuer_final = if self.issuer_param {
+                    format!("&issuer={}", url_encode(self.issuer))
+                } else {
+                    String::new()
+                };
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
                 let mut algo_final = String::new();
@@ -349,12 +350,13 @@ impl<'a> KeyUriBuilder<'a> {
 
                 // REQUIRED if type is hotp: The counter parameter is required when provisioning
                 // a key for use with HOTP. It will set the initial counter value.
-                let mut counter_final = String::new();
-                if self.uri_type == HOTP {
+                let counter_final = if self.uri_type == HOTP {
                     // Unwraping here is safe, since the counter is required for HOTP.
                     // Panicing would indicate a bug in `HOTP.key_uri_format()`.
-                    counter_final = format!("&counter={}", self.counter.unwrap());
-                }
+                    format!("&counter={}", self.counter.unwrap())
+                } else {
+                    String::new()
+                };
 
                 // OPTIONAL only if type is totp: The period parameter defines a period that a
                 // TOTP code will be valid for, in seconds. The default value is 30.
@@ -417,7 +419,7 @@ fn url_encode(data: &str) -> String {
             b => escaped.push_str(format!("%{:02X}", b as u32).as_str()),
         };
     }
-    return escaped;
+    escaped
 }
 
 macro_rules! builder_common {
