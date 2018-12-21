@@ -110,16 +110,16 @@
 //! const PWD_SCHEME_VERSION: usize = 1;
 //!
 //! // Hashing a password.
-//! let password = "correct horse battery staple".to_string();
+//! let password = "correct horse battery staple";
 //! let hasher = HashBuilder::new().version(PWD_SCHEME_VERSION).finalize().unwrap();
-//! let stored_password = hasher.hash(&password).unwrap();
+//! let stored_password = hasher.hash(password).unwrap();
 //! // Store the result in the database.
 //!
 //! // Checking a password against a previously hashed one.
 //! let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-//! assert!(!checker.is_valid(&"bad password".to_string()));
-//! assert!(checker.is_valid(&password));
-//! if checker.is_valid(&password) && checker.needs_update(PWD_SCHEME_VERSION) {
+//! assert!(!checker.is_valid("bad password"));
+//! assert!(checker.is_valid(password));
+//! if checker.is_valid(password) && checker.needs_update(PWD_SCHEME_VERSION) {
 //!   // The password hashing scheme has been updated since we stored this
 //!   // password. Hence, We should hash it again and update the database.
 //! }
@@ -541,20 +541,20 @@ impl Hasher {
 /// use libreauth::pass::HashBuilder;
 ///
 /// // Hashing a password in order to store it.
-/// let password = "correct horse battery staple".to_string();
+/// let password = "correct horse battery staple";
 /// let hasher = match HashBuilder::new().finalize() {
 ///     Ok(h) => h,
 ///     Err(e) => panic!("{:?}", e),
 /// };
-/// let stored_password = match hasher.hash(&password) {
+/// let stored_password = match hasher.hash(password) {
 ///     Ok(p) => p,
 ///     Err(e) => panic!("{:?}", e),
 /// };
 ///
 /// // Checking a password against a previously hashed one.
 /// let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-/// assert!(!checker.is_valid(&"bad password".to_string()));
-/// assert!(checker.is_valid(&password));
+/// assert!(!checker.is_valid("bad password"));
+/// assert!(checker.is_valid(password));
 /// ```
 ///
 /// Build a Hasher object with the default parameters to comply with the NIST Special Publication 800-63B. This object will be usable to hash a password.
@@ -571,8 +571,8 @@ impl Hasher {
 /// ```
 /// let hasher = match libreauth::pass::HashBuilder::new()
 ///     .min_len(12).algorithm(libreauth::pass::Algorithm::Pbkdf2)
-///     .add_param(&"hash", &"sha512")
-///     .add_param(&"norm", &"nfkd")
+///     .add_param("hash", "sha512")
+///     .add_param("norm", "nfkd")
 ///     .finalize() {
 ///     Ok(h) => h,
 ///     Err(e) => panic!("{:?}", e),
@@ -1039,8 +1039,8 @@ mod tests {
             .length_calculation(LengthCalculationMethod::Characters)
             .normalization(Normalization::Nfkd)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param(&"iter", &"80000")
-            .add_param(&"hash", &"sha512t256");
+            .add_param("iter", "80000")
+            .add_param("hash", "sha512t256");
         assert_eq!(hb.min_len, 42);
         assert_eq!(hb.max_len, 256);
         assert_eq!(hb.ref_salt, None);
@@ -1093,11 +1093,11 @@ mod tests {
 
     #[test]
     fn test_phc_params() {
-        let password = "correct horse battery staple".to_string();
-        let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY".to_string();
-        let checker = HashBuilder::from_phc(reference.as_str()).unwrap();
+        let password = "correct horse battery staple";
+        let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY";
+        let checker = HashBuilder::from_phc(reference).unwrap();
 
-        assert!(checker.is_valid(&password));
+        assert!(checker.is_valid(password));
         assert_eq!(checker.min_len, 10);
         assert_eq!(checker.max_len, 42);
     }
@@ -1254,7 +1254,7 @@ mod tests {
     fn test_nist_invalid_iter() {
         HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param(&"iter", &"8000")
+            .add_param("iter", "8000")
             .finalize()
             .unwrap();
     }
