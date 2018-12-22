@@ -60,7 +60,7 @@
 //!             <td>ver</td>
 //!             <td>integer</td>
 //!             <td>The password hashing version.</td>
-//!             <td>1</td>
+//!             <td>Sum of the user-defined and internal version numbers.</td>
 //!         </tr>
 //!         <tr>
 //!             <td rowspan="4" class="hash">argon2</td>
@@ -110,16 +110,16 @@
 //! const PWD_SCHEME_VERSION: usize = 1;
 //!
 //! // Hashing a password.
-//! let password = "correct horse battery staple".to_string();
+//! let password = "correct horse battery staple";
 //! let hasher = HashBuilder::new().version(PWD_SCHEME_VERSION).finalize().unwrap();
-//! let stored_password = hasher.hash(&password).unwrap();
+//! let stored_password = hasher.hash(password).unwrap();
 //! // Store the result in the database.
 //!
 //! // Checking a password against a previously hashed one.
 //! let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-//! assert!(!checker.is_valid(&"bad password".to_string()));
-//! assert!(checker.is_valid(&password));
-//! if checker.is_valid(&password) && checker.needs_update(PWD_SCHEME_VERSION) {
+//! assert!(!checker.is_valid("bad password"));
+//! assert!(checker.is_valid(password));
+//! if checker.is_valid(password) && checker.needs_update(Some(PWD_SCHEME_VERSION)) {
 //!   // The password hashing scheme has been updated since we stored this
 //!   // password. Hence, We should hash it again and update the database.
 //! }
@@ -130,7 +130,7 @@
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 macro_rules! set_normalization {
-    ($obj:ident, $attr:ident, $val:ident, $name:expr) => {
+    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
         $val.insert(
             $name,
             match $obj.$attr {
@@ -152,12 +152,13 @@ mod std_nist;
 
 use self::phc::PHCData;
 use hmac::{Hmac, Mac};
-use key::KeyBuilder;
+use crate::key::KeyBuilder;
 use sha2::Sha512;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
-const DEFAULT_VERSION: usize = 1;
+const INTERNAL_VERSION: usize = 1;
+const DEFAULT_USER_VERSION: usize = 0;
 
 /// The recommended length to reserve for password hash storage.
 ///
@@ -528,8 +529,11 @@ impl Hasher {
         }
     }
 
-    pub fn needs_update(&self, current_version: usize) -> bool {
-        self.version < current_version
+    pub fn needs_update(&self, current_version: Option<usize>) -> bool {
+        match current_version {
+            Some(nb) => self.version < nb + INTERNAL_VERSION,
+            None => self.version < DEFAULT_USER_VERSION + INTERNAL_VERSION,
+        }
     }
 }
 
@@ -541,20 +545,20 @@ impl Hasher {
 /// use libreauth::pass::HashBuilder;
 ///
 /// // Hashing a password in order to store it.
-/// let password = "correct horse battery staple".to_string();
+/// let password = "correct horse battery staple";
 /// let hasher = match HashBuilder::new().finalize() {
 ///     Ok(h) => h,
 ///     Err(e) => panic!("{:?}", e),
 /// };
-/// let stored_password = match hasher.hash(&password) {
+/// let stored_password = match hasher.hash(password) {
 ///     Ok(p) => p,
 ///     Err(e) => panic!("{:?}", e),
 /// };
 ///
 /// // Checking a password against a previously hashed one.
 /// let checker = HashBuilder::from_phc(stored_password.as_str()).unwrap();
-/// assert!(!checker.is_valid(&"bad password".to_string()));
-/// assert!(checker.is_valid(&password));
+/// assert!(!checker.is_valid("bad password"));
+/// assert!(checker.is_valid(password));
 /// ```
 ///
 /// Build a Hasher object with the default parameters to comply with the NIST Special Publication 800-63B. This object will be usable to hash a password.
@@ -571,8 +575,8 @@ impl Hasher {
 /// ```
 /// let hasher = match libreauth::pass::HashBuilder::new()
 ///     .min_len(12).algorithm(libreauth::pass::Algorithm::Pbkdf2)
-///     .add_param(&"hash", &"sha512")
-///     .add_param(&"norm", &"nfkd")
+///     .add_param("hash", "sha512")
+///     .add_param("norm", "nfkd")
 ///     .finalize() {
 ///     Ok(h) => h,
 ///     Err(e) => panic!("{:?}", e),
@@ -618,7 +622,7 @@ impl HashBuilder {
                 ref_hash: None,
                 salt_len: std_default::DEFAULT_SALT_LEN,
                 length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
-                version: DEFAULT_VERSION,
+                version: DEFAULT_USER_VERSION + INTERNAL_VERSION,
             },
             PasswordStorageStandard::Nist80063b => HashBuilder {
                 standard: PasswordStorageStandard::Nist80063b,
@@ -631,7 +635,7 @@ impl HashBuilder {
                 ref_hash: None,
                 salt_len: std_nist::DEFAULT_SALT_LEN,
                 length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
-                version: DEFAULT_VERSION,
+                version: DEFAULT_USER_VERSION + INTERNAL_VERSION,
             },
         }
     }
@@ -658,7 +662,7 @@ impl HashBuilder {
                 Ok(l) => l,
                 Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
             },
-            None => DEFAULT_VERSION,
+            None => DEFAULT_USER_VERSION + INTERNAL_VERSION,
         };
         let min_l = match phc.parameters.remove("pmin") {
             Some(v) => match v.parse::<usize>() {
@@ -700,7 +704,7 @@ impl HashBuilder {
             },
             ref_salt: phc.salt,
             length_calculation: lc,
-            version: version,
+            version,
         };
         hash_builder.finalize()
     }
@@ -776,23 +780,21 @@ impl HashBuilder {
 
     /// Set the hashing scheme version number.
     pub fn version(&mut self, version: usize) -> &mut HashBuilder {
-        self.version = version;
+        self.version = version + INTERNAL_VERSION;
         self
     }
 }
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{
-        std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-        Normalization, PasswordStorageStandard, DEFAULT_VERSION,
-    };
+    use super::{std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
+                Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION};
     use libc;
     use std;
     use std::ffi::CStr;
 
     macro_rules! get_cfg {
-        ($cfg:ident, $ret:expr) => {{
+        ($cfg: ident, $ret: expr) => {{
             match $cfg.is_null() {
                 false => unsafe { &*$cfg },
                 true => {
@@ -803,7 +805,7 @@ mod cbindings {
     }
 
     macro_rules! get_cfg_mut {
-        ($cfg:ident, $ret:expr) => {{
+        ($cfg: ident, $ret: expr) => {{
             match $cfg.is_null() {
                 false => unsafe { &mut *$cfg },
                 true => {
@@ -814,7 +816,7 @@ mod cbindings {
     }
 
     macro_rules! get_string {
-        ($ptr:ident) => {{
+        ($ptr: ident) => {{
             unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
         }};
     }
@@ -857,7 +859,7 @@ mod cbindings {
                         c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_default::DEFAULT_NORMALIZATION;
                         c.standard = std;
-                        c.version = DEFAULT_VERSION;
+                        c.version = DEFAULT_USER_VERSION;
                     }
                     PasswordStorageStandard::Nist80063b => {
                         c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
@@ -867,7 +869,7 @@ mod cbindings {
                         c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
                         c.normalization = std_nist::DEFAULT_NORMALIZATION;
                         c.standard = std;
-                        c.version = DEFAULT_VERSION;
+                        c.version = DEFAULT_USER_VERSION;
                     }
                 };
                 ErrorCode::Success
@@ -897,7 +899,11 @@ mod cbindings {
         c.length_calculation = checker.length_calculation;
         c.normalization = checker.normalization;
         c.standard = PasswordStorageStandard::NoStandard;
-        c.version = checker.version;
+        c.version = if checker.version >= INTERNAL_VERSION {
+            checker.version - INTERNAL_VERSION
+        } else {
+            checker.version
+        };
         ErrorCode::Success
     }
 
@@ -981,17 +987,15 @@ pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
-        PasswordStorageStandard, DEFAULT_VERSION,
-    };
+    use super::{std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod,
+                Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION};
 
     #[test]
     fn test_default_hashbuilder() {
         let hb = HashBuilder::new();
         assert_eq!(hb.min_len, std_default::DEFAULT_PASSWORD_MIN_LEN);
         assert_eq!(hb.max_len, std_default::DEFAULT_PASSWORD_MAX_LEN);
-        assert_eq!(hb.version, DEFAULT_VERSION);
+        assert_eq!(hb.version, DEFAULT_USER_VERSION + INTERNAL_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         match hb.standard {
@@ -1013,7 +1017,7 @@ mod tests {
         let hb = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
         assert_eq!(hb.min_len, std_nist::DEFAULT_PASSWORD_MIN_LEN);
         assert_eq!(hb.max_len, std_nist::DEFAULT_PASSWORD_MAX_LEN);
-        assert_eq!(hb.version, DEFAULT_VERSION);
+        assert_eq!(hb.version, DEFAULT_USER_VERSION + INTERNAL_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         match hb.length_calculation {
@@ -1037,20 +1041,19 @@ mod tests {
     #[test]
     fn test_params() {
         let mut b = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
-        let hb = b
-            .min_len(42)
+        let hb = b.min_len(42)
             .max_len(256)
             .version(5)
             .length_calculation(LengthCalculationMethod::Characters)
             .normalization(Normalization::Nfkd)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param(&"iter", &"80000")
-            .add_param(&"hash", &"sha512t256");
+            .add_param("iter", "80000")
+            .add_param("hash", "sha512t256");
         assert_eq!(hb.min_len, 42);
         assert_eq!(hb.max_len, 256);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
-        assert_eq!(hb.version, 5);
+        assert_eq!(hb.version, 5 + INTERNAL_VERSION);
         match hb.length_calculation {
             LengthCalculationMethod::Characters => assert!(true),
             _ => assert!(false),
@@ -1084,25 +1087,34 @@ mod tests {
     }
 
     #[test]
+    fn test_default_version() {
+        let data = "$argon2$passes=3,len-calc=chars,lanes=4,mem=12,pmax=128,len=128,pmin=8,norm=nfkc$F3rmE8Z867gmmeJJ+LfJJQ$/VuD5U8nEqLR+j87PH0b1uBvri2Zu5O+C6juhFZ8BYbjt5ZLuhQz91uMEqyvzMaKtJCeoMpWwi4xvXbYGomdlQw3ETqq6tA4UKiT5cjcmwm4yLwm6S5H/b04XcxIAbvhLfthIq6IRX1YRWQyVce8TVpz4McI40dbruE/7r9EwhM";
+        let c = HashBuilder::from_phc(data).unwrap();
+        assert_eq!(c.version, DEFAULT_USER_VERSION + INTERNAL_VERSION);
+        assert!(!c.needs_update(None));
+    }
+
+    #[test]
     fn test_version() {
         let data = "$argon2$passes=3,len-calc=chars,lanes=4,mem=12,pmax=128,len=128,pmin=8,ver=5,norm=nfkc$F3rmE8Z867gmmeJJ+LfJJQ$/VuD5U8nEqLR+j87PH0b1uBvri2Zu5O+C6juhFZ8BYbjt5ZLuhQz91uMEqyvzMaKtJCeoMpWwi4xvXbYGomdlQw3ETqq6tA4UKiT5cjcmwm4yLwm6S5H/b04XcxIAbvhLfthIq6IRX1YRWQyVce8TVpz4McI40dbruE/7r9EwhM";
         let c = HashBuilder::from_phc(data).unwrap();
-        assert_eq!(c.version, 5);
-        assert!(c.needs_update(42));
-        assert!(c.needs_update(6));
-        assert!(!c.needs_update(5));
-        assert!(!c.needs_update(4));
-        assert!(!c.needs_update(1));
-        assert!(!c.needs_update(0));
+        assert_eq!(c.version, 4 + INTERNAL_VERSION);
+        assert!(c.needs_update(Some(42)));
+        assert!(c.needs_update(Some(5)));
+        assert!(!c.needs_update(Some(4)));
+        assert!(!c.needs_update(Some(3)));
+        assert!(!c.needs_update(Some(1)));
+        assert!(!c.needs_update(Some(0)));
+        assert!(!c.needs_update(None));
     }
 
     #[test]
     fn test_phc_params() {
-        let password = "correct horse battery staple".to_string();
-        let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY".to_string();
-        let checker = HashBuilder::from_phc(reference.as_str()).unwrap();
+        let password = "correct horse battery staple";
+        let reference = "$argon2$lanes=4,mem=12,len=128,len-calc=chars,pmax=42,pmin=10,passes=3,norm=nfkc$DHoZJMA/bttSBYs6s4yySw$pojoDCKFKD6E0NGjfpM5pZjaRklmo3ZkIiW//kxKQ09eookzRtJGQbeEeT207IT8LzWnlAnq4yJO8tgVm1K44DrzLesy0VCOPwf0SBvr1QFlmpv2g8X80hlEMI6vSGTP7gJdjMGMztnO0OKbFuS/r5DVOiUp+KeSwvLBhr8thqY";
+        let checker = HashBuilder::from_phc(reference).unwrap();
 
-        assert!(checker.is_valid(&password));
+        assert!(checker.is_valid(password));
         assert_eq!(checker.min_len, 10);
         assert_eq!(checker.max_len, 42);
     }
@@ -1110,10 +1122,10 @@ mod tests {
     #[test]
     fn test_nfkc() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
@@ -1138,10 +1150,10 @@ mod tests {
     #[test]
     fn test_nfkd() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
@@ -1166,10 +1178,10 @@ mod tests {
     #[test]
     fn test_no_normalize() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
         ]).unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
         ]).unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
@@ -1259,7 +1271,7 @@ mod tests {
     fn test_nist_invalid_iter() {
         HashBuilder::new_std(PasswordStorageStandard::Nist80063b)
             .algorithm(Algorithm::Pbkdf2)
-            .add_param(&"iter", &"8000")
+            .add_param("iter", "8000")
             .finalize()
             .unwrap();
     }

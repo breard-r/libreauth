@@ -8,7 +8,7 @@ use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 
 macro_rules! compute_hmac {
-    ($obj:ident, $hash:ty, $input:ident) => {{
+    ($obj: ident, $hash: ty, $input: ident) => {{
         let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
         hmac.input(&$input);
         hmac.result().code().to_vec()
@@ -28,8 +28,7 @@ impl HOTP {
     fn reduce_result(&self, hs: &[u8]) -> u32 {
         let offset = (hs[hs.len() - 1] & 0xf) as usize;
         let hash = hs[offset..offset + 4].to_vec();
-        let snum: u32 = ((u32::from(hash[0]) & 0x7f) << 24)
-            | ((u32::from(hash[1]) & 0xff) << 16)
+        let snum: u32 = ((u32::from(hash[0]) & 0x7f) << 24) | ((u32::from(hash[1]) & 0xff) << 16)
             | ((u32::from(hash[2]) & 0xff) << 8)
             | (u32::from(hash[3]) & 0xff);
 
@@ -222,13 +221,17 @@ impl HOTP {
     ///     "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
-    pub fn key_uri_format<'a>(&'a self, issuer: &'a str, account_name: &'a str) -> KeyUriBuilder<'a> {
+    pub fn key_uri_format<'a>(
+        &'a self,
+        issuer: &'a str,
+        account_name: &'a str,
+    ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
             uri_type: UriType::HOTP,
             key: &self.key,
-            issuer: issuer,
+            issuer,
             issuer_param: true, // add issuer to parameters?
-            account_name: account_name,
+            account_name,
             label: None,
             parameters: None,
             parameters_encode: false,
@@ -352,7 +355,7 @@ impl HOTPBuilder {
 pub mod cbindings {
     use super::HOTPBuilder;
     use libc;
-    use oath::{c, ErrorCode, HashFunction};
+    use crate::oath::{c, ErrorCode, HashFunction};
     use std;
 
     /// [C binding] HOTP configuration storage
@@ -493,12 +496,12 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::HOTPBuilder;
-    use oath::HashFunction;
+    use crate::oath::HashFunction;
 
     #[test]
     fn test_hotp_key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new().key(&key).finalize().unwrap();
@@ -519,7 +522,7 @@ mod tests {
     #[test]
     fn test_hotp_key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new()
@@ -547,7 +550,7 @@ mod tests {
     fn test_hotp_asciikey_simple() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -569,7 +572,7 @@ mod tests {
     fn test_hotp_asciikey_full() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new()
@@ -597,7 +600,7 @@ mod tests {
     fn test_hotp_hexkey_simple() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new().hex_key(&key_hex).finalize().unwrap();
@@ -619,7 +622,7 @@ mod tests {
     fn test_hotp_hexkey_full() {
         let key_hex = "3132333435363738393031323334353637383930".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
 
         let hotp = HOTPBuilder::new()
@@ -646,7 +649,7 @@ mod tests {
     #[test]
     fn test_hotp_base32key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -671,7 +674,7 @@ mod tests {
     #[test]
     fn test_hotp_base32key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
         let key_base32 = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_owned();
 
@@ -699,7 +702,7 @@ mod tests {
     #[test]
     fn test_hotp_base64key_simple() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 
@@ -724,7 +727,7 @@ mod tests {
     #[test]
     fn test_hotp_base64key_full() {
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
         let key_base64 = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=".to_owned();
 
@@ -916,7 +919,7 @@ mod tests {
     fn test_rfc4226_examples() {
         let key_ascii = "12345678901234567890".to_owned();
         let key = vec![
-            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+            49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48
         ];
         let hex_base = "0123456789ABCDEF".to_owned().into_bytes();
 
@@ -1381,13 +1384,9 @@ mod tests {
     #[test]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .finalize();
 
         assert_eq!(
@@ -1399,13 +1398,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_disable_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .disable_issuer()
             .disable_hash_function()
             .disable_digits()
@@ -1420,13 +1415,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_label() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_label("Provider1Label")
             .finalize();
 
@@ -1439,13 +1430,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_parameters("Provider1Parameters and more", false)
             .finalize();
 
@@ -1458,13 +1445,9 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_both() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+        let uri = hotp.key_uri_format("Provider1", "alice@gmail.com")
             .overwrite_label("Provider1Label")
             .overwrite_parameters("Provider1Parameters", false)
             .finalize();
@@ -1478,10 +1461,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_overwrite_parameters_encoded() {
         let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = HOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
+        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
             .key_uri_format("Provider1", "alice@gmail.com")

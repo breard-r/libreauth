@@ -1,6 +1,8 @@
 use base64;
 use nom::types::CompleteByteSlice;
 use std::collections::HashMap;
+use nom::{call, complete, cond, do_parse, error_position, named, opt, tag, take_while, fold_many0,
+          take_while1};
 
 fn from_b64(data: Option<Vec<u8>>) -> Option<Vec<u8>> {
     match data {
@@ -277,11 +279,10 @@ mod tests {
 
     #[test]
     fn test_valid_data_full() {
-        match PHCData::from_bytes(
-            &"$dummy$i=42$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3Vy"
-                .to_string()
-                .into_bytes(),
-        ) {
+        match PHCData::from_bytes(&"$dummy$i=42$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3Vy"
+            .to_string()
+            .into_bytes())
+        {
             Ok(phc) => {
                 assert_eq!(phc.id, "dummy".to_string());
                 assert_eq!(phc.parameters.len(), 1);
@@ -310,11 +311,10 @@ mod tests {
 
     #[test]
     fn test_multiple_params() {
-        match PHCData::from_bytes(
-            &"$dummy$i=42,plop=asdfg,21=abcd12efg$YXN1cmUu"
-                .to_string()
-                .into_bytes(),
-        ) {
+        match PHCData::from_bytes(&"$dummy$i=42,plop=asdfg,21=abcd12efg$YXN1cmUu"
+            .to_string()
+            .into_bytes())
+        {
             Ok(phc) => {
                 assert_eq!(phc.parameters.len(), 3);
                 match phc.parameters.get("i") {

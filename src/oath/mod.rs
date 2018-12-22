@@ -221,7 +221,7 @@ impl<'a> KeyUriBuilder<'a> {
         self
     }
     /// Do not append the period to the parameters section.
-    pub fn disable_period(mut self) -> Self{
+    pub fn disable_period(mut self) -> Self {
         self.period = None;
         self
     }
@@ -294,13 +294,18 @@ impl<'a> KeyUriBuilder<'a> {
         // unless a custom label was set (overwritten).
         let label_final = match self.label {
             Some(label) => label.to_string(), // Custom label
-            None => format!("{}:{}", url_encode(self.issuer), url_encode(self.account_name)),
+            None => format!(
+                "{}:{}",
+                url_encode(self.issuer),
+                url_encode(self.account_name)
+            ),
         };
 
         // Create the parameters structure according to the specification,
         // unless custom parameters were set (overwritten).
         let parameters_final = match self.parameters {
-            Some(parameters) => { // Custom parameters
+            Some(parameters) => {
+                // Custom parameters
                 // Make sure the parameters section starts with `&`
                 let mut prefix = String::new();
                 if !parameters.starts_with('&') {
@@ -313,24 +318,25 @@ impl<'a> KeyUriBuilder<'a> {
                     prefix.push_str(parameters);
                 }
                 prefix
-            },
+            }
             None => {
                 // STRONGLY RECOMMENDED: The issuer parameter is a string value indicating the
                 // provider or service this account is associated with. If the issuer parameter
                 // is absent, issuer information may be taken from the issuer prefix of the label.
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
-                let mut issuer_final = String::new();
-                if self.issuer_param {
-                    issuer_final = format!("&issuer={}", url_encode(self.issuer));
-                }
+                let issuer_final = if self.issuer_param {
+                    format!("&issuer={}", url_encode(self.issuer))
+                } else {
+                    String::new()
+                };
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
                 let mut algo_final = String::new();
                 if let Some(algo) = self.algo {
                     algo_final = match algo {
-                        Sha1 => "&algorithm=SHA1".to_string(),
-                        Sha256 => "&algorithm=SHA256".to_string(),
-                        Sha512 => "&algorithm=SHA512".to_string(),
+                        HashFunction::Sha1 => "&algorithm=SHA1".to_string(),
+                        HashFunction::Sha256 => "&algorithm=SHA256".to_string(),
+                        HashFunction::Sha512 => "&algorithm=SHA512".to_string(),
                         _ => "".to_string(),
                     };
                 }
@@ -344,12 +350,13 @@ impl<'a> KeyUriBuilder<'a> {
 
                 // REQUIRED if type is hotp: The counter parameter is required when provisioning
                 // a key for use with HOTP. It will set the initial counter value.
-                let mut counter_final = String::new();
-                if self.uri_type == HOTP {
+                let counter_final = if self.uri_type == HOTP {
                     // Unwraping here is safe, since the counter is required for HOTP.
                     // Panicing would indicate a bug in `HOTP.key_uri_format()`.
-                    counter_final = format!("&counter={}", self.counter.unwrap());
-                }
+                    format!("&counter={}", self.counter.unwrap())
+                } else {
+                    String::new()
+                };
 
                 // OPTIONAL only if type is totp: The period parameter defines a period that a
                 // TOTP code will be valid for, in seconds. The default value is 30.
@@ -412,9 +419,8 @@ fn url_encode(data: &str) -> String {
             b => escaped.push_str(format!("%{:02X}", b as u32).as_str()),
         };
     }
-    return escaped;
+    escaped
 }
-
 
 macro_rules! builder_common {
     ($t:ty) => {
@@ -576,7 +582,7 @@ macro_rules! otp_init {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_errno {
-    ($val:expr) => {{
+    ($val: expr) => {{
         match $val {
             Ok(v) => v,
             Err(errno) => return errno,
@@ -586,7 +592,7 @@ macro_rules! get_value_or_errno {
 
 #[cfg(feature = "cbindings")]
 macro_rules! get_value_or_false {
-    ($val:expr) => {{
+    ($val: expr) => {{
         match $val {
             Ok(v) => v,
             Err(_) => return 0,

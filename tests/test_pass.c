@@ -51,7 +51,7 @@ static uint32_t test_valid_pass(void) {
     assert(cfg1.min_len == 8);
     assert(cfg1.max_len == 128);
     assert(cfg1.salt_len == 16);
-    assert(cfg1.version == 1);
+    assert(cfg1.version == 0);
     assert(cfg1.algorithm == LIBREAUTH_PASS_ARGON2);
     assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
     assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
@@ -65,7 +65,7 @@ static uint32_t test_valid_pass(void) {
     assert(cfg2.min_len == 8);
     assert(cfg2.max_len == 128);
     assert(cfg2.salt_len == 16);
-    assert(cfg2.version == 1);
+    assert(cfg2.version == 0);
     assert(cfg2.algorithm == LIBREAUTH_PASS_ARGON2);
     assert(cfg2.length_calculation == LIBREAUTH_PASS_CHARACTERS);
     assert(cfg2.normalization == LIBREAUTH_PASS_NFKC);
@@ -90,7 +90,7 @@ static uint32_t test_nist_pass(void) {
     assert(cfg1.min_len == 8);
     assert(cfg1.max_len == 128);
     assert(cfg1.salt_len == 16);
-    assert(cfg1.version == 1);
+    assert(cfg1.version == 0);
     assert(cfg1.algorithm == LIBREAUTH_PASS_PBKDF2);
     assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
     assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
@@ -130,7 +130,7 @@ static uint32_t test_invalid_pass(void) {
     assert(cfg.min_len == 8);
     assert(cfg.max_len == 128);
     assert(cfg.salt_len == 4);
-    assert(cfg.version == 1);
+    assert(cfg.version == 0);
     assert(cfg.algorithm == LIBREAUTH_PASS_PBKDF2);
     assert(cfg.length_calculation == LIBREAUTH_PASS_CHARACTERS);
     assert(cfg.normalization == LIBREAUTH_PASS_NFKC);
