@@ -220,7 +220,8 @@ impl<'a> KeyUriBuilder<'a> {
         self.digits = None;
         self
     }
-    /// Do not append the period to the parameters section.
+    /// Do not append the period to the parameters section. If this is a builder for a HOTP key, calling this
+    /// method has no effect.
     pub fn disable_period(mut self) -> Self {
         self.period = None;
         self
