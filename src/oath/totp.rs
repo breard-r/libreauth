@@ -1034,36 +1034,4 @@ mod tests {
             .is_valid(&user_code);
         assert_eq!(valid, false);
     }
-
-    /*
-    #[test]
-    fn test_key_uri_format() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = TOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
-
-        let uri = hotp.key_uri_format("Provider1:alice@gmail.com", Some("Provider1"));
-        assert_eq!(
-            uri,
-            "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_empty_values() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let mut hotp = TOTPBuilder::new()
-            .ascii_key(&key_ascii)
-            .finalize()
-            .unwrap();
-
-        let uri = hotp.key_uri_format("", None);
-        assert_eq!(
-            uri,
-            "otpauth://totp/?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=SHA1&digits=6&period=30"
-        );
-    }
-    */
 }
