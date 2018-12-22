@@ -193,11 +193,11 @@ pub struct KeyUriBuilder<'a> {
     uri_type: UriType,
     key: &'a Vec<u8>,
     issuer: &'a str,
-    issuer_param: bool, // add issuer to parameters?
+    add_issuer_param: bool,
     account_name: &'a str,
-    label: Option<&'a str>,
-    parameters: Option<&'a str>,
-    parameters_encode: bool, // URL-encode custom parameter?
+    custom_label: Option<&'a str>,
+    custom_parameters: Option<&'a str>,
+    encode_parameters: bool, // URL-encode custom parameter?
     algo: Option<HashFunction>,
     digits: Option<usize>,
     counter: Option<u64>,
@@ -207,7 +207,7 @@ pub struct KeyUriBuilder<'a> {
 impl<'a> KeyUriBuilder<'a> {
     /// Do not append the issuer to the parameters section.
     pub fn disable_issuer(mut self) -> Self {
-        self.issuer_param = false;
+        self.add_issuer_param = false;
         self
     }
     /// Do not append the hash function to the parameters section.
@@ -247,7 +247,7 @@ impl<'a> KeyUriBuilder<'a> {
     /// );
     /// ```
     pub fn overwrite_label(mut self, label: &'a str) -> Self {
-        self.label = Some(label);
+        self.custom_label = Some(label);
         self
     }
     /// Completely overwrite the default parameters section with a custom one.
@@ -273,8 +273,8 @@ impl<'a> KeyUriBuilder<'a> {
     /// );
     /// ```
     pub fn overwrite_parameters(mut self, parameters: &'a str, url_encode: bool) -> Self {
-        self.parameters = Some(parameters);
-        self.parameters_encode = url_encode;
+        self.custom_parameters = Some(parameters);
+        self.encode_parameters = url_encode;
         self
     }
     /// Generate the final format.
@@ -292,7 +292,7 @@ impl<'a> KeyUriBuilder<'a> {
 
         // Create the label according to the recommendations,
         // unless a custom label was set (overwritten).
-        let label_final = match self.label {
+        let label_final = match self.custom_label {
             Some(label) => label.to_string(), // Custom label
             None => format!(
                 "{}:{}",
@@ -303,7 +303,7 @@ impl<'a> KeyUriBuilder<'a> {
 
         // Create the parameters structure according to the specification,
         // unless custom parameters were set (overwritten).
-        let parameters_final = match self.parameters {
+        let parameters_final = match self.custom_parameters {
             Some(parameters) => {
                 // Custom parameters
                 // Make sure the parameters section starts with `&`
@@ -312,7 +312,7 @@ impl<'a> KeyUriBuilder<'a> {
                     prefix.push('&');
                 }
 
-                if self.parameters_encode {
+                if self.encode_parameters {
                     prefix.push_str(&url_encode(parameters));
                 } else {
                     prefix.push_str(parameters);
@@ -324,7 +324,7 @@ impl<'a> KeyUriBuilder<'a> {
                 // provider or service this account is associated with. If the issuer parameter
                 // is absent, issuer information may be taken from the issuer prefix of the label.
                 // If both issuer parameter and issuer label prefix are present, they should be equal.
-                let issuer_final = if self.issuer_param {
+                let issuer_final = if self.add_issuer_param {
                     format!("&issuer={}", url_encode(self.issuer))
                 } else {
                     String::new()
