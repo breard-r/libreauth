@@ -286,8 +286,8 @@ impl<'a> KeyUriBuilder<'a> {
 
         use self::UriType::*;
         let uri_type_final = match self.uri_type {
-            TOTP => "totp".to_string(),
-            HOTP => "hotp".to_string(),
+            TOTP => "totp",
+            HOTP => "hotp",
         };
 
         // Create the label according to the recommendations,
@@ -331,13 +331,13 @@ impl<'a> KeyUriBuilder<'a> {
                 };
 
                 // OPTIONAL: The algorithm may have the values: SHA1 (Default), SHA256, SHA512.
-                let mut algo_final = String::new();
+                let mut algo_final = "";
                 if let Some(algo) = self.algo {
                     algo_final = match algo {
-                        HashFunction::Sha1 => "&algorithm=SHA1".to_string(),
-                        HashFunction::Sha256 => "&algorithm=SHA256".to_string(),
-                        HashFunction::Sha512 => "&algorithm=SHA512".to_string(),
-                        _ => "".to_string(),
+                        HashFunction::Sha1 => "&algorithm=SHA1",
+                        HashFunction::Sha256 => "&algorithm=SHA256",
+                        HashFunction::Sha512 => "&algorithm=SHA512",
+                        _ => "",
                     };
                 }
 
