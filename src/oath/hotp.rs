@@ -230,11 +230,11 @@ impl HOTP {
             uri_type: UriType::HOTP,
             key: &self.key,
             issuer,
-            issuer_param: true, // add issuer to parameters?
+            add_issuer_param: true,
             account_name,
-            label: None,
-            parameters: None,
-            parameters_encode: false,
+            custom_label: None,
+            custom_parameters: None,
+            encode_parameters: false,
             algo: Some(self.hash_function),
             digits: Some(self.output_len),
             counter: Some(self.counter), // Required!
