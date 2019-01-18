@@ -248,7 +248,7 @@ pub enum Algorithm {
 pub enum ErrorCode {
     /// Used in C-bindings to indicate the absence of errors.
     Success = 0,
-    /// The password is shorter than the miniimal length (default: [DEFAULT_PASSWORD_MIN_LEN][1]).
+    /// The password is shorter than the minimal length (default: [DEFAULT_PASSWORD_MIN_LEN][1]).
     ///
     /// [1]: constant.DEFAULT_PASSWORD_MIN_LEN.html
     PasswordTooShort = 1,
