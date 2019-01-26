@@ -336,9 +336,20 @@ impl<'a> KeyUriBuilder<'a> {
                 if let Some(algo) = self.algo {
                     algo_final = match algo {
                         HashFunction::Sha1 => "&algorithm=SHA1",
+                        HashFunction::Sha224 => "&algorithm=SHA224",
                         HashFunction::Sha256 => "&algorithm=SHA256",
+                        HashFunction::Sha384 => "&algorithm=SHA384",
                         HashFunction::Sha512 => "&algorithm=SHA512",
-                        _ => "",
+                        HashFunction::Sha512Trunc224 => "&algorithm=SHA512T224",
+                        HashFunction::Sha512Trunc256 => "&algorithm=SHA512T256",
+                        HashFunction::Sha3_224 => "&algorithm=SHA3-224",
+                        HashFunction::Sha3_256 => "&algorithm=SHA3-256",
+                        HashFunction::Sha3_384 => "&algorithm=SHA3-384",
+                        HashFunction::Sha3_512 => "&algorithm=SHA3-512",
+                        HashFunction::Keccak224 => "&algorithm=KECCAK224",
+                        HashFunction::Keccak256 => "&algorithm=KECCAK256",
+                        HashFunction::Keccak384 => "&algorithm=KECCAK384",
+                        HashFunction::Keccak512 => "&algorithm=KECCAK512",
                     };
                 }
 
