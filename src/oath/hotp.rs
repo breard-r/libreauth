@@ -1,4 +1,5 @@
-use super::{ErrorCode, HashFunction, KeyUriBuilder, UriType};
+use super::{ErrorCode, HashFunction};
+use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
 use hex;
