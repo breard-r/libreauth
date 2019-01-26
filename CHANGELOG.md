@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased][unreleased]
+
+### Added
+- Internal password version number.
+- Key Uri Format generation for HOTP and TOTP.
+
+### Changed
+- The crate is now compiled with Rust 2018.
+
+
 ## [0.11.0] - 2018-09-08
 
 ### Added
