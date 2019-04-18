@@ -291,16 +291,16 @@ mod tests {
     #[test]
     fn test_invalid_data() {
         let data = [
-            "", // does not start with $<id>
-            "$", // still no id
-            "$@zerty", // id must be alphanumerical
-            "$test$YXN1cmUu", // parameters may not be ommited
-            "$test$=42", // missing parameter name
-            "$test$i@=42", // parameter name must be alphanumerical
-            "$test$i=?", // parameter value must be alphanumerical
-            "$test$i", // missing parameter value and delimiter
-            "$test$i=", // missing parameter value
-            "$test$i=$YXN1cmUu", // missing parameter value
+            "",                                               // does not start with $<id>
+            "$",                                              // still no id
+            "$@zerty",                                        // id must be alphanumerical
+            "$test$YXN1cmUu",                                 // parameters may not be ommited
+            "$test$=42",                                      // missing parameter name
+            "$test$i@=42",           // parameter name must be alphanumerical
+            "$test$i=?",             // parameter value must be alphanumerical
+            "$test$i",               // missing parameter value and delimiter
+            "$test$i=",              // missing parameter value
+            "$test$i=$YXN1cmUu",     // missing parameter value
             "$test$i=42$YXN1cmUr%w", // invalid character in salt
             "$test$i=42$YXN1cmUr%w$YW55IGNhcm5hbCBwbGVhc3Vy", // invalid character in salt
             "$test$i=42$YXN1cmUu$YW55IGNhcm5hbCBwbGVhc3V=", // no padding allowed

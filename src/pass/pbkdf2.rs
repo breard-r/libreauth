@@ -1,6 +1,6 @@
 use super::{std_default, ErrorCode, HashingFunction, Normalization};
-use hmac::Hmac;
 use crate::key::KeyBuilder;
+use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};

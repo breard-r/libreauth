@@ -1,6 +1,6 @@
 use super::{std_default, ErrorCode, HashingFunction, Normalization};
-use argon2;
 use crate::key::KeyBuilder;
+use argon2;
 use std::collections::HashMap;
 
 const MIN_SALT_LENGTH: usize = 8; // in bytes
@@ -167,7 +167,8 @@ mod tests {
             output_len: 24,
             salt: "somesalt".to_string().into_bytes(),
             norm: Normalization::Nfkc,
-        }.hash(&"password".to_string().into_bytes());
+        }
+        .hash(&"password".to_string().into_bytes());
         assert_eq!(
             h,
             vec![

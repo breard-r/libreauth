@@ -151,8 +151,8 @@ mod std_default;
 mod std_nist;
 
 use self::phc::PHCData;
-use hmac::{Hmac, Mac};
 use crate::key::KeyBuilder;
+use hmac::{Hmac, Mac};
 use sha2::Sha512;
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
@@ -787,8 +787,10 @@ impl HashBuilder {
 
 #[cfg(feature = "cbindings")]
 mod cbindings {
-    use super::{std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-                Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION};
+    use super::{
+        std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
+        Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
+    };
     use libc;
     use std;
     use std::ffi::CStr;
@@ -987,8 +989,10 @@ pub use self::cbindings::libreauth_pass_is_valid;
 
 #[cfg(test)]
 mod tests {
-    use super::{std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod,
-                Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION};
+    use super::{
+        std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
+        PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
+    };
 
     #[test]
     fn test_default_hashbuilder() {
@@ -1041,7 +1045,8 @@ mod tests {
     #[test]
     fn test_params() {
         let mut b = HashBuilder::new_std(PasswordStorageStandard::Nist80063b);
-        let hb = b.min_len(42)
+        let hb = b
+            .min_len(42)
             .max_len(256)
             .version(5)
             .length_calculation(LengthCalculationMethod::Characters)
@@ -1122,19 +1127,23 @@ mod tests {
     #[test]
     fn test_nfkc() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
-        ]).unwrap();
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ])
+        .unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             97,
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s4 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             98,
-        ]).unwrap();
+        ])
+        .unwrap();
         let hasher = HashBuilder::new()
             .normalization(Normalization::Nfkc)
             .finalize()
@@ -1150,19 +1159,23 @@ mod tests {
     #[test]
     fn test_nfkd() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
-        ]).unwrap();
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ])
+        .unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             97,
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s4 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             98,
-        ]).unwrap();
+        ])
+        .unwrap();
         let hasher = HashBuilder::new()
             .normalization(Normalization::Nfkd)
             .finalize()
@@ -1178,19 +1191,23 @@ mod tests {
     #[test]
     fn test_no_normalize() {
         let s1 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 97,
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s2 = String::from_utf8(vec![
-            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98
-        ]).unwrap();
+            116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 195, 164, 32, 80, 32, 32, 204, 136, 98,
+        ])
+        .unwrap();
         let s3 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             97,
-        ]).unwrap(); // "test nfkd ä P  ̈a"
+        ])
+        .unwrap(); // "test nfkd ä P  ̈a"
         let s4 = String::from_utf8(vec![
             116, 101, 115, 116, 32, 110, 102, 107, 100, 32, 97, 204, 136, 32, 80, 32, 32, 204, 136,
             98,
-        ]).unwrap();
+        ])
+        .unwrap();
         let hasher = HashBuilder::new()
             .normalization(Normalization::None)
             .finalize()

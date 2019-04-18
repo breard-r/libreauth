@@ -1,5 +1,6 @@
-use super::pbkdf2::{DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH, DEFAULT_ITER as PBKDF2_DEF_ITER,
-                    HashFunction};
+use super::pbkdf2::{
+    HashFunction, DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH, DEFAULT_ITER as PBKDF2_DEF_ITER,
+};
 use super::{Algorithm, HashBuilder, LengthCalculationMethod, Normalization};
 
 pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
