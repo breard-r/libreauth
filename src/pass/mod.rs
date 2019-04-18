@@ -642,7 +642,7 @@ impl HashBuilder {
 
     /// Create a new Hasher object from a PHC formatted string.
     pub fn from_phc(data: &str) -> Result<Hasher, ErrorCode> {
-        let mut phc = match PHCData::from_bytes(data.as_bytes()) {
+        let mut phc = match PHCData::from_str(data) {
             Ok(v) => v,
             Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
         };
