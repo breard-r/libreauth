@@ -1,8 +1,9 @@
 use base64;
 use nom::bytes::complete::{tag, take_while, take_while1};
+use nom::combinator::{map_res, opt};
 use nom::multi::fold_many0;
 use nom::sequence::{preceded, separated_pair, terminated};
-use nom::{map_res, opt, IResult};
+use nom::IResult;
 use std::collections::HashMap;
 
 fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
