@@ -378,10 +378,7 @@ pub mod cbindings {
     /// printf("TOTP code: %s\n", code);
     /// ```
     #[no_mangle]
-    pub extern "C" fn libreauth_totp_generate(
-        cfg: *const TOTPcfg,
-        code: *mut u8,
-    ) -> ErrorCode {
+    pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
         let output_base = get_value_or_errno!(c::get_output_base(
@@ -429,10 +426,7 @@ pub mod cbindings {
     /// }
     /// ```
     #[no_mangle]
-    pub extern "C" fn libreauth_totp_is_valid(
-        cfg: *const TOTPcfg,
-        code: *const u8,
-    ) -> i32 {
+    pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> i32 {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
         let output_base = get_value_or_false!(c::get_output_base(
