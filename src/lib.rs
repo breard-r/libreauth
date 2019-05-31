@@ -10,6 +10,3 @@
 pub mod key;
 pub mod oath;
 pub mod pass;
-
-#[cfg(feature = "cbindings")]
-extern crate libc;
