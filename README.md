@@ -71,13 +71,11 @@ libreauth = "*"
 
 ## Using outside Rust
 
-In order to build LibreAuth, you will need both the [rust compiler](https://github.com/rust-lang/rust) and [cargo](https://github.com/rust-lang/cargo).
+In order to build LibreAuth, you will need the [Rust](https://www.rust-lang.org/) compiler and its package manager, Cargo. The minimal required Rust version is 1.31, although it is recommended to use the latest stable one.
 
 ```ShellSession
-$ git clone https://github.com/breard-r/libreauth.git
-$ cd libreauth
 $ make
-$ make install prefix=/usr
+$ make install
 ```
 
 

@@ -1,11 +1,13 @@
-DOC_PATH   = target/doc/
+PREFIX     = /usr
+INCLUDEDIR = $(PREFIX)/include
+LIBDIR     = $(PREFIX)/lib
+LA_INCDIR  = ./include
+LA_LIBDIR  = ./target/release
+DOC_PATH   = ./target/doc
 CARGO_CNF  = Cargo.toml
 NAME       = $(shell grep name $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
 VERSION    = $(shell grep version $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
 TAG_NAME   = v$(VERSION)
-LIBDIR     = ./target/release/
-INCDIR     = ./include/
-prefix    ?= /usr
 
 
 all: $(NAME)
@@ -18,13 +20,9 @@ audit:
 	@cargo audit
 
 install:
-	@install -d $(prefix)/include $(prefix)/lib
-	@install --mode=0644 $(INCDIR)$(NAME).h $(prefix)/include
-	@install --mode=0755 $(LIBDIR)lib$(NAME).a $(prefix)/lib
-	@install --mode=0755 $(LIBDIR)lib$(NAME).so $(prefix)/lib
-
-uninstall:
-	@rm -f $(prefix)/include/$(NAME).h $(prefix)/lib/lib$(NAME).so
+	@install -D --mode=0644 $(LA_INCDIR)/$(NAME).h $(DESTDIR)$(INCLUDEDIR)/$(NAME).h
+	@install -D --mode=0755 $(LA_LIBDIR)/lib$(NAME).a $(DESTDIR)$(LIBDIR)/lib$(NAME).a
+	@install -D --mode=0755 $(LA_LIBDIR)/lib$(NAME).so $(DESTDIR)$(LIBDIR)/lib$(NAME).so
 
 debug:
 	@cargo build --features "cbindings"
@@ -80,4 +78,4 @@ help:
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
 
-.PHONY: all audit install uninstall debug test tests test_nightly clean doc release help
+.PHONY: $(NAME) all audit install debug test tests test_nightly clean doc release help
