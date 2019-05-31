@@ -914,7 +914,7 @@ mod cbindings {
     pub extern "C" fn libreauth_pass_hash(
         cfg: *const PassCfg,
         pass: *const libc::c_char,
-        dest: *mut libc::uint8_t,
+        dest: *mut u8,
         dest_len: libc::size_t,
     ) -> ErrorCode {
         let c: &PassCfg = get_cfg!(cfg, ErrorCode::NullPtr);
@@ -960,7 +960,7 @@ mod cbindings {
     pub extern "C" fn libreauth_pass_is_valid(
         pass: *const libc::c_char,
         reference: *const libc::c_char,
-    ) -> libc::int32_t {
+    ) -> i32 {
         let p = get_string!(pass);
         let r = get_string!(reference);
         let checker = match HashBuilder::from_phc(r.as_str()) {

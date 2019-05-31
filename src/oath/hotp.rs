@@ -365,7 +365,7 @@ pub mod cbindings {
     pub struct HOTPcfg {
         key: *const u8,
         key_len: libc::size_t,
-        counter: libc::uint64_t,
+        counter: u64,
         output_len: libc::size_t,
         output_base: *const u8,
         output_base_len: libc::size_t,
@@ -420,7 +420,7 @@ pub mod cbindings {
     #[no_mangle]
     pub extern "C" fn libreauth_hotp_generate(
         cfg: *const HOTPcfg,
-        code: *mut libc::uint8_t,
+        code: *mut u8,
     ) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
@@ -469,8 +469,8 @@ pub mod cbindings {
     #[no_mangle]
     pub extern "C" fn libreauth_hotp_is_valid(
         cfg: *const HOTPcfg,
-        code: *const libc::uint8_t,
-    ) -> libc::int32_t {
+        code: *const u8,
+    ) -> i32 {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
         let output_base = get_value_or_false!(c::get_output_base(

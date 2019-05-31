@@ -124,9 +124,9 @@ mod cbindings {
     /// ```
     #[no_mangle]
     pub extern "C" fn libreauth_keygen(
-        buff: *mut libc::uint8_t,
+        buff: *mut u8,
         buff_len: libc::size_t,
-    ) -> libc::int32_t {
+    ) -> i32 {
         let key_size = buff_len as usize;
         if key_size == 0 || buff.is_null() {
             return 1;

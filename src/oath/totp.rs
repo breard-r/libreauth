@@ -308,11 +308,11 @@ pub mod cbindings {
     pub struct TOTPcfg {
         key: *const u8,
         key_len: libc::size_t,
-        timestamp: libc::int64_t,
-        positive_tolerance: libc::uint64_t,
-        negative_tolerance: libc::uint64_t,
-        period: libc::uint32_t,
-        initial_time: libc::uint64_t,
+        timestamp: i64,
+        positive_tolerance: u64,
+        negative_tolerance: u64,
+        period: u32,
+        initial_time: u64,
         output_len: libc::size_t,
         output_base: *const u8,
         output_base_len: libc::size_t,
@@ -380,7 +380,7 @@ pub mod cbindings {
     #[no_mangle]
     pub extern "C" fn libreauth_totp_generate(
         cfg: *const TOTPcfg,
-        code: *mut libc::uint8_t,
+        code: *mut u8,
     ) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
@@ -431,8 +431,8 @@ pub mod cbindings {
     #[no_mangle]
     pub extern "C" fn libreauth_totp_is_valid(
         cfg: *const TOTPcfg,
-        code: *const libc::uint8_t,
-    ) -> libc::int32_t {
+        code: *const u8,
+    ) -> i32 {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
         let output_base = get_value_or_false!(c::get_output_base(
