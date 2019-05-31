@@ -41,7 +41,7 @@ fn get_id(input: &str) -> IResult<&str, &str> {
 }
 
 fn get_phc_part(input: &str) -> IResult<&str, Option<Vec<u8>>> {
-    if input.len() == 0 {
+    if input.is_empty() {
         return Ok((input, None));
     }
     map_res(preceded(tag("$"), take_while(is_b64)), from_b64)(input)
