@@ -436,8 +436,8 @@ impl Hasher {
         }
     }
 
-    fn get_hash_func(&self) -> Box<HashingFunction> {
-        let mut hash_func: Box<HashingFunction> = match self.algorithm {
+    fn get_hash_func(&self) -> Box<dyn HashingFunction> {
+        let mut hash_func: Box<dyn HashingFunction> = match self.algorithm {
             Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
             Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
         };
