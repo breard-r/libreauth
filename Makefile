@@ -27,7 +27,7 @@ install:
 debug:
 	@cargo build --all-features
 
-test:
+test: debug
 	@cargo test --all-features
 	@make -C tests clean test
 	@echo
