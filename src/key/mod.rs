@@ -74,7 +74,7 @@ impl KeyBuilder {
             panic!();
         }
         let mut key: Vec<u8> = vec![0; self.size];
-        OsRng::new().unwrap().fill_bytes(&mut key.as_mut_slice());
+        OsRng.fill_bytes(&mut key.as_mut_slice());
         self.key = Some(key);
         self
     }
