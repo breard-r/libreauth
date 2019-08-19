@@ -92,16 +92,17 @@ $ make install
 More examples are available in the [documentation](https://docs.rs/libreauth/).
 
 ```rust
-extern crate libreauth;
 use libreauth::oath::TOTPBuilder;
 
-let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
-let code = TOTPBuilder::new()
-    .base32_key(&key)
-    .finalize()
-    .unwrap()
-    .generate();
-assert_eq!(code.len(), 6);
+fn main() {
+    let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ".to_string();
+    let code = TOTPBuilder::new()
+        .base32_key(&key)
+        .finalize()
+        .unwrap()
+        .generate();
+    assert_eq!(code.len(), 6);
+}
 ```
 
 ### C
