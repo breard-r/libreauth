@@ -27,7 +27,7 @@ install:
 debug:
 	@cargo build --all-features
 
-test: debug
+test:
 	@cargo test --all-features
 	@make -C tests clean test
 	@echo
@@ -36,7 +36,7 @@ test: debug
 tests: test
 
 test_nightly:
-	@rustup run nightly cargo test --all-features
+	@cargo +nightly test --all-features
 	@make -C tests clean test
 	@echo
 	@echo "All tests completed successfully."
