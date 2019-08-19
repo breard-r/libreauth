@@ -7,6 +7,9 @@
 //!
 //!
 
+#[cfg(feature = "key")]
 pub mod key;
+#[cfg(feature = "oath")]
 pub mod oath;
+#[cfg(feature = "pass")]
 pub mod pass;

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The crate is now compiled with Rust 2018.
+- Each module has now its dedicated feature that needs to be explicitly enabled.
 
 
 ## [0.11.0] - 2018-09-08

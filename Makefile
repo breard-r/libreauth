@@ -13,7 +13,7 @@ TAG_NAME   = v$(VERSION)
 all: $(NAME)
 
 $(NAME):
-	@cargo build --release --features "cbindings"
+	@cargo build --release --all-features
 
 audit:
 	@cargo outdated
@@ -25,10 +25,10 @@ install:
 	@install -D --mode=0755 $(LA_LIBDIR)/lib$(NAME).so $(DESTDIR)$(LIBDIR)/lib$(NAME).so
 
 debug:
-	@cargo build --features "cbindings"
+	@cargo build --all-features
 
 test: debug
-	@cargo test --features "cbindings"
+	@cargo test --all-features
 	@make -C tests clean test
 	@echo
 	@echo "All tests completed successfully."
@@ -36,7 +36,7 @@ test: debug
 tests: test
 
 test_nightly:
-	@rustup run nightly cargo test --features "cbindings"
+	@rustup run nightly cargo test --all-features
 	@make -C tests clean test
 	@echo
 	@echo "All tests completed successfully."
@@ -47,7 +47,7 @@ clean:
 
 doc:
 	@rm -rf $(DOC_PATH)
-	@cargo doc --no-deps --features "cbindings"
+	@cargo doc --no-deps --all-features
 
 release: test audit
 	@git diff --exit-code >/dev/null || (echo "The local git directory is not clean." && exit 1)
