@@ -96,7 +96,7 @@ impl HashingFunction for Pbkdf2Hash {
         match name {
             "iter" => match value.parse::<usize>() {
                 Ok(i) => match i {
-                    MIN_ITER...MAX_ITER => {
+                    MIN_ITER..=MAX_ITER => {
                         self.nb_iter = i;
                         Ok(())
                     }
@@ -177,7 +177,7 @@ impl HashingFunction for Pbkdf2Hash {
 
     fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode> {
         match salt.len() {
-            MIN_SALT_LENGTH...MAX_SALT_LENGTH => {
+            MIN_SALT_LENGTH..=MAX_SALT_LENGTH => {
                 self.salt = salt;
                 Ok(())
             }

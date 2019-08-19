@@ -22,7 +22,7 @@ macro_rules! set_param {
     ($obj: ident, $attr: ident, $val: ident, $t: ty, $min: expr, $max: expr) => {{
         match $val.parse::<$t>() {
             Ok(i) => match i {
-                $min...$max => {
+                $min..=$max => {
                     $obj.$attr = i;
                     Ok(())
                 }
@@ -88,7 +88,7 @@ impl HashingFunction for Argon2Hash {
 
     fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode> {
         match salt.len() {
-            MIN_SALT_LENGTH...MAX_SALT_LENGTH => {
+            MIN_SALT_LENGTH..=MAX_SALT_LENGTH => {
                 self.salt = salt;
                 Ok(())
             }

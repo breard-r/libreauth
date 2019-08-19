@@ -274,7 +274,7 @@ fn url_encode(data: &str) -> String {
     for b in data.as_bytes().iter() {
         match *b as char {
             // Accepted characters
-            'A'...'Z' | 'a'...'z' | '0'...'9' | '-' | '_' | '.' | '~' => escaped.push(*b as char),
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => escaped.push(*b as char),
 
             // Everything else is percent-encoded
             b => escaped.push_str(format!("%{:02X}", b as u32).as_str()),
