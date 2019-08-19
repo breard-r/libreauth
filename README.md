@@ -36,8 +36,11 @@ LibreAuth is a collection of tools for user authentication.
 - Random key generation
   - [x] uses the platform's secure entropy source
   - [x] customizable size
-  - [x] customizable output format (Vec<u8>, hexadicimal string, base32 string, base64 string)
-- ~~U2F - Universal 2nd Factor~~ ([FIDO Alliance](https://fidoalliance.org/specifications/download/)) :warning: Not started
+  - [x] customizable output format (Vec<u8>, hexadecimal string, base32 string, base64 string)
+- ~~WebAuthn - Web Authentication: An API for accessing Public Key Credentials Level 1~~ ([W3C](https://www.w3.org/TR/webauthn/)) :warning: Not started yet
+  - [ ] authenticator API
+  - [ ] server API
+- ~~U2F - Universal 2nd Factor~~ ([FIDO Alliance](https://fidoalliance.org/specifications/download/)) :warning: Not started yet
   - [ ] virtual device API
   - [ ] client API
   - [ ] server API
