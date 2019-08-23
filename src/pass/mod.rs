@@ -97,7 +97,7 @@
 //!         <tr>
 //!             <td>hash</td>
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256 | keccak224 | keccak256 | keccak384 | keccak512 | sha3-224 | sha3-256 | sha3-384 | sha3-512</td>
-//!             <td>The hash function.</td>
+//!             <td>The underlying hash function to use for the HMAC.</td>
 //!             <td>sha512</td>
 //!         </tr>
 //!     </tbody>
