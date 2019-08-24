@@ -19,6 +19,7 @@ name = "libreauth"
 crate-type = ["rlib", "staticlib", "dylib"]
 
 [features]
+default = ["key", "oath", "pass"]
 cbindings = ["libc"]
 key = ["base32", "base64", "hex", "rand"]
 oath = ["base32", "base64", "hex", "hmac", "sha-1", "sha2", "sha3", "time"]

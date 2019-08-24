@@ -68,10 +68,17 @@ The project itself is still in development and therefore should not be used in p
 You can find LibreAuth on [crates.io](https://crates.io/crates/libreauth) and include it in your `Cargo.toml`:
 
 ```toml
-libreauth = { version = "*", features = ["key", "oath", "pass"]}
+libreauth = "*"
 ```
 
-Each module has its dedicated feature that needs to be explicitly enabled.
+Modules can be cherry-picked using `default-features = false` and then using only the features you want.
+
+```toml
+[dependencies.libreauth]
+version = "*"
+default-features = false
+features = ["key", "oath", "pass"]
+```
 
 
 ## Using outside Rust
