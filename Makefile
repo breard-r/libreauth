@@ -49,16 +49,6 @@ doc:
 	@rm -rf $(DOC_PATH)
 	@cargo doc --no-deps --all-features
 
-release: test audit
-	@git diff --exit-code >/dev/null || (echo "The local git directory is not clean." && exit 1)
-	@git diff --exit-code --cached >/dev/null || (echo "The local git directory is not clean." && exit 1)
-	@test "$(shell git tag -l $(TAG_NAME))" = "" || (echo "Version $(VERSION) already exists." && exit 1)
-	@git tag -s $(TAG_NAME) -m "$(NAME) $(VERSION)"
-	@git push origin $(TAG_NAME)
-	@cargo package
-	@cargo publish
-	@echo "$(NAME) $(VERSION) released."
-
 help:
 	@echo "Default target: $(NAME)"
 	@echo
@@ -78,4 +68,4 @@ help:
 	@echo "Options:"
 	@echo "   prefix=<path>   set the installation prefix (default: /usr)"
 
-.PHONY: $(NAME) all audit install debug test tests test_nightly clean doc release help
+.PHONY: $(NAME) all audit install debug test tests test_nightly clean doc help
