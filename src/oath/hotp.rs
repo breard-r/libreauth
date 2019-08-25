@@ -244,6 +244,7 @@ impl HOTP {
             output_len: self.output_len,
             counter: Some(self.counter),
             period: None,
+            initial_time: None,
         }
     }
 }

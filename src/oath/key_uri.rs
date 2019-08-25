@@ -1,4 +1,4 @@
-use super::{DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD};
+use super::{DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0};
 use crate::oath::HashFunction;
 use url::Url;
 use urlencoding::encode as url_encode;
@@ -87,6 +87,7 @@ pub struct KeyUriBuilder<'a> {
     pub(crate) output_len: usize,
     pub(crate) counter: Option<u64>,
     pub(crate) period: Option<u32>,
+    pub(crate) initial_time: Option<u64>,
 }
 
 impl<'a> KeyUriBuilder<'a> {
@@ -215,9 +216,17 @@ impl<'a> KeyUriBuilder<'a> {
 
         insert_param!(self, uri, self.issuer, "issuer", "", true);
         insert_param!(self, uri, self.algo, "algorithm", DEFAULT_OTP_HASH, true);
-        insert_param!(self, uri, self.output_len, "digits", DEFAULT_OTP_OUT_LEN, true);
+        insert_param!(
+            self,
+            uri,
+            self.output_len,
+            "digits",
+            DEFAULT_OTP_OUT_LEN,
+            true
+        );
         insert_param_opt!(self, uri, self.counter, "counter", 0, true);
         insert_param_opt!(self, uri, self.period, "period", DEFAULT_TOTP_PERIOD, true);
+        insert_param_opt!(self, uri, self.initial_time, "t0", DEFAULT_TOTP_T0, false);
 
         uri.into_string()
     }

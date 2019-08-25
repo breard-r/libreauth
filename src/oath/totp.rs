@@ -1,6 +1,6 @@
 use super::{
     ErrorCode, HOTPBuilder, HashFunction, DEFAULT_KEY_URI_PARAM_POLICY, DEFAULT_OTP_HASH,
-    DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
+    DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
 };
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
@@ -137,6 +137,7 @@ impl TOTP {
             output_len: self.output_len,
             counter: None,
             period: Some(self.period),
+            initial_time: Some(self.initial_time),
         }
     }
 }
@@ -216,7 +217,7 @@ impl TOTPBuilder {
             positive_tolerance: 0,
             negative_tolerance: 0,
             period: DEFAULT_TOTP_PERIOD,
-            initial_time: 0,
+            initial_time: DEFAULT_TOTP_T0,
             output_len: DEFAULT_OTP_OUT_LEN,
             output_base: DEFAULT_OTP_OUT_BASE.to_owned().into_bytes(),
             hash_function: DEFAULT_OTP_HASH,

@@ -38,6 +38,7 @@ const DEFAULT_OTP_HASH: HashFunction = HashFunction::Sha1;
 const DEFAULT_OTP_OUT_BASE: &str = "0123456789";
 const DEFAULT_OTP_OUT_LEN: usize = 6;
 const DEFAULT_TOTP_PERIOD: u32 = 30;
+const DEFAULT_TOTP_T0: u64 = 0;
 
 /// Hash functions used for the code's computation.
 ///
