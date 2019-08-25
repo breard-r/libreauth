@@ -84,7 +84,7 @@ pub struct KeyUriBuilder<'a> {
     pub(crate) custom_parameters: Option<&'a str>,
     pub(crate) encode_parameters: bool, // URL-encode custom parameter?
     pub(crate) algo: HashFunction,
-    pub(crate) digits: usize,
+    pub(crate) output_len: usize,
     pub(crate) counter: Option<u64>,
     pub(crate) period: Option<u32>,
 }
@@ -215,7 +215,7 @@ impl<'a> KeyUriBuilder<'a> {
 
         insert_param!(self, uri, self.issuer, "issuer", "", true);
         insert_param!(self, uri, self.algo, "algorithm", DEFAULT_OTP_HASH, true);
-        insert_param!(self, uri, self.digits, "digits", DEFAULT_OTP_OUT_LEN, true);
+        insert_param!(self, uri, self.output_len, "digits", DEFAULT_OTP_OUT_LEN, true);
         insert_param_opt!(self, uri, self.counter, "counter", 0, true);
         insert_param_opt!(self, uri, self.period, "period", DEFAULT_TOTP_PERIOD, true);
 

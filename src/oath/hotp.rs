@@ -241,7 +241,7 @@ impl HOTP {
             custom_parameters: None,
             encode_parameters: false,
             algo: self.hash_function,
-            digits: self.output_len,
+            output_len: self.output_len,
             counter: Some(self.counter),
             period: None,
         }
