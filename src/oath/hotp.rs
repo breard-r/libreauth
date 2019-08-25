@@ -10,6 +10,7 @@ use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
+use std::collections::HashMap;
 
 macro_rules! compute_hmac {
     ($obj: ident, $hash: ty, $input: ident) => {{
@@ -238,8 +239,7 @@ impl HOTP {
             issuer,
             account_name,
             custom_label: None,
-            custom_parameters: None,
-            encode_parameters: false,
+            custom_parameters: HashMap::new(),
             algo: self.hash_function,
             output_len: self.output_len,
             counter: Some(self.counter),
@@ -1387,12 +1387,12 @@ mod tests {
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider 1", "alice@gmail.com")
             .finalize();
 
         assert_eq!(
             uri,
-            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+            "otpauth://hotp/Provider%201:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&algorithm=SHA1&digits=6&counter=0"
         );
     }
 
@@ -1413,51 +1413,21 @@ mod tests {
     }
 
     #[test]
-    fn test_key_uri_format_overwrite_parameters() {
+    fn test_key_uri_format_add_parameter() {
         let key_ascii = "12345678901234567890".to_owned();
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
             .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_parameters("Provider1Parameters and more", false)
+            .add_parameter("foo", "bar baz")
+            .add_parameter("foo 2", "è_é")
             .finalize();
 
-        assert_eq!(
-            uri,
-            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters and more"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_overwrite_both() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_label("Provider1Label")
-            .overwrite_parameters("Provider1Parameters", false)
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://hotp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_overwrite_parameters_encoded() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_parameters("Provider1Parameters and more", true) // true => URL-encode
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters%20and%20more"
-        );
+        assert_eq!(uri.len(), 165);
+        assert!(uri.starts_with(
+            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0&"
+        ));
+        assert!(uri.contains("&foo=bar+baz"));
+        assert!(uri.contains("&foo+2=%C3%A8_%C3%A9"));
     }
 }

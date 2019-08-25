@@ -6,6 +6,7 @@ use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
 use hex;
+use std::collections::HashMap;
 use time;
 
 /// Generates and checks TOTP codes.
@@ -131,8 +132,7 @@ impl TOTP {
             issuer,
             account_name,
             custom_label: None,
-            custom_parameters: None,
-            encode_parameters: false,
+            custom_parameters: HashMap::new(),
             algo: self.hash_function,
             output_len: self.output_len,
             counter: None,
@@ -1066,51 +1066,18 @@ mod tests {
     }
 
     #[test]
-    fn test_key_uri_format_overwrite_parameters() {
+    fn test_key_uri_format_add_parameter() {
         let key_ascii = "12345678901234567890".to_owned();
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = totp
             .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_parameters("Provider1Parameters and more", false)
+            .add_parameter("foo", "bar baz")
             .finalize();
 
         assert_eq!(
             uri,
-            "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters and more"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_overwrite_both() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_label("Provider1Label")
-            .overwrite_parameters("Provider1Parameters", false)
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_overwrite_parameters_encoded() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .overwrite_parameters("Provider1Parameters and more", true) // true => URL-encode
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters%20and%20more"
+            "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar+baz"
         );
     }
 }

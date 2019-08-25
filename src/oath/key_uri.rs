@@ -1,7 +1,7 @@
 use super::{DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0};
 use crate::oath::HashFunction;
+use std::collections::HashMap;
 use url::Url;
-use urlencoding::encode as url_encode;
 
 macro_rules! insert_param {
     ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
@@ -81,8 +81,7 @@ pub struct KeyUriBuilder<'a> {
     pub(crate) issuer: &'a str,
     pub(crate) account_name: &'a str,
     pub(crate) custom_label: Option<&'a str>,
-    pub(crate) custom_parameters: Option<&'a str>,
-    pub(crate) encode_parameters: bool, // URL-encode custom parameter?
+    pub(crate) custom_parameters: HashMap<&'a str, &'a str>,
     pub(crate) algo: HashFunction,
     pub(crate) output_len: usize,
     pub(crate) counter: Option<u64>,
@@ -145,8 +144,7 @@ impl<'a> KeyUriBuilder<'a> {
         self
     }
 
-    /// Overwrite the parameters other than `secret` with given string.
-    /// Set `url_encode` to `true` to have it URL-encoded.
+    /// Add a custom key/value parameter.
     ///
     /// ## Example
     ///
@@ -159,17 +157,16 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// let uri = totp
     ///     .key_uri_format("Provider1", "alice@gmail.com")
-    ///     .overwrite_parameters("Provider1Parameters", false)
+    ///     .add_parameter("foo", "bar")
     ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&Provider1Parameters"
+    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
     /// );
     /// ```
-    pub fn overwrite_parameters(mut self, parameters: &'a str, url_encode: bool) -> Self {
-        self.custom_parameters = Some(parameters);
-        self.encode_parameters = url_encode;
+    pub fn add_parameter(mut self, key: &'a str, value: &'a str) -> Self {
+        self.custom_parameters.insert(key, value);
         self
     }
 
@@ -189,8 +186,8 @@ impl<'a> KeyUriBuilder<'a> {
             Some(label) => label.to_string(),
             None => format!(
                 "{}:{}",
-                url_encode(self.issuer),
-                url_encode(self.account_name)
+                urlencoding::encode(self.issuer),
+                urlencoding::encode(self.account_name)
             ),
         };
         uri.set_path(&label_final);
@@ -201,18 +198,9 @@ impl<'a> KeyUriBuilder<'a> {
         );
         uri.query_pairs_mut().append_pair("secret", &secret_final);
 
-        if let Some(params) = self.custom_parameters {
-            if self.parameters_visibility == ParametersVisibility::HideAll {
-                return uri.into_string();
-            }
-
-            let final_params = if self.encode_parameters {
-                url_encode(params)
-            } else {
-                params.to_string()
-            };
-            return format!("{}&{}", uri.as_str(), final_params);
-        };
+        if self.parameters_visibility == ParametersVisibility::HideAll {
+            return uri.into_string();
+        }
 
         insert_param!(self, uri, self.issuer, "issuer", "", true);
         insert_param!(self, uri, self.algo, "algorithm", DEFAULT_OTP_HASH, true);
@@ -227,6 +215,12 @@ impl<'a> KeyUriBuilder<'a> {
         insert_param_opt!(self, uri, self.counter, "counter", 0, true);
         insert_param_opt!(self, uri, self.period, "period", DEFAULT_TOTP_PERIOD, true);
         insert_param_opt!(self, uri, self.initial_time, "t0", DEFAULT_TOTP_T0, false);
+        if !self.custom_parameters.is_empty() {
+            for (k, v) in &self.custom_parameters {
+                uri.query_pairs_mut().append_pair(k, v);
+            }
+            return uri.into_string();
+        }
 
         uri.into_string()
     }
