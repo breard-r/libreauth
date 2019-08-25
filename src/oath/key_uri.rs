@@ -69,12 +69,12 @@ pub enum ParametersVisibility {
 ///     .unwrap();
 ///
 /// let uri = totp
-///     .key_uri_format("Provider1", "alice@gmail.com")
+///     .key_uri_format("Provider1", "alice@example.com")
 ///     .finalize();
 ///
 /// assert_eq!(
 ///     uri,
-///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
 /// );
 /// ```
 pub struct KeyUriBuilder<'a> {
@@ -108,13 +108,13 @@ impl<'a> KeyUriBuilder<'a> {
     ///     .unwrap();
     ///
     /// let uri = totp
-    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .key_uri_format("Provider1", "alice@example.com")
     ///     .parameters_visibility_policy(ParametersVisibility::HideAll)
     ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+    ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
     /// );
     /// ```
     pub fn parameters_visibility_policy(mut self, policy: ParametersVisibility) -> Self {
@@ -134,7 +134,7 @@ impl<'a> KeyUriBuilder<'a> {
     ///     .unwrap();
     ///
     /// let uri = totp
-    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .key_uri_format("Provider1", "alice@example.com")
     ///     .overwrite_label("Provider1Label")
     ///     .finalize();
     ///
@@ -160,13 +160,13 @@ impl<'a> KeyUriBuilder<'a> {
     ///     .unwrap();
     ///
     /// let uri = totp
-    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .key_uri_format("Provider1", "alice@example.com")
     ///     .add_parameter("foo", "bar")
     ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
+    ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
     /// );
     /// ```
     pub fn add_parameter(mut self, key: &'a str, value: &'a str) -> Self {

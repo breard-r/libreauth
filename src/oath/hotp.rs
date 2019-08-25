@@ -219,12 +219,12 @@ impl HOTP {
     ///     .unwrap();
     ///
     /// let uri = hotp
-    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .key_uri_format("Provider1", "alice@example.com")
     ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+    ///     "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
     pub fn key_uri_format<'a>(
@@ -1388,12 +1388,12 @@ mod tests {
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
-            .key_uri_format("Provider 1", "alice@gmail.com")
+            .key_uri_format("Provider 1", "alice@example.com")
             .finalize();
 
         assert_eq!(
             uri,
-            "otpauth://hotp/Provider%201:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&algorithm=SHA1&digits=6&counter=0"
+            "otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&algorithm=SHA1&digits=6&counter=0"
         );
     }
 
@@ -1403,7 +1403,7 @@ mod tests {
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .overwrite_label("Provider1Label")
             .finalize();
 
@@ -1419,14 +1419,14 @@ mod tests {
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .add_parameter("foo", "bar baz")
             .add_parameter("foo 2", "è_é")
             .finalize();
 
-        assert_eq!(uri.len(), 163);
+        assert_eq!(uri.len(), 165);
         assert!(uri.starts_with(
-            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0&"
+            "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0&"
         ));
         assert!(uri.contains("&foo=bar+baz"));
         assert!(uri.contains("&foo+2=%C3%A8_%C3%A9"));

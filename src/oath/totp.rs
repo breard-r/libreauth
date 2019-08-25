@@ -112,12 +112,12 @@ impl TOTP {
     ///     .unwrap();
     ///
     /// let uri = totp
-    ///     .key_uri_format("Provider1", "alice@gmail.com")
+    ///     .key_uri_format("Provider1", "alice@example.com")
     ///     .finalize();
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+    ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
     /// );
     /// ```
     pub fn key_uri_format<'a>(
@@ -1041,12 +1041,12 @@ mod tests {
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .finalize();
 
         assert_eq!(
             uri,
-            "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+            "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
         );
     }
 
@@ -1071,7 +1071,7 @@ mod tests {
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .overwrite_label("Provider1Label")
             .finalize();
 
@@ -1087,13 +1087,13 @@ mod tests {
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
 
         let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .add_parameter("foo", "bar baz")
             .finalize();
 
         assert_eq!(
             uri,
-            "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar+baz"
+            "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar+baz"
         );
     }
 
@@ -1108,9 +1108,9 @@ mod tests {
             .unwrap();
 
         let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .finalize();
-        assert_eq!(uri, "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=qwertyuiop&period=30");
+        assert_eq!(uri, "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=qwertyuiop&period=30");
     }
 
     #[test]
@@ -1124,8 +1124,8 @@ mod tests {
             .unwrap();
 
         let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
+            .key_uri_format("Provider1", "alice@example.com")
             .finalize();
-        assert_eq!(uri, "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=%C3%A8_%C3%A9%C3%B6%E2%82%AC%E2%80%A6%C3%B7%E2%80%94%E2%98%BA&period=30");
+        assert_eq!(uri, "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=%C3%A8_%C3%A9%C3%B6%E2%82%AC%E2%80%A6%C3%B7%E2%80%94%E2%98%BA&period=30");
     }
 }
