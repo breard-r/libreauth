@@ -1,4 +1,7 @@
-use super::{ErrorCode, HOTPBuilder, HashFunction};
+use super::{
+    ErrorCode, HOTPBuilder, HashFunction, DEFAULT_KEY_URI_PARAM_POLICY, DEFAULT_OTP_HASH,
+    DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
+};
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
@@ -122,16 +125,16 @@ impl TOTP {
         account_name: &'a str,
     ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
+            parameters_visibility: DEFAULT_KEY_URI_PARAM_POLICY,
             uri_type: UriType::TOTP,
             key: &self.key,
             issuer,
-            add_issuer_param: true,
             account_name,
             custom_label: None,
             custom_parameters: None,
             encode_parameters: false,
-            algo: Some(self.hash_function),
-            digits: Some(self.output_len),
+            algo: self.hash_function,
+            digits: self.output_len,
             counter: None,
             period: Some(self.period),
         }
@@ -212,11 +215,11 @@ impl TOTPBuilder {
             timestamp_offset: 0,
             positive_tolerance: 0,
             negative_tolerance: 0,
-            period: 30,
+            period: DEFAULT_TOTP_PERIOD,
             initial_time: 0,
-            output_len: 6,
-            output_base: "0123456789".to_owned().into_bytes(),
-            hash_function: HashFunction::Sha1,
+            output_len: DEFAULT_OTP_OUT_LEN,
+            output_base: DEFAULT_OTP_OUT_BASE.to_owned().into_bytes(),
+            hash_function: DEFAULT_OTP_HASH,
             runtime_error: None,
         }
     }
@@ -1042,25 +1045,6 @@ mod tests {
         assert_eq!(
             uri,
             "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_disable_parameters() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = totp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .disable_issuer()
-            .disable_hash_function()
-            .disable_digits()
-            .disable_period()
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
         );
     }
 

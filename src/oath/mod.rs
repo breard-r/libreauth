@@ -31,6 +31,14 @@
 //! assert!(totp.is_valid(&code));
 //! ```
 
+use std::fmt;
+
+const DEFAULT_KEY_URI_PARAM_POLICY: ParametersVisibility = ParametersVisibility::GAuthNonDefaultExt;
+const DEFAULT_OTP_HASH: HashFunction = HashFunction::Sha1;
+const DEFAULT_OTP_OUT_BASE: &str = "0123456789";
+const DEFAULT_OTP_OUT_LEN: usize = 6;
+const DEFAULT_TOTP_PERIOD: u32 = 30;
+
 /// Hash functions used for the code's computation.
 ///
 /// ## C interface
@@ -59,7 +67,7 @@
 ///     </tbody>
 /// </table>
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum HashFunction {
     Sha1 = 1,
     Sha224 = 2,
@@ -76,6 +84,29 @@ pub enum HashFunction {
     Keccak256 = 13,
     Keccak384 = 14,
     Keccak512 = 15,
+}
+
+impl fmt::Display for HashFunction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            HashFunction::Sha1 => "SHA1",
+            HashFunction::Sha224 => "SHA224",
+            HashFunction::Sha256 => "SHA256",
+            HashFunction::Sha384 => "SHA384",
+            HashFunction::Sha512 => "SHA512",
+            HashFunction::Sha512Trunc224 => "SHA512-224",
+            HashFunction::Sha512Trunc256 => "SHA512-256",
+            HashFunction::Sha3_224 => "SHA3-224",
+            HashFunction::Sha3_256 => "SHA3-256",
+            HashFunction::Sha3_384 => "SHA3-384",
+            HashFunction::Sha3_512 => "SHA3-512",
+            HashFunction::Keccak224 => "Keccak224",
+            HashFunction::Keccak256 => "Keccak256",
+            HashFunction::Keccak384 => "Keccak384",
+            HashFunction::Keccak512 => "Keccak512",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 /// Error codes used both in the rust and C interfaces.
@@ -301,10 +332,10 @@ macro_rules! otp_init {
                 let c: &mut $cfg_type = unsafe { &mut *$cfg };
                 c.key = std::ptr::null();
                 c.key_len = 0;
-                c.output_len = 6;
+                c.output_len = crate::oath::DEFAULT_OTP_OUT_LEN;
                 c.output_base = std::ptr::null();
                 c.output_base_len = 0;
-                c.hash_function = HashFunction::Sha1;
+                c.hash_function = crate::oath::DEFAULT_OTP_HASH;
                 $(
                     c.$field = $value;
                 )*
@@ -336,7 +367,7 @@ macro_rules! get_value_or_false {
 }
 
 mod key_uri;
-pub use self::key_uri::KeyUriBuilder;
+pub use self::key_uri::{KeyUriBuilder, ParametersVisibility};
 
 mod hotp;
 #[cfg(feature = "cbindings")]

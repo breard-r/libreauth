@@ -1,4 +1,7 @@
-use super::{ErrorCode, HashFunction};
+use super::{
+    ErrorCode, HashFunction, DEFAULT_KEY_URI_PARAM_POLICY, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
+    DEFAULT_OTP_OUT_LEN,
+};
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
@@ -229,17 +232,17 @@ impl HOTP {
         account_name: &'a str,
     ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
+            parameters_visibility: DEFAULT_KEY_URI_PARAM_POLICY,
             uri_type: UriType::HOTP,
             key: &self.key,
             issuer,
-            add_issuer_param: true,
             account_name,
             custom_label: None,
             custom_parameters: None,
             encode_parameters: false,
-            algo: Some(self.hash_function),
-            digits: Some(self.output_len),
-            counter: Some(self.counter), // Required!
+            algo: self.hash_function,
+            digits: self.output_len,
+            counter: Some(self.counter),
             period: None,
         }
     }
@@ -315,9 +318,9 @@ impl HOTPBuilder {
         HOTPBuilder {
             key: None,
             counter: 0,
-            output_len: 6,
-            output_base: "0123456789".to_owned().into_bytes(),
-            hash_function: HashFunction::Sha1,
+            output_len: DEFAULT_OTP_OUT_LEN,
+            output_base: DEFAULT_OTP_OUT_BASE.to_owned().into_bytes(),
+            hash_function: DEFAULT_OTP_HASH,
             runtime_error: None,
         }
     }
@@ -1389,24 +1392,6 @@ mod tests {
         assert_eq!(
             uri,
             "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
-        );
-    }
-
-    #[test]
-    fn test_key_uri_format_disable_parameters() {
-        let key_ascii = "12345678901234567890".to_owned();
-        let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
-
-        let uri = hotp
-            .key_uri_format("Provider1", "alice@gmail.com")
-            .disable_issuer()
-            .disable_hash_function()
-            .disable_digits()
-            .finalize();
-
-        assert_eq!(
-            uri,
-            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0"
         );
     }
 
