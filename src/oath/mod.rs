@@ -33,7 +33,7 @@
 
 use std::fmt;
 
-const DEFAULT_KEY_URI_PARAM_POLICY: ParametersVisibility = ParametersVisibility::GAuthNonDefaultExt;
+const DEFAULT_KEY_URI_PARAM_POLICY: ParametersVisibility = ParametersVisibility::ShowNonDefault;
 const DEFAULT_OTP_HASH: HashFunction = HashFunction::Sha1;
 const DEFAULT_OTP_OUT_BASE: &str = "0123456789";
 const DEFAULT_OTP_OUT_LEN: usize = 6;

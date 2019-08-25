@@ -41,7 +41,7 @@ pub(crate) enum UriType {
 pub enum ParametersVisibility {
     /// Shows all possible parameters.
     ShowAll,
-    /// Shows only parameters with non-default values.
+    /// Shows only parameters with non-default values. This is the default value.
     ShowNonDefault,
     /// Shows all parameters defined in the Google's Key Uri Format and hide extensions.
     GAuthOnly,
@@ -74,7 +74,7 @@ pub enum ParametersVisibility {
 ///
 /// assert_eq!(
 ///     uri,
-///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
 /// );
 /// ```
 pub struct KeyUriBuilder<'a> {
@@ -140,7 +140,7 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+    ///     "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
     /// );
     /// ```
     pub fn overwrite_label(mut self, label: &'a str) -> Self {
@@ -166,7 +166,7 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
+    ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&foo=bar"
     /// );
     /// ```
     pub fn add_parameter(mut self, key: &'a str, value: &'a str) -> Self {
