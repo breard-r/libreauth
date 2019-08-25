@@ -242,6 +242,7 @@ impl HOTP {
             custom_parameters: HashMap::new(),
             algo: self.hash_function,
             output_len: self.output_len,
+            output_base: &self.output_base,
             counter: Some(self.counter),
             period: None,
             initial_time: None,

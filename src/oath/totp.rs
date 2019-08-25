@@ -135,6 +135,7 @@ impl TOTP {
             custom_parameters: HashMap::new(),
             algo: self.hash_function,
             output_len: self.output_len,
+            output_base: &self.output_base,
             counter: None,
             period: Some(self.period),
             initial_time: Some(self.initial_time),
@@ -1094,5 +1095,37 @@ mod tests {
             uri,
             "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar+baz"
         );
+    }
+
+    #[test]
+    fn test_key_uri_format_output_base() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let base = "qwertyuiop".to_owned().into_bytes();
+        let totp = TOTPBuilder::new()
+            .output_base(&base)
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = totp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .finalize();
+        assert_eq!(uri, "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=qwertyuiop&period=30");
+    }
+
+    #[test]
+    fn test_key_uri_format_output_base_utf8() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let base = "è_éö€…÷—☺".to_owned().into_bytes();
+        let totp = TOTPBuilder::new()
+            .output_base(&base)
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = totp
+            .key_uri_format("Provider1", "alice@gmail.com")
+            .finalize();
+        assert_eq!(uri, "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&base=%C3%A8_%C3%A9%C3%B6%E2%82%AC%E2%80%A6%C3%B7%E2%80%94%E2%98%BA&period=30");
     }
 }

@@ -1,4 +1,7 @@
-use super::{DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0};
+use super::{
+    DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
+    DEFAULT_TOTP_T0,
+};
 use crate::oath::HashFunction;
 use std::collections::HashMap;
 use url::Url;
@@ -84,6 +87,7 @@ pub struct KeyUriBuilder<'a> {
     pub(crate) custom_parameters: HashMap<&'a str, &'a str>,
     pub(crate) algo: HashFunction,
     pub(crate) output_len: usize,
+    pub(crate) output_base: &'a [u8],
     pub(crate) counter: Option<u64>,
     pub(crate) period: Option<u32>,
     pub(crate) initial_time: Option<u64>,
@@ -208,6 +212,8 @@ impl<'a> KeyUriBuilder<'a> {
             DEFAULT_OTP_OUT_LEN,
             true
         );
+        let output_base = String::from_utf8(self.output_base.to_vec()).unwrap();
+        insert_param!(self, uri, output_base, "base", DEFAULT_OTP_OUT_BASE, false);
         insert_param_opt!(self, uri, self.counter, "counter", 0, true);
         insert_param_opt!(self, uri, self.period, "period", DEFAULT_TOTP_PERIOD, true);
         insert_param_opt!(self, uri, self.initial_time, "t0", DEFAULT_TOTP_T0, false);
