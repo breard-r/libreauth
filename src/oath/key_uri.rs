@@ -6,14 +6,18 @@ use crate::oath::HashFunction;
 use std::collections::HashMap;
 use url::Url;
 
-macro_rules! insert_param {
-    ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
-        let incl = match $s.parameters_visibility {
-            ParametersVisibility::ShowAll => true,
-            ParametersVisibility::ShowNonDefault => $elem != $def,
-            ParametersVisibility::GAuthOnly => $is_gauth,
-            ParametersVisibility::GAuthNonDefaultExt => $is_gauth || $elem != $def,
-            ParametersVisibility::HideAll => false,
+macro_rules! do_insert_param {
+    ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr, $force_param: expr) => {{
+        let incl = if $force_param {
+            true
+        } else {
+            match $s.parameters_visibility {
+                ParametersVisibility::ShowAll => true,
+                ParametersVisibility::ShowNonDefault => $elem != $def,
+                ParametersVisibility::GAuthOnly => $is_gauth,
+                ParametersVisibility::GAuthNonDefaultExt => $is_gauth || $elem != $def,
+                ParametersVisibility::HideAll => false,
+            }
         };
         if incl {
             $uri.query_pairs_mut()
@@ -22,10 +26,24 @@ macro_rules! insert_param {
     }};
 }
 
+macro_rules! insert_param {
+    ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
+        do_insert_param!($s, $uri, $elem, $name, $def, $is_gauth, false)
+    }};
+}
+
 macro_rules! insert_param_opt {
     ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
         if let Some(e) = $elem {
-            insert_param!($s, $uri, e, $name, $def, $is_gauth);
+            do_insert_param!($s, $uri, e, $name, $def, $is_gauth, false);
+        }
+    }};
+}
+
+macro_rules! insert_param_opt_f {
+    ($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
+        if let Some(e) = $elem {
+            do_insert_param!($s, $uri, e, $name, $def, $is_gauth, true);
         }
     }};
 }
@@ -41,13 +59,13 @@ pub(crate) enum UriType {
 pub enum ParametersVisibility {
     /// Shows all possible parameters.
     ShowAll,
-    /// Shows only parameters with non-default values. This is the default value.
+    /// Shows only parameters with non-default values.
     ShowNonDefault,
     /// Shows all parameters defined in the Google's Key Uri Format and hide extensions.
     GAuthOnly,
     /// Shows all parameters except those with default values that are not part of the Google's Key Uri Format.
     GAuthNonDefaultExt,
-    /// Hides all parameters except `secret`.
+    /// Hides all parameters except `secret` and, for HOTP, `counter`.
     HideAll,
 }
 
@@ -175,6 +193,7 @@ impl<'a> KeyUriBuilder<'a> {
     }
 
     /// Generate the final format.
+    #[allow(clippy::cognitive_complexity)]
     pub fn finalize(&self) -> String {
         let mut uri = Url::parse("otpauth://").unwrap();
 
@@ -184,8 +203,6 @@ impl<'a> KeyUriBuilder<'a> {
         };
         uri.set_host(Some(uri_type_final)).unwrap();
 
-        // Create the label according to the recommendations,
-        // unless a custom label was set (overwritten).
         let label_final = match self.custom_label {
             Some(label) => label.to_string(),
             None => format!("{}:{}", self.issuer, self.account_name),
@@ -197,10 +214,6 @@ impl<'a> KeyUriBuilder<'a> {
             self.key.as_slice(),
         );
         uri.query_pairs_mut().append_pair("secret", &secret_final);
-
-        if self.parameters_visibility == ParametersVisibility::HideAll {
-            return uri.into_string();
-        }
 
         insert_param!(self, uri, self.issuer, "issuer", "", true);
         insert_param!(self, uri, self.algo, "algorithm", DEFAULT_OTP_HASH, true);
@@ -214,7 +227,7 @@ impl<'a> KeyUriBuilder<'a> {
         );
         let output_base = String::from_utf8(self.output_base.to_vec()).unwrap();
         insert_param!(self, uri, output_base, "base", DEFAULT_OTP_OUT_BASE, false);
-        insert_param_opt!(self, uri, self.counter, "counter", 0, true);
+        insert_param_opt_f!(self, uri, self.counter, "counter", 0, true);
         insert_param_opt!(self, uri, self.period, "period", DEFAULT_TOTP_PERIOD, true);
         insert_param_opt!(self, uri, self.initial_time, "t0", DEFAULT_TOTP_T0, false);
         if !self.custom_parameters.is_empty() {

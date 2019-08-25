@@ -497,7 +497,7 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::HOTPBuilder;
-    use crate::oath::HashFunction;
+    use crate::oath::{HashFunction, ParametersVisibility};
 
     #[test]
     fn test_hotp_key_simple() {
@@ -1394,6 +1394,27 @@ mod tests {
         assert_eq!(
             uri,
             "otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&counter=0"
+        );
+    }
+
+    #[test]
+    fn test_key_uri_format_hide_all() {
+        let key_ascii = "12345678901234567890".to_owned();
+        let hotp = HOTPBuilder::new()
+            .output_len(7)
+            .hash_function(HashFunction::Sha256)
+            .ascii_key(&key_ascii)
+            .finalize()
+            .unwrap();
+
+        let uri = hotp
+            .key_uri_format("Provider 1", "alice@example.com")
+            .parameters_visibility_policy(ParametersVisibility::HideAll)
+            .finalize();
+
+        assert_eq!(
+            uri,
+            "otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0"
         );
     }
 
