@@ -71,7 +71,7 @@ pub enum ParametersVisibility {
 ///
 /// assert_eq!(
 ///     uri,
-///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
+///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30"
 /// );
 /// ```
 pub struct KeyUriBuilder<'a> {
@@ -110,7 +110,7 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
     /// );
     /// ```
     pub fn parameters_visibility_policy(mut self, policy: ParametersVisibility) -> Self {
@@ -162,7 +162,7 @@ impl<'a> KeyUriBuilder<'a> {
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://totp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
+    ///     "otpauth://totp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&period=30&foo=bar"
     /// );
     /// ```
     pub fn add_parameter(mut self, key: &'a str, value: &'a str) -> Self {
@@ -184,11 +184,7 @@ impl<'a> KeyUriBuilder<'a> {
         // unless a custom label was set (overwritten).
         let label_final = match self.custom_label {
             Some(label) => label.to_string(),
-            None => format!(
-                "{}:{}",
-                urlencoding::encode(self.issuer),
-                urlencoding::encode(self.account_name)
-            ),
+            None => format!("{}:{}", self.issuer, self.account_name),
         };
         uri.set_path(&label_final);
 

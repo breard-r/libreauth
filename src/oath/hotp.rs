@@ -224,7 +224,7 @@ impl HOTP {
     ///
     /// assert_eq!(
     ///     uri,
-    ///     "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
+    ///     "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0"
     /// );
     /// ```
     pub fn key_uri_format<'a>(
@@ -1392,7 +1392,7 @@ mod tests {
 
         assert_eq!(
             uri,
-            "otpauth://hotp/Provider%201:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&algorithm=SHA1&digits=6&counter=0"
+            "otpauth://hotp/Provider%201:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&algorithm=SHA1&digits=6&counter=0"
         );
     }
 
@@ -1423,9 +1423,9 @@ mod tests {
             .add_parameter("foo 2", "è_é")
             .finalize();
 
-        assert_eq!(uri.len(), 165);
+        assert_eq!(uri.len(), 163);
         assert!(uri.starts_with(
-            "otpauth://hotp/Provider1:alice%40gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0&"
+            "otpauth://hotp/Provider1:alice@gmail.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA1&digits=6&counter=0&"
         ));
         assert!(uri.contains("&foo=bar+baz"));
         assert!(uri.contains("&foo+2=%C3%A8_%C3%A9"));

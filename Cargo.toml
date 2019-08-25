@@ -22,7 +22,7 @@ crate-type = ["rlib", "staticlib", "dylib"]
 default = ["key", "oath", "pass"]
 cbindings = ["libc"]
 key = ["base32", "base64", "hex", "rand"]
-oath = ["base32", "base64", "hex", "hmac", "sha-1", "sha2", "sha3", "time", "url", "urlencoding"]
+oath = ["base32", "base64", "hex", "hmac", "sha-1", "sha2", "sha3", "time", "url"]
 pass = ["base64", "hmac", "key", "nom", "pbkdf2", "rust-argon2", "sha-1", "sha2", "sha3", "unicode-normalization"]
 
 [dependencies]
@@ -41,4 +41,3 @@ sha3 = { version = "^0.8", optional = true }
 time = { version = "^0.1", optional = true }
 unicode-normalization = { version = "^0.1", optional = true }
 url = { version = "^2.1", optional = true }
-urlencoding = { version = "^1.0", optional = true }
