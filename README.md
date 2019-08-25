@@ -83,7 +83,7 @@ features = ["key", "oath", "pass"]
 
 ## Using outside Rust
 
-In order to build LibreAuth, you will need the [Rust](https://www.rust-lang.org/) compiler and its package manager, Cargo. The minimal required Rust version is 1.32, although it is recommended to use the latest stable one.
+In order to build LibreAuth, you will need the [Rust](https://www.rust-lang.org/) compiler and its package manager, Cargo. The minimal required Rust version is 1.33, although it is recommended to use the latest stable one.
 
 ```ShellSession
 $ make
