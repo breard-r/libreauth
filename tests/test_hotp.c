@@ -39,7 +39,8 @@
 #include <libreauth.h>
 #include "libreauth_tests.h"
 
-#define DEFAULT_BUFF_LEN  6
+#define DEFAULT_BUFF_LEN     6
+#define DEFAULT_URI_BUFF_LEN 1024
 
 
 static uint32_t test_basic_hotp(void) {
@@ -78,11 +79,34 @@ static uint32_t test_basic_hotp(void) {
     return 1;
 }
 
+static uint32_t test_basic_key_uri(void) {
+    test_name("hotp: test_basic_key_uri");
+
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char uri_buff[DEFAULT_URI_BUFF_LEN + 1];
+
+    uint32_t ret = libreauth_hotp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    cfg.key = key;
+    cfg.key_len = strlen(key);
+
+    ret = libreauth_hotp_get_uri(&cfg, "Provider1", "alice@example.com", NULL, 42);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
+    ret = libreauth_hotp_get_uri(&cfg, "Provider1", "alice@example.com", uri_buff, 5);
+    assert(ret == LIBREAUTH_OATH_NOT_ENOUGH_SPACE);
+    ret = libreauth_hotp_get_uri(&cfg, "Provider1", "alice@example.com", uri_buff, sizeof(uri_buff));
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strncmp(uri_buff, "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0", DEFAULT_URI_BUFF_LEN) == 0);
+
+    return 1;
+}
+
 static uint32_t test_init_null_ptr(void) {
     test_name("hotp: test_init_null_ptr");
 
     uint32_t ret = libreauth_hotp_init(NULL);
-    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     return 1;
 }
@@ -98,11 +122,11 @@ static uint32_t test_generate_null_ptr(void) {
     libreauth_hotp_init(&cfg);
 
     ret = libreauth_hotp_generate(NULL, code);
-    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
     assert(strcmp(code, "qwerty") == 0);
 
     ret = libreauth_hotp_generate(&cfg, code);
-    assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     cfg.key = key;
 
@@ -112,7 +136,7 @@ static uint32_t test_generate_null_ptr(void) {
     cfg.key_len = strlen(key);
 
     ret = libreauth_hotp_generate(&cfg, NULL);
-    assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     ret = libreauth_hotp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);
@@ -247,6 +271,7 @@ uint32_t test_hotp(void) {
     uint32_t nb_tests = 0;
 
     nb_tests += test_basic_hotp();
+    nb_tests += test_basic_key_uri();
     nb_tests += test_init_null_ptr();
     nb_tests += test_generate_null_ptr();
     nb_tests += test_invalid_base();

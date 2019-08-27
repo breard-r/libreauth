@@ -364,6 +364,7 @@ pub mod cbindings {
     use crate::oath::{c, ErrorCode, HashFunction};
     use libc;
     use std;
+    use std::ffi::CStr;
 
     /// [C binding] HOTP configuration storage
     #[repr(C)]
@@ -490,6 +491,50 @@ pub mod cbindings {
                 false => 0,
             },
             Err(_) => 0,
+        }
+    }
+
+    #[no_mangle]
+    pub extern "C" fn libreauth_hotp_get_uri(
+        cfg: *const HOTPcfg,
+        issuer: *const libc::c_char,
+        account_name: *const libc::c_char,
+        uri_buff: *mut u8,
+        uri_buff_len: libc::size_t,
+    ) -> ErrorCode {
+        let cfg = get_value_or_errno!(c::get_cfg(cfg));
+        let issuer = get_string!(issuer);
+        let acc_name = get_string!(account_name);
+        let buff = get_value_or_errno!(c::get_mut_code(uri_buff, uri_buff_len));
+        let output_base = get_value_or_errno!(c::get_output_base(
+            cfg.output_base,
+            cfg.output_base_len as usize
+        ));
+        let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
+        match HOTPBuilder::new()
+            .key(&key)
+            .output_len(cfg.output_len as usize)
+            .output_base(&output_base)
+            .hash_function(cfg.hash_function)
+            .counter(cfg.counter)
+            .finalize()
+        {
+            Ok(hotp) => {
+                let b = hotp
+                    .key_uri_format(&issuer, &acc_name)
+                    .finalize()
+                    .into_bytes();
+                let len = b.len();
+                if len >= uri_buff_len {
+                    return ErrorCode::NotEnoughSpace;
+                }
+                for i in 0..len {
+                    buff[i] = b[i];
+                }
+                buff[len] = 0;
+                ErrorCode::Success
+            }
+            Err(errno) => errno,
         }
     }
 }

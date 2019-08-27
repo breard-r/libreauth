@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Internal password version number.
-- Key URI generation for HOTP and TOTP.
+- Key URI generation for HOTP and TOTP (with partial C-bindings).
 
 ### Changed
 - The crate is now compiled with Rust 2018.
 - Each module has now its dedicated feature that needs to be explicitly enabled.
+- `LIBREAUTH_OATH_CFG_NULL_PTR`, `LIBREAUTH_OATH_CODE_NULL_PTR` and `LIBREAUTH_OATH_KEY_NULL_PTR` has been replaced by `LIBREAUTH_OATH_NULL_PTR`.
 
 
 ## [0.11.0] - 2018-09-08

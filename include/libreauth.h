@@ -127,9 +127,8 @@ typedef enum {
 typedef enum {
     LIBREAUTH_OATH_SUCCESS           = 0,
 
-    LIBREAUTH_OATH_CFG_NULL_PTR      = 1,
-    LIBREAUTH_OATH_CODE_NULL_PTR     = 2,
-    LIBREAUTH_OATH_KEY_NULL_PTR      = 3,
+    LIBREAUTH_OATH_NULL_PTR          = 1,
+    LIBREAUTH_OATH_NOT_ENOUGH_SPACE  = 2,
 
     LIBREAUTH_OATH_INVALID_BASE_LEN  = 10,
     LIBREAUTH_OATH_INVALID_KEY_LEN   = 11,
@@ -156,6 +155,7 @@ struct libreauth_hotp_cfg {
 
 libreauth_oath_errno libreauth_hotp_init(struct libreauth_hotp_cfg *cfg);
 libreauth_oath_errno libreauth_hotp_generate(const struct libreauth_hotp_cfg *cfg, char *code);
+libreauth_oath_errno libreauth_hotp_get_uri(const struct libreauth_hotp_cfg *cfg, const char *issuer, const char *account_name, char *uri_buff, size_t uri_buff_len);
 int32_t              libreauth_hotp_is_valid(const struct libreauth_hotp_cfg *cfg, const char *code);
 
 /* TOTP */
@@ -176,4 +176,5 @@ struct libreauth_totp_cfg {
 
 libreauth_oath_errno libreauth_totp_init(struct libreauth_totp_cfg *cfg);
 libreauth_oath_errno libreauth_totp_generate(const struct libreauth_totp_cfg *cfg, void *code);
+libreauth_oath_errno libreauth_totp_get_uri(const struct libreauth_totp_cfg *cfg, const char *issuer, const char *account_name, char *uri_buff, size_t uri_buff_len);
 int32_t              libreauth_totp_is_valid(const struct libreauth_totp_cfg *cfg, const void *code);

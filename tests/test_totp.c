@@ -39,8 +39,9 @@
 #include <libreauth.h>
 #include "libreauth_tests.h"
 
-#define DEFAULT_BUFF_LEN 6
-#define BIGGER_BUFF_LEN  8
+#define DEFAULT_BUFF_LEN     6
+#define BIGGER_BUFF_LEN      8
+#define DEFAULT_URI_BUFF_LEN 1024
 
 
 static uint32_t test_basic_totp(void) {
@@ -76,6 +77,30 @@ static uint32_t test_basic_totp(void) {
     assert(!libreauth_totp_is_valid(&cfg, "!@#$%^"));
     assert(!libreauth_totp_is_valid(&cfg, ""));
     assert(!libreauth_totp_is_valid(&cfg, NULL));
+
+    return 1;
+}
+
+static uint32_t test_basic_key_uri(void) {
+    test_name("totp: test_basic_key_uri");
+
+    struct libreauth_totp_cfg cfg;
+    const char key[] = "12345678901234567890";
+    char uri_buff[DEFAULT_URI_BUFF_LEN + 1];
+
+    uint32_t ret = libreauth_totp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    cfg.key = key;
+    cfg.key_len = strlen(key);
+    cfg.hash_function = LIBREAUTH_OATH_SHA_256;
+
+    ret = libreauth_totp_get_uri(&cfg, "Provider1", "alice@example.com", NULL, 42);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
+    ret = libreauth_totp_get_uri(&cfg, "Provider1", "alice@example.com", uri_buff, 5);
+    assert(ret == LIBREAUTH_OATH_NOT_ENOUGH_SPACE);
+    ret = libreauth_totp_get_uri(&cfg, "Provider1", "alice@example.com", uri_buff, sizeof(uri_buff));
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(strncmp(uri_buff, "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&algorithm=SHA256", DEFAULT_URI_BUFF_LEN) == 0);
 
     return 1;
 }
@@ -157,7 +182,7 @@ static uint32_t test_init_null_ptr(void) {
     test_name("totp: test_init_null_ptr");
 
     uint32_t ret = libreauth_totp_init(NULL);
-    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     return 1;
 }
@@ -172,11 +197,11 @@ static uint32_t test_generate_null_ptr(void) {
     libreauth_totp_init(&cfg);
 
     uint32_t ret = libreauth_totp_generate(NULL, code);
-    assert(ret == LIBREAUTH_OATH_CFG_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
     assert(strcmp(code, "qwerty") == 0);
 
     ret = libreauth_totp_generate(&cfg, code);
-    assert(ret == LIBREAUTH_OATH_KEY_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     cfg.key = key;
 
@@ -186,7 +211,7 @@ static uint32_t test_generate_null_ptr(void) {
     cfg.key_len = strlen(key);
 
     ret = libreauth_totp_generate(&cfg, NULL);
-    assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
+    assert(ret == LIBREAUTH_OATH_NULL_PTR);
 
     ret = libreauth_totp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);
@@ -225,6 +250,7 @@ uint32_t test_totp(void) {
     uint32_t nb_tests = 0;
 
     nb_tests += test_basic_totp();
+    nb_tests += test_basic_key_uri();
     nb_tests += test_advanced_totp();
     nb_tests += test_tolerance();
     nb_tests += test_init_null_ptr();

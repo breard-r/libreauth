@@ -7,6 +7,13 @@
 //!
 //!
 
+#[allow(unused_macros)]
+macro_rules! get_string {
+    ($ptr: ident) => {{
+        unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
+    }};
+}
+
 #[cfg(feature = "key")]
 pub mod key;
 #[cfg(feature = "oath")]

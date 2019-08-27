@@ -817,12 +817,6 @@ mod cbindings {
         }};
     }
 
-    macro_rules! get_string {
-        ($ptr: ident) => {{
-            unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
-        }};
-    }
-
     /// [C binding] Password hasher configuration storage
     #[repr(C)]
     pub struct PassCfg {

@@ -128,16 +128,12 @@ impl fmt::Display for HashFunction {
 ///             <td>LIBREAUTH_OATH_SUCCESS</td>
 ///         </tr>
 ///         <tr>
-///             <td>CfgNullPtr</td>
-///             <td>LIBREAUTH_OATH_CFG_NULL_PTR</td>
+///             <td>NullPtr</td>
+///             <td>LIBREAUTH_OATH_NULL_PTR</td>
 ///         </tr>
 ///         <tr>
-///             <td>CodeNullPtr</td>
-///             <td>LIBREAUTH_OATH_CODE_NULL_PTR</td>
-///         </tr>
-///         <tr>
-///             <td>KeyNullPtr</td>
-///             <td>LIBREAUTH_OATH_KEY_NULL_PTR</td>
+///             <td>NotEnoughSpace</td>
+///             <td>LIBREAUTH_OATH_NOT_ENOUGH_SPACE</td>
 ///         </tr>
 ///         <tr>
 ///             <td>InvalidBaseLen</td>
@@ -174,9 +170,8 @@ impl fmt::Display for HashFunction {
 pub enum ErrorCode {
     Success = 0,
 
-    CfgNullPtr = 1,
-    CodeNullPtr = 2,
-    KeyNullPtr = 3,
+    NullPtr = 1,
+    NotEnoughSpace = 2,
 
     InvalidBaseLen = 10,
     InvalidKeyLen = 11,
@@ -277,7 +272,7 @@ mod c {
 
     pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
         if cfg.is_null() {
-            return Err(ErrorCode::CfgNullPtr);
+            return Err(ErrorCode::NullPtr);
         }
         let cfg: &T = unsafe { &*cfg };
         Ok(cfg)
@@ -285,7 +280,7 @@ mod c {
 
     pub fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
         if code.is_null() {
-            return Err(ErrorCode::CodeNullPtr);
+            return Err(ErrorCode::NullPtr);
         }
         let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
         match String::from_utf8(code) {
@@ -296,7 +291,7 @@ mod c {
 
     pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
         if code.is_null() {
-            return Err(ErrorCode::CodeNullPtr);
+            return Err(ErrorCode::NullPtr);
         }
         Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
     }
@@ -320,7 +315,7 @@ mod c {
                 0 => Err(ErrorCode::InvalidKeyLen),
                 l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
             },
-            true => Err(ErrorCode::KeyNullPtr),
+            true => Err(ErrorCode::NullPtr),
         }
     }
 }
@@ -342,7 +337,7 @@ macro_rules! otp_init {
                 )*
                 Ok(c)
             }
-            true => Err(ErrorCode::CfgNullPtr),
+            true => Err(ErrorCode::NullPtr),
         }
     }
 }
