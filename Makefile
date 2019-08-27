@@ -16,7 +16,7 @@ $(NAME):
 	@cargo build --release --all-features
 
 audit:
-	@cargo outdated
+	@cargo outdated --exit-code 1
 	@cargo audit
 
 install:
