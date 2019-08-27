@@ -336,7 +336,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     /// ```
     #[no_mangle]
     pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
@@ -373,7 +373,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     ///
     /// ret = libreauth_totp_generate(&cfg, code);
     /// if (ret != LIBREAUTH_OATH_SUCCESS) {
@@ -422,7 +422,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     ///
     /// if (libreauth_totp_is_valid(&cfg, "4755224")) {
     ///     printf("Valid TOTP code\n");

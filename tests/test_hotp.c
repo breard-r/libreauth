@@ -60,7 +60,7 @@ static uint32_t test_basic_hotp(void) {
     assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
 
     cfg.key = key;
-    cfg.key_len = sizeof(key);
+    cfg.key_len = strlen(key);
 
     ret = libreauth_hotp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);
@@ -109,7 +109,7 @@ static uint32_t test_generate_null_ptr(void) {
     ret = libreauth_hotp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_INVALID_KEY_LEN);
 
-    cfg.key_len = sizeof(key);
+    cfg.key_len = strlen(key);
 
     ret = libreauth_hotp_generate(&cfg, NULL);
     assert(ret == LIBREAUTH_OATH_CODE_NULL_PTR);
@@ -130,7 +130,7 @@ static uint32_t test_invalid_base(void) {
     libreauth_hotp_init(&cfg);
 
     cfg.key = key;
-    cfg.key_len = sizeof(key);
+    cfg.key_len = strlen(key);
     cfg.output_base = base;
 
     uint32_t ret = libreauth_hotp_generate(&cfg, code);
@@ -139,7 +139,7 @@ static uint32_t test_invalid_base(void) {
     ret = libreauth_hotp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
 
-    cfg.output_base_len = sizeof(base);
+    cfg.output_base_len = strlen(base);
 
     ret = libreauth_hotp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);

@@ -389,7 +389,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     /// ```
     #[no_mangle]
     pub extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
@@ -413,7 +413,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     ///
     /// ret = libreauth_hotp_generate(&cfg, code);
     /// if (ret != LIBREAUTH_OATH_SUCCESS) {
@@ -460,7 +460,7 @@ pub mod cbindings {
     ///     // Handle the error.
     /// }
     /// cfg.key = key;
-    /// cfg.key_len = sizeof(key);
+    /// cfg.key_len = strlen(key);
     ///
     /// if (libreauth_hotp_is_valid(&cfg, "755224")) {
     ///     printf("Valid HOTP code\n");

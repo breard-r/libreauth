@@ -126,7 +126,7 @@ int main(void) {
     return 1;
   }
   cfg.key = key;
-  cfg.key_len = sizeof(key);
+  cfg.key_len = strlen(key);
   if (libreauth_totp_generate(&cfg, code) != LIBREAUTH_OTP_SUCCESS) {
     return 2;
   }
