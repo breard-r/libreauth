@@ -160,8 +160,8 @@ impl fmt::Display for HashFunction {
 ///             <td>LIBREAUTH_OATH_INVALID_PERIOD</td>
 ///         </tr>
 ///         <tr>
-///             <td>CodeInvalidUTF8</td>
-///             <td>LIBREAUTH_OATH_CODE_INVALID_UTF8</td>
+///             <td>InvalidUTF8</td>
+///             <td>LIBREAUTH_OATH_INVALID_UTF8</td>
 ///         </tr>
 ///     </tbody>
 /// </table>
@@ -181,7 +181,7 @@ pub enum ErrorCode {
     InvalidKey = 20,
     InvalidPeriod = 21,
 
-    CodeInvalidUTF8 = 30,
+    InvalidUTF8 = 30,
 }
 
 macro_rules! builder_common {
@@ -243,9 +243,9 @@ macro_rules! builder_common {
             self
         }
 
-        /// Sets the base used to represents the output code. Default is "0123456789".to_owned().into_bytes().
-        pub fn output_base(&mut self, base: &[u8]) -> &mut $t {
-            self.output_base = base.to_owned();
+        /// Sets the base used to represents the output code. Default is "0123456789".
+        pub fn output_base(&mut self, base: &str) -> &mut $t {
+            self.output_base = base.to_string();
             self
         }
 
@@ -260,7 +260,7 @@ macro_rules! builder_common {
 #[cfg(feature = "cbindings")]
 mod c {
     use super::ErrorCode;
-    use std;
+    use std::{self, ffi::CStr};
 
     pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
         let len = code.len();
@@ -285,7 +285,7 @@ mod c {
         let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
         match String::from_utf8(code) {
             Ok(code) => Ok(code),
-            Err(_) => Err(ErrorCode::CodeInvalidUTF8),
+            Err(_) => Err(ErrorCode::InvalidUTF8),
         }
     }
 
@@ -296,16 +296,15 @@ mod c {
         Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
     }
 
-    pub fn get_output_base(
-        output_base: *const u8,
-        output_base_len: usize,
-    ) -> Result<Vec<u8>, ErrorCode> {
-        match output_base.is_null() {
-            false => match output_base_len {
-                0 | 1 => Err(ErrorCode::InvalidBaseLen),
-                l => Ok(unsafe { std::slice::from_raw_parts(output_base, l).to_owned() }),
-            },
-            true => Ok("0123456789".to_owned().into_bytes()),
+    pub fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
+        if output_base.is_null() {
+            return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
+        }
+        let raw_str = unsafe { CStr::from_ptr(output_base).to_bytes().to_vec() };
+        let output_base = String::from_utf8(raw_str).map_err(|_| ErrorCode::InvalidUTF8)?;
+        match output_base.len() {
+            0 | 1 => Err(ErrorCode::InvalidBaseLen),
+            _ => Ok(output_base),
         }
     }
 
@@ -330,7 +329,6 @@ macro_rules! otp_init {
                 c.key_len = 0;
                 c.output_len = crate::oath::DEFAULT_OTP_OUT_LEN;
                 c.output_base = std::ptr::null();
-                c.output_base_len = 0;
                 c.hash_function = crate::oath::DEFAULT_OTP_HASH;
                 $(
                     c.$field = $value;

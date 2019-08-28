@@ -9,7 +9,7 @@
 
 #[allow(unused_macros)]
 macro_rules! get_string {
-    ($ptr: ident) => {{
+    ($ptr: expr) => {{
         unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
     }};
 }

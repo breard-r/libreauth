@@ -18,7 +18,7 @@ pub struct TOTP {
     period: u32,
     initial_time: u64,
     output_len: usize,
-    output_base: Vec<u8>,
+    output_base: String,
     hash_function: HashFunction,
 }
 
@@ -198,7 +198,7 @@ pub struct TOTPBuilder {
     period: u32,
     initial_time: u64,
     output_len: usize,
-    output_base: Vec<u8>,
+    output_base: String,
     hash_function: HashFunction,
     runtime_error: Option<ErrorCode>,
 }
@@ -220,7 +220,7 @@ impl TOTPBuilder {
             period: DEFAULT_TOTP_PERIOD,
             initial_time: DEFAULT_TOTP_T0,
             output_len: DEFAULT_OTP_OUT_LEN,
-            output_base: DEFAULT_OTP_OUT_BASE.to_owned().into_bytes(),
+            output_base: DEFAULT_OTP_OUT_BASE.to_string(),
             hash_function: DEFAULT_OTP_HASH,
             runtime_error: None,
         }
@@ -320,8 +320,7 @@ pub mod cbindings {
         period: u32,
         initial_time: u64,
         output_len: libc::size_t,
-        output_base: *const u8,
-        output_base_len: libc::size_t,
+        output_base: *const libc::c_char,
         hash_function: HashFunction,
     }
 
@@ -387,10 +386,7 @@ pub mod cbindings {
     pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_errno!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match TOTPBuilder::new()
             .key(&key)
@@ -435,10 +431,7 @@ pub mod cbindings {
     pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> i32 {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_false!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base));
         let key = get_value_or_false!(c::get_key(cfg.key, cfg.key_len as usize));
         match TOTPBuilder::new()
             .key(&key)
@@ -472,10 +465,7 @@ pub mod cbindings {
         let issuer = get_string!(issuer);
         let acc_name = get_string!(account_name);
         let buff = get_value_or_errno!(c::get_mut_code(uri_buff, uri_buff_len));
-        let output_base = get_value_or_errno!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match TOTPBuilder::new()
             .key(&key)
@@ -821,9 +811,7 @@ mod tests {
     #[test]
     fn test_small_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -838,9 +826,7 @@ mod tests {
     #[test]
     fn test_big_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -855,9 +841,7 @@ mod tests {
     #[test]
     fn test_result_ok_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match TOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -1149,7 +1133,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "qwertyuiop".to_owned().into_bytes();
+        let base = "qwertyuiop";
         let totp = TOTPBuilder::new()
             .output_base(&base)
             .ascii_key(&key_ascii)
@@ -1165,7 +1149,7 @@ mod tests {
     #[test]
     fn test_key_uri_format_output_base_utf8() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "è_éö€…÷—☺".to_owned().into_bytes();
+        let base = "è_éö€…÷—☺";
         let totp = TOTPBuilder::new()
             .output_base(&base)
             .ascii_key(&key_ascii)

@@ -25,7 +25,7 @@ pub struct HOTP {
     key: Vec<u8>,
     counter: u64,
     output_len: usize,
-    output_base: Vec<u8>,
+    output_base: String,
     hash_function: HashFunction,
 }
 
@@ -43,23 +43,24 @@ impl HOTP {
     }
 
     fn format_result(&self, nb: u32) -> String {
-        let mut code: Vec<u8> = vec![];
+        let mut code = Vec::with_capacity(self.output_len);
         let mut nb = nb;
         let base_len = self.output_base.len() as u32;
 
         while nb > 0 {
-            code.push(self.output_base[(nb % base_len) as usize]);
+            code.push(
+                self.output_base
+                    .chars()
+                    .nth((nb % base_len) as usize)
+                    .unwrap(),
+            );
             nb /= base_len;
         }
         while code.len() != self.output_len {
-            code.push(self.output_base[0]);
+            code.push(self.output_base.chars().nth(0).unwrap());
         }
         code.reverse();
-
-        match String::from_utf8(code) {
-            Ok(s) => s,
-            Err(e) => panic!(e),
-        }
+        code.iter().collect()
     }
 
     /// Generate the HOTP value.
@@ -303,7 +304,7 @@ pub struct HOTPBuilder {
     key: Option<Vec<u8>>,
     counter: u64,
     output_len: usize,
-    output_base: Vec<u8>,
+    output_base: String,
     hash_function: HashFunction,
     runtime_error: Option<ErrorCode>,
 }
@@ -321,7 +322,7 @@ impl HOTPBuilder {
             key: None,
             counter: 0,
             output_len: DEFAULT_OTP_OUT_LEN,
-            output_base: DEFAULT_OTP_OUT_BASE.to_owned().into_bytes(),
+            output_base: DEFAULT_OTP_OUT_BASE.to_string(),
             hash_function: DEFAULT_OTP_HASH,
             runtime_error: None,
         }
@@ -373,8 +374,7 @@ pub mod cbindings {
         key_len: libc::size_t,
         counter: u64,
         output_len: libc::size_t,
-        output_base: *const u8,
-        output_base_len: libc::size_t,
+        output_base: *const libc::c_char,
         hash_function: HashFunction,
     }
 
@@ -427,10 +427,7 @@ pub mod cbindings {
     pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> ErrorCode {
         let cfg = get_value_or_errno!(c::get_cfg(cfg));
         let code = get_value_or_errno!(c::get_mut_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_errno!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match HOTPBuilder::new()
             .key(&key)
@@ -473,10 +470,7 @@ pub mod cbindings {
     pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) -> i32 {
         let cfg = get_value_or_false!(c::get_cfg(cfg));
         let code = get_value_or_false!(c::get_code(code, cfg.output_len as usize));
-        let output_base = get_value_or_false!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_false!(c::get_output_base(cfg.output_base));
         let key = get_value_or_false!(c::get_key(cfg.key, cfg.key_len as usize));
         match HOTPBuilder::new()
             .key(&key)
@@ -506,10 +500,7 @@ pub mod cbindings {
         let issuer = get_string!(issuer);
         let acc_name = get_string!(account_name);
         let buff = get_value_or_errno!(c::get_mut_code(uri_buff, uri_buff_len));
-        let output_base = get_value_or_errno!(c::get_output_base(
-            cfg.output_base,
-            cfg.output_base_len as usize
-        ));
+        let output_base = get_value_or_errno!(c::get_output_base(cfg.output_base));
         let key = get_value_or_errno!(c::get_key(cfg.key, cfg.key_len as usize));
         match HOTPBuilder::new()
             .key(&key)
@@ -827,7 +818,7 @@ mod tests {
     #[test]
     fn test_empty_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
-        let output_base = vec![];
+        let output_base = "";
         match HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&output_base)
@@ -841,7 +832,7 @@ mod tests {
     #[test]
     fn test_invalid_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
-        let output_base = "1".to_owned().into_bytes();
+        let output_base = "1";
         match HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&output_base)
@@ -904,9 +895,7 @@ mod tests {
     #[test]
     fn test_small_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -921,9 +910,7 @@ mod tests {
     #[test]
     fn test_big_result_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -938,9 +925,7 @@ mod tests {
     #[test]
     fn test_result_ok_base64() {
         let key_ascii = "12345678901234567890".to_owned();
-        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
-            .to_owned()
-            .into_bytes();
+        let base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
         match HOTPBuilder::new()
             .ascii_key(&key_ascii)
             .output_base(&base)
@@ -967,7 +952,7 @@ mod tests {
         let key = vec![
             49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
         ];
-        let hex_base = "0123456789ABCDEF".to_owned().into_bytes();
+        let hex_base = "0123456789ABCDEF";
 
         let examples = [
             ["755224", "93CF18"],

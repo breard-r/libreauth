@@ -138,7 +138,7 @@ typedef enum {
     LIBREAUTH_OATH_INVALID_KEY       = 20,
     LIBREAUTH_OATH_INVALID_PERIOD    = 21,
 
-    LIBREAUTH_OATH_CODE_INVALID_UTF8 = 30
+    LIBREAUTH_OATH_INVALID_UTF8      = 30
 } libreauth_oath_errno;
 
 /* HOTP */
@@ -149,7 +149,6 @@ struct libreauth_hotp_cfg {
     uint64_t                      counter;
     size_t                        output_len;
     const char                   *output_base;
-    size_t                        output_base_len;
     libreauth_oath_hash_function  hash_function;
 };
 
@@ -170,7 +169,6 @@ struct libreauth_totp_cfg {
     uint64_t                      initial_time;
     size_t                        output_len;
     const void                   *output_base;
-    size_t                        output_base_len;
     libreauth_oath_hash_function  hash_function;
 };
 

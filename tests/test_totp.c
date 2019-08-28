@@ -63,7 +63,6 @@ static uint32_t test_basic_totp(void) {
     assert(cfg.initial_time == 0);
     assert(cfg.output_len == DEFAULT_BUFF_LEN);
     assert(cfg.output_base == NULL);
-    assert(cfg.output_base_len == 0);
     assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
 
     cfg.key = key;
@@ -230,16 +229,12 @@ static uint32_t test_invalid_base(void) {
 
     cfg.key = key;
     cfg.key_len = strlen(key);
-    cfg.output_base = base;
+    cfg.output_base = "";
 
     uint32_t ret = libreauth_totp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
-    cfg.output_base_len = 1;
-    ret = libreauth_totp_generate(&cfg, code);
-    assert(ret == LIBREAUTH_OATH_INVALID_BASE_LEN);
 
-    cfg.output_base_len = strlen(base);
-
+    cfg.output_base = base;
     ret = libreauth_totp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);
 
