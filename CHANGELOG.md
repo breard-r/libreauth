@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The crate is now compiled with Rust 2018.
-- Each module has now its dedicated feature that needs to be explicitly enabled.
+- Each module has now its dedicated feature.
 - `LIBREAUTH_OATH_CFG_NULL_PTR`, `LIBREAUTH_OATH_CODE_NULL_PTR` and `LIBREAUTH_OATH_KEY_NULL_PTR` has been replaced by `LIBREAUTH_OATH_NULL_PTR`.
 
 
