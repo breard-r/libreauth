@@ -63,7 +63,7 @@ pub fn is_valid(h: &HashBuilder) -> bool {
                     }
                 }
             };
-            match h.parameters.get("hash") {
+            match h.parameters.get("hmac") {
                 Some(h) => match h.as_str() {
                     "sha1" => {}
                     "sha224" => {}

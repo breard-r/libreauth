@@ -95,7 +95,7 @@
 //!             <td>45000</td>
 //!         </tr>
 //!         <tr>
-//!             <td>hash</td>
+//!             <td>hmac</td>
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256 | keccak224 | keccak256 | keccak384 | keccak512 | sha3-224 | sha3-256 | sha3-384 | sha3-512</td>
 //!             <td>The underlying hash function to use for the HMAC.</td>
 //!             <td>sha512</td>
@@ -571,8 +571,9 @@ impl Hasher {
 /// Build a Hasher object with custom parameters. This object will be usable to hash a password.
 /// ```
 /// let hasher = match libreauth::pass::HashBuilder::new()
-///     .min_len(12).algorithm(libreauth::pass::Algorithm::Pbkdf2)
-///     .add_param("hash", "sha512")
+///     .min_len(12)
+///     .algorithm(libreauth::pass::Algorithm::Pbkdf2)
+///     .add_param("hmac", "sha256")
 ///     .add_param("norm", "nfkd")
 ///     .finalize() {
 ///     Ok(h) => h,
@@ -1044,7 +1045,7 @@ mod tests {
             .normalization(Normalization::Nfkd)
             .algorithm(Algorithm::Pbkdf2)
             .add_param("iter", "80000")
-            .add_param("hash", "sha512t256");
+            .add_param("hmac", "sha512t256");
         assert_eq!(hb.min_len, 42);
         assert_eq!(hb.max_len, 256);
         assert_eq!(hb.ref_salt, None);
@@ -1066,7 +1067,7 @@ mod tests {
             Algorithm::Pbkdf2 => assert!(true),
             _ => assert!(false),
         }
-        match hb.parameters.get("hash") {
+        match hb.parameters.get("hmac") {
             Some(h) => match h.as_str() {
                 "sha512t256" => assert!(true),
                 _ => assert!(false),

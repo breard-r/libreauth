@@ -123,7 +123,7 @@ static uint32_t test_invalid_pass(void) {
 
     struct libreauth_pass_cfg   cfg;
     const char password[] = "invalid password",
-          reference[] = "$pbkdf2$hash=sha256,iter=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk";
+          reference[] = "$pbkdf2$hmac=sha256,iter=21000$RSF4Aw$pgenLCySNXpFaLmYxfcI+AHwsf+66iBTV+COTTJYMMk";
 
     uint32_t ret = libreauth_pass_init_from_phc(&cfg, reference);
     assert(ret == LIBREAUTH_PASS_SUCCESS);

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The output base for HOTP and TOTP must now be valid UTF-8.
 - `LIBREAUTH_OATH_CODE_INVALID_UTF8` has been renamed `LIBREAUTH_OATH_INVALID_UTF8`.
 - The `output_base_len` parameter in the `libreauth_hotp_cfg` and `libreauth_totp_cfg` structures has been dropped.
+- The PBKDF2 `hash` parameter has been renamed `hmac`.
 
 
 ## [0.12.0] - 2019-08-27

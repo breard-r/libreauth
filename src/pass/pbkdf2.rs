@@ -70,7 +70,7 @@ impl HashingFunction for Pbkdf2Hash {
         set_normalization!(self, norm, params, "norm".to_string());
         params.insert("iter".to_string(), self.nb_iter.to_string());
         params.insert(
-            "hash".to_string(),
+            "hmac".to_string(),
             match self.hash_function {
                 HashFunction::Sha1 => "sha1".to_string(),
                 HashFunction::Sha224 => "sha224".to_string(),
@@ -104,7 +104,7 @@ impl HashingFunction for Pbkdf2Hash {
                 },
                 Err(_) => Err(ErrorCode::InvalidPasswordFormat),
             },
-            "hash" => match value {
+            "hash" | "hmac" => match value {
                 "sha1" => {
                     self.hash_function = HashFunction::Sha1;
                     Ok(())
