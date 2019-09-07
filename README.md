@@ -40,10 +40,6 @@ LibreAuth is a collection of tools for user authentication.
 - ~~WebAuthn - Web Authentication: An API for accessing Public Key Credentials Level 1~~ ([W3C](https://www.w3.org/TR/webauthn/)) :warning: Not started yet
   - [ ] authenticator API
   - [ ] server API
-- ~~U2F - Universal 2nd Factor~~ ([FIDO Alliance](https://fidoalliance.org/specifications/download/)) :warning: Not started yet
-  - [ ] virtual device API
-  - [ ] client API
-  - [ ] server API
 
 
 ## Status
