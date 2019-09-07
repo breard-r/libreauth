@@ -7,6 +7,7 @@ use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
+use std::str::FromStr;
 
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
 const MIN_SALT_LENGTH: usize = 4; // in bytes
@@ -54,23 +55,7 @@ impl HashingFunction for Pbkdf2Hash {
         params.insert("iter".to_string(), self.nb_iter.to_string());
         params.insert(
             "hmac".to_string(),
-            match self.hash_function {
-                HashFunction::Sha1 => "sha1".to_string(),
-                HashFunction::Sha224 => "sha224".to_string(),
-                HashFunction::Sha256 => "sha256".to_string(),
-                HashFunction::Sha384 => "sha384".to_string(),
-                HashFunction::Sha512 => "sha512".to_string(),
-                HashFunction::Sha512Trunc224 => "sha512t224".to_string(),
-                HashFunction::Sha512Trunc256 => "sha512t256".to_string(),
-                HashFunction::Keccak224 => "keccak224".to_string(),
-                HashFunction::Keccak256 => "keccak256".to_string(),
-                HashFunction::Keccak384 => "keccak384".to_string(),
-                HashFunction::Keccak512 => "keccak512".to_string(),
-                HashFunction::Sha3_224 => "sha3-224".to_string(),
-                HashFunction::Sha3_256 => "sha3-256".to_string(),
-                HashFunction::Sha3_384 => "sha3-384".to_string(),
-                HashFunction::Sha3_512 => "sha3-512".to_string(),
-            },
+            self.hash_function.to_string().to_lowercase(),
         );
         params
     }
@@ -87,68 +72,12 @@ impl HashingFunction for Pbkdf2Hash {
                 },
                 Err(_) => Err(ErrorCode::InvalidPasswordFormat),
             },
-            "hash" | "hmac" => match value {
-                "sha1" => {
-                    self.hash_function = HashFunction::Sha1;
+            "hash" | "hmac" => match HashFunction::from_str(value) {
+                Ok(h) => {
+                    self.hash_function = h;
                     Ok(())
                 }
-                "sha224" => {
-                    self.hash_function = HashFunction::Sha224;
-                    Ok(())
-                }
-                "sha256" => {
-                    self.hash_function = HashFunction::Sha256;
-                    Ok(())
-                }
-                "sha384" => {
-                    self.hash_function = HashFunction::Sha384;
-                    Ok(())
-                }
-                "sha512" => {
-                    self.hash_function = HashFunction::Sha512;
-                    Ok(())
-                }
-                "sha512t224" => {
-                    self.hash_function = HashFunction::Sha512Trunc224;
-                    Ok(())
-                }
-                "sha512t256" => {
-                    self.hash_function = HashFunction::Sha512Trunc256;
-                    Ok(())
-                }
-                "keccak224" => {
-                    self.hash_function = HashFunction::Keccak224;
-                    Ok(())
-                }
-                "keccak256" => {
-                    self.hash_function = HashFunction::Keccak256;
-                    Ok(())
-                }
-                "keccak384" => {
-                    self.hash_function = HashFunction::Keccak384;
-                    Ok(())
-                }
-                "keccak512" => {
-                    self.hash_function = HashFunction::Keccak512;
-                    Ok(())
-                }
-                "sha3-224" => {
-                    self.hash_function = HashFunction::Sha3_224;
-                    Ok(())
-                }
-                "sha3-256" => {
-                    self.hash_function = HashFunction::Sha3_256;
-                    Ok(())
-                }
-                "sha3-384" => {
-                    self.hash_function = HashFunction::Sha3_384;
-                    Ok(())
-                }
-                "sha3-512" => {
-                    self.hash_function = HashFunction::Sha3_512;
-                    Ok(())
-                }
-                _ => Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => Err(ErrorCode::InvalidPasswordFormat),
             },
             _ => Err(ErrorCode::InvalidPasswordFormat),
         }

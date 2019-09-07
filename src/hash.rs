@@ -1,6 +1,11 @@
 //! Hash functions used in the library
 
 use std::fmt;
+use std::str::FromStr;
+
+pub enum HashFunctionError {
+    ImportError,
+}
 
 /// ## C interface
 /// The C interface uses an enum of type `libreauth_oath_hash_function` and
@@ -115,5 +120,32 @@ impl fmt::Display for HashFunction {
             HashFunction::Keccak512 => "Keccak512",
         };
         write!(f, "{}", s)
+    }
+}
+
+impl FromStr for HashFunction {
+    type Err = HashFunctionError;
+
+    fn from_str(data: &str) -> Result<Self, Self::Err> {
+        Ok(match data.to_lowercase().as_str() {
+            "sha1" => HashFunction::Sha1,
+            "sha224" => HashFunction::Sha224,
+            "sha256" => HashFunction::Sha256,
+            "sha384" => HashFunction::Sha384,
+            "sha512" => HashFunction::Sha512,
+            "sha512-224" | "sha512t224" => HashFunction::Sha512Trunc224,
+            "sha512-256" | "sha512t256" => HashFunction::Sha512Trunc256,
+            "sha3-224" => HashFunction::Sha3_224,
+            "sha3-256" => HashFunction::Sha3_256,
+            "sha3-384" => HashFunction::Sha3_384,
+            "sha3-512" => HashFunction::Sha3_512,
+            "keccak224" => HashFunction::Keccak224,
+            "keccak256" => HashFunction::Keccak256,
+            "keccak384" => HashFunction::Keccak384,
+            "keccak512" => HashFunction::Keccak512,
+            _ => {
+                return Err(HashFunctionError::ImportError);
+            }
+        })
     }
 }
