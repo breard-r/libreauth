@@ -491,10 +491,7 @@ impl Hasher {
     }
 
     pub fn hash(&self, password: &str) -> Result<String, ErrorCode> {
-        match self.do_hash(password) {
-            Ok(hash_duo) => Ok(hash_duo.formated),
-            Err(e) => Err(e),
-        }
+        Ok(self.do_hash(password)?.formated)
     }
 
     pub fn is_valid(&self, password: &str) -> bool {
