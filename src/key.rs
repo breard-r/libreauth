@@ -5,12 +5,12 @@
 //! Many random generators are available, but not all of them are
 //! cryptographically secure. That is a problem because if a secret key may
 //! be predictable, the security of your system crumbles into pieces. This
-//! key generation module is a wrapper upon `rand::OsRng` which, as its name
-//! stands, is a rust wrapper around the operating system's RNG. If the OS's
-//! entropy source is not available, it fails instead of falling back to a
-//! less secure source.
+//! key generation module is a wrapper upon `rand_core::OsRng` which, as its
+//! name stands, is a rust wrapper around the operating system's RNG. If the
+//! OS's entropy source is not available, it fails instead of falling back
+//! to a less secure source.
 //!
-//! You may read more about cryptographic security in [rand's documentation](https://doc.rust-lang.org/rand/rand/index.html#cryptographic-security).
+//! You may read more about cryptographic security in [rand_core's documentation](https://rust-random.github.io/rand/rand_core/trait.CryptoRng.html).
 //!
 //! ## Examples
 //!
@@ -39,8 +39,7 @@
 use base32;
 use base64;
 use hex;
-use rand::rngs::OsRng;
-use rand::RngCore;
+use rand_core::{CryptoRng, OsRng, RngCore};
 
 /// Random key builder.
 #[derive(Default)]
@@ -69,12 +68,16 @@ impl KeyBuilder {
     }
 
     /// Generate a random key.
-    pub fn generate(mut self) -> Self {
+    pub fn generate(self) -> Self {
+        self.do_generate(OsRng)
+    }
+
+    fn do_generate<T: RngCore + CryptoRng>(mut self, mut rng: T) -> Self {
         if self.size == 0 {
             panic!();
         }
         let mut key: Vec<u8> = vec![0; self.size];
-        OsRng.fill_bytes(&mut key.as_mut_slice());
+        rng.fill_bytes(&mut key.as_mut_slice());
         self.key = Some(key);
         self
     }
