@@ -57,7 +57,7 @@ static uint32_t test_basic_hotp(void) {
     assert(cfg.counter == 0);
     assert(cfg.output_len == DEFAULT_BUFF_LEN);
     assert(cfg.output_base == NULL);
-    assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
+    assert(cfg.hash_function == LIBREAUTH_HASH_SHA_1);
 
     cfg.key = key;
     cfg.key_len = strlen(key);

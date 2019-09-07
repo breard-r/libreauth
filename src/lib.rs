@@ -14,6 +14,8 @@ macro_rules! get_string {
     }};
 }
 
+#[cfg(feature = "hash")]
+pub mod hash;
 #[cfg(feature = "key")]
 pub mod key;
 #[cfg(feature = "oath")]

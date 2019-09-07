@@ -63,7 +63,7 @@ static uint32_t test_basic_totp(void) {
     assert(cfg.initial_time == 0);
     assert(cfg.output_len == DEFAULT_BUFF_LEN);
     assert(cfg.output_base == NULL);
-    assert(cfg.hash_function == LIBREAUTH_OATH_SHA_1);
+    assert(cfg.hash_function == LIBREAUTH_HASH_SHA_1);
 
     cfg.key = key;
     cfg.key_len = strlen(key);
@@ -91,7 +91,7 @@ static uint32_t test_basic_key_uri(void) {
     assert(ret == LIBREAUTH_OATH_SUCCESS);
     cfg.key = key;
     cfg.key_len = strlen(key);
-    cfg.hash_function = LIBREAUTH_OATH_SHA_256;
+    cfg.hash_function = LIBREAUTH_HASH_SHA_256;
 
     ret = libreauth_totp_get_uri(&cfg, "Provider1", "alice@example.com", NULL, 42);
     assert(ret == LIBREAUTH_OATH_NULL_PTR);
@@ -118,7 +118,7 @@ static uint32_t test_advanced_totp(void) {
     cfg.key_len = strlen(key);
     cfg.timestamp = 1111111109;
     cfg.output_len = BIGGER_BUFF_LEN;
-    cfg.hash_function = LIBREAUTH_OATH_SHA_256;
+    cfg.hash_function = LIBREAUTH_HASH_SHA_256;
 
     ret = libreauth_totp_generate(&cfg, code);
     assert(ret == LIBREAUTH_OATH_SUCCESS);

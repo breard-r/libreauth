@@ -178,7 +178,7 @@ impl TOTP {
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
-///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .hash_function(libreauth::hash::HashFunction::Sha256)
 ///     .finalize();
 /// ```
 ///
@@ -187,7 +187,7 @@ impl TOTP {
 /// let mut totp = libreauth::oath::TOTPBuilder::new()
 ///     .base64_key(&key_base64)
 ///     .output_len(8)
-///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .hash_function(libreauth::hash::HashFunction::Sha256)
 ///     .finalize();
 /// ```
 pub struct TOTPBuilder {
@@ -502,7 +502,7 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::TOTPBuilder;
-    use crate::oath::HashFunction;
+    use crate::hash::HashFunction;
 
     #[test]
     fn test_totp_key_simple() {

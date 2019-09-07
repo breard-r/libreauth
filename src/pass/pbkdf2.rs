@@ -1,4 +1,5 @@
 use super::{std_default, ErrorCode, HashingFunction, Normalization};
+use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
@@ -6,24 +7,6 @@ use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
-
-pub enum HashFunction {
-    Sha1,
-    Sha224,
-    Sha256,
-    Sha384,
-    Sha512,
-    Sha512Trunc224,
-    Sha512Trunc256,
-    Keccak224,
-    Keccak256,
-    Keccak384,
-    Keccak512,
-    Sha3_224,
-    Sha3_256,
-    Sha3_384,
-    Sha3_512,
-}
 
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
 const MIN_SALT_LENGTH: usize = 4; // in bytes

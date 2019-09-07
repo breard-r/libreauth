@@ -19,11 +19,12 @@ name = "libreauth"
 crate-type = ["rlib", "staticlib", "dylib"]
 
 [features]
-default = ["key", "oath", "pass"]
+default = ["hash", "key", "oath", "pass"]
 cbindings = ["libc"]
+hash = ["hmac", "sha-1", "sha2", "sha3"]
 key = ["base32", "base64", "hex", "rand"]
-oath = ["base32", "base64", "hex", "hmac", "sha-1", "sha2", "sha3", "time", "url"]
-pass = ["base64", "hmac", "key", "nom", "pbkdf2", "rust-argon2", "sha-1", "sha2", "sha3", "unicode-normalization"]
+oath = ["base32", "base64", "hash", "hex", "time", "url"]
+pass = ["base64", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
 
 [dependencies]
 base32 = { version = "^0.4", optional = true }

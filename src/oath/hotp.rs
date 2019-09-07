@@ -288,7 +288,7 @@ impl HOTP {
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .base32_key(&key_base32)
 ///     .output_len(8)
-///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .hash_function(libreauth::hash::HashFunction::Sha256)
 ///     .finalize();
 /// ```
 ///
@@ -297,7 +297,7 @@ impl HOTP {
 /// let mut hotp = libreauth::oath::HOTPBuilder::new()
 ///     .base64_key(&key_base64)
 ///     .output_len(8)
-///     .hash_function(libreauth::oath::HashFunction::Sha256)
+///     .hash_function(libreauth::hash::HashFunction::Sha256)
 ///     .finalize();
 /// ```
 pub struct HOTPBuilder {
@@ -533,7 +533,8 @@ pub mod cbindings {
 #[cfg(test)]
 mod tests {
     use super::HOTPBuilder;
-    use crate::oath::{HashFunction, ParametersVisibility};
+    use crate::hash::HashFunction;
+    use crate::oath::ParametersVisibility;
 
     #[test]
     fn test_hotp_key_simple() {

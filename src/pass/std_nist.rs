@@ -1,7 +1,6 @@
-use super::pbkdf2::{
-    HashFunction, DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH, DEFAULT_ITER as PBKDF2_DEF_ITER,
-};
+use super::pbkdf2::{DEFAULT_HASH_FUNCTION as PBKDF2_DEF_HASH, DEFAULT_ITER as PBKDF2_DEF_ITER};
 use super::{Algorithm, HashBuilder, LengthCalculationMethod, Normalization};
+use crate::hash::HashFunction;
 
 pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
 pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;

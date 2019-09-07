@@ -37,6 +37,28 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/*
+ * Hash module
+ */
+
+typedef enum {
+    LIBREAUTH_HASH_SHA_1                = 1,
+    LIBREAUTH_HASH_SHA_224              = 2,
+    LIBREAUTH_HASH_SHA_256              = 3,
+    LIBREAUTH_HASH_SHA_384              = 4,
+    LIBREAUTH_HASH_SHA_512              = 5,
+    LIBREAUTH_HASH_SHA_512_TRUNC_224    = 6,
+    LIBREAUTH_HASH_SHA_512_TRUNC_256    = 7,
+    LIBREAUTH_HASH_SHA_3_224            = 8,
+    LIBREAUTH_HASH_SHA_3_256            = 9,
+    LIBREAUTH_HASH_SHA_3_384            = 10,
+    LIBREAUTH_HASH_SHA_3_512            = 11,
+    LIBREAUTH_HASH_KECCAK_224           = 12,
+    LIBREAUTH_HASH_KECCAK_256           = 13,
+    LIBREAUTH_HASH_KECCAK_384           = 14,
+    LIBREAUTH_HASH_KECCAK_512           = 15,
+} libreauth_oath_hash_function;
+
 
 /*
  * Key generation module
@@ -105,24 +127,6 @@ int32_t                 libreauth_pass_is_valid(const char *pass, const char *re
 /*
  * OATH module
  */
-
-typedef enum {
-    LIBREAUTH_OATH_SHA_1                = 1,
-    LIBREAUTH_OATH_SHA_224              = 2,
-    LIBREAUTH_OATH_SHA_256              = 3,
-    LIBREAUTH_OATH_SHA_384              = 4,
-    LIBREAUTH_OATH_SHA_512              = 5,
-    LIBREAUTH_OATH_SHA_512_TRUNC_224    = 6,
-    LIBREAUTH_OATH_SHA_512_TRUNC_256    = 7,
-    LIBREAUTH_OATH_SHA_3_224            = 8,
-    LIBREAUTH_OATH_SHA_3_256            = 9,
-    LIBREAUTH_OATH_SHA_3_384            = 10,
-    LIBREAUTH_OATH_SHA_3_512            = 11,
-    LIBREAUTH_OATH_KECCAK_224           = 12,
-    LIBREAUTH_OATH_KECCAK_256           = 13,
-    LIBREAUTH_OATH_KECCAK_384           = 14,
-    LIBREAUTH_OATH_KECCAK_512           = 15,
-} libreauth_oath_hash_function;
 
 typedef enum {
     LIBREAUTH_OATH_SUCCESS           = 0,
