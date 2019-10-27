@@ -20,7 +20,7 @@
 //!
 //! ## Supported identifiers and parameters
 //!
-//! <table class="vcentered_table">
+//! <table>
 //!     <thead>
 //!         <tr>
 //!             <th>Algorithm</th>
@@ -32,23 +32,17 @@
 //!     </thead>
 //!     <tbody>
 //!         <tr>
-//!             <td rowspan="5" class="hash">Global parameters</td>
-//!             <td>norm</td>
-//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
-//!             <td>Unicode normalization.</td>
-//!             <td>nfkc</td>
-//!         </tr>
-//!         <tr>
+//!             <td rowspan="7">Global parameters</td>
 //!             <td>len-calc</td>
 //!             <td>string: bytes | chars</td>
 //!             <td>Unicode string length calculation method.</td>
 //!             <td>chars</td>
 //!         </tr>
 //!         <tr>
-//!             <td>pmin</td>
-//!             <td>integer</td>
-//!             <td>Password minimal length.</td>
-//!             <td>8</td>
+//!             <td>norm</td>
+//!             <td>string: nfd | nfkd | nfc | nfkc | none</td>
+//!             <td>Unicode normalization.</td>
+//!             <td>nfkc</td>
 //!         </tr>
 //!         <tr>
 //!             <td>pmax</td>
@@ -57,25 +51,31 @@
 //!             <td>128</td>
 //!         </tr>
 //!         <tr>
+//!             <td>pmin</td>
+//!             <td>integer</td>
+//!             <td>Password minimal length.</td>
+//!             <td>8</td>
+//!         </tr>
+//!         <tr>
 //!             <td>ver</td>
 //!             <td>integer</td>
 //!             <td>The password hashing version.</td>
 //!             <td>Sum of the user-defined and internal version numbers.</td>
 //!         </tr>
 //!         <tr>
-//!             <td rowspan="4" class="hash">argon2</td>
-//!             <td>passes</td>
-//!             <td>integer</td>
-//!             <td>The number of block matrix iterations to perform.</td>
-//!             <td>3</td>
+//!             <td>xhmac</td>
+//!             <td>string: none | before | after</td>
+//!             <td>If not none, apply an additional HMAC with an external salt before or after hashing the password.</td>
+//!             <td>none</td>
 //!         </tr>
 //!         <tr>
-//!             <td>mem</td>
-//!             <td>integer</td>
-//!             <td>Memmory cost (2^mem kibbibytes).</td>
-//!             <td>12 (4096 KiB)</td>
+//!             <td>xhmac-alg</td>
+//!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256 | keccak224 | keccak256 | keccak384 | keccak512 | sha3-224 | sha3-256 | sha3-384 | sha3-512</td>
+//!             <td>The underlying hash function to use for the HMAC.</td>
+//!             <td>sha512</td>
 //!         </tr>
 //!         <tr>
+//!             <td rowspan="4">argon2</td>
 //!             <td>lanes</td>
 //!             <td>integer</td>
 //!             <td>The degree of parallelism by which memory is filled during hash computation.</td>
@@ -88,17 +88,29 @@
 //!             <td>128</td>
 //!         </tr>
 //!         <tr>
-//!             <td rowspan="2" class="hash">pbkdf2</td>
-//!             <td>iter</td>
+//!             <td>mem</td>
 //!             <td>integer</td>
-//!             <td>Number of iterations.</td>
-//!             <td>45000</td>
+//!             <td>Memmory cost (2^mem kibbibytes).</td>
+//!             <td>12 (4096 KiB)</td>
 //!         </tr>
 //!         <tr>
+//!             <td>passes</td>
+//!             <td>integer</td>
+//!             <td>The number of block matrix iterations to perform.</td>
+//!             <td>3</td>
+//!         </tr>
+//!         <tr>
+//!             <td rowspan="2">pbkdf2</td>
 //!             <td>hmac</td>
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256 | keccak224 | keccak256 | keccak384 | keccak512 | sha3-224 | sha3-256 | sha3-384 | sha3-512</td>
 //!             <td>The underlying hash function to use for the HMAC.</td>
 //!             <td>sha512</td>
+//!         </tr>
+//!         <tr>
+//!             <td>iter</td>
+//!             <td>integer</td>
+//!             <td>Number of iterations.</td>
+//!             <td>45000</td>
 //!         </tr>
 //!     </tbody>
 //! </table>
@@ -144,6 +156,15 @@ macro_rules! set_normalization {
     };
 }
 
+macro_rules! get_salt {
+    ($salt: ident) => {
+        $salt
+            .as_ref()
+            .ok_or(ErrorCode::InvalidPasswordFormat)?
+            .to_vec()
+    };
+}
+
 mod argon2;
 mod pbkdf2;
 mod phc;
@@ -151,10 +172,15 @@ mod std_default;
 mod std_nist;
 
 use self::phc::PHCData;
+use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use hmac::{Hmac, Mac};
-use sha2::Sha512;
+use sha1::Sha1;
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
+use std::fmt;
+use std::str::FromStr;
 use unicode_normalization::UnicodeNormalization;
 
 const INTERNAL_VERSION: usize = 1;
@@ -268,6 +294,12 @@ pub enum ErrorCode {
     NullPtr = 21,
 }
 
+impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
+    fn from(_error: crypto_mac::InvalidKeyLength) -> Self {
+        ErrorCode::InvalidPasswordFormat
+    }
+}
+
 /// Available methods to calculate the length of a UTF-8 string.
 ///
 /// ## C interface
@@ -375,6 +407,37 @@ pub enum PasswordStorageStandard {
     Nist80063b = 1,
 }
 
+#[derive(Clone, Eq, PartialEq, Debug)]
+enum XHMAC {
+    Before(Vec<u8>),
+    After(Vec<u8>),
+    None,
+}
+
+impl fmt::Display for XHMAC {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            XHMAC::Before(_) => "before",
+            XHMAC::After(_) => "after",
+            XHMAC::None => "none",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl XHMAC {
+    pub(crate) fn is_none(&self) -> bool {
+        match *self {
+            XHMAC::None => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
 trait HashingFunction {
     fn get_id(&self) -> String;
     fn get_parameters(&self) -> HashMap<String, String>;
@@ -403,6 +466,16 @@ pub struct Hasher {
     salt_len: usize,
     length_calculation: LengthCalculationMethod,
     version: usize,
+    xhmac: XHMAC,
+    xhmax_alg: HashFunction,
+}
+
+macro_rules! get_hmac {
+    ($hash_func: ty, $salt: ident, $pass: ident) => {{
+        let mut hasher = Hmac::<$hash_func>::new_varkey(&$salt)?;
+        hasher.input($pass);
+        Ok(hasher.result().code().as_slice().to_vec())
+    }};
 }
 
 impl Hasher {
@@ -456,6 +529,26 @@ impl Hasher {
         hash_func
     }
 
+    fn apply_xhmac(&self, password: &[u8], salt: &[u8]) -> Result<Vec<u8>, ErrorCode> {
+        match self.xhmax_alg {
+            HashFunction::Sha1 => get_hmac!(Sha1, salt, password),
+            HashFunction::Sha224 => get_hmac!(Sha224, salt, password),
+            HashFunction::Sha256 => get_hmac!(Sha256, salt, password),
+            HashFunction::Sha384 => get_hmac!(Sha384, salt, password),
+            HashFunction::Sha512 => get_hmac!(Sha512, salt, password),
+            HashFunction::Sha512Trunc224 => get_hmac!(Sha512Trunc224, salt, password),
+            HashFunction::Sha512Trunc256 => get_hmac!(Sha512Trunc256, salt, password),
+            HashFunction::Sha3_224 => get_hmac!(Sha3_224, salt, password),
+            HashFunction::Sha3_256 => get_hmac!(Sha3_256, salt, password),
+            HashFunction::Sha3_384 => get_hmac!(Sha3_384, salt, password),
+            HashFunction::Sha3_512 => get_hmac!(Sha3_512, salt, password),
+            HashFunction::Keccak224 => get_hmac!(Keccak224, salt, password),
+            HashFunction::Keccak256 => get_hmac!(Keccak256, salt, password),
+            HashFunction::Keccak384 => get_hmac!(Keccak384, salt, password),
+            HashFunction::Keccak512 => get_hmac!(Keccak512, salt, password),
+        }
+    }
+
     fn do_hash(&self, password: &str) -> Result<HashedDuo, ErrorCode> {
         let norm_pass = self.normalize_password(password);
         match self.check_password(&norm_pass) {
@@ -464,8 +557,16 @@ impl Hasher {
                 return Err(e);
             }
         };
+        let norm_pass = match &self.xhmac {
+            XHMAC::Before(salt) => self.apply_xhmac(password.as_bytes(), &salt)?,
+            _ => norm_pass.into_bytes(),
+        };
         let hash_func = self.get_hash_func();
-        let hash = hash_func.hash(&norm_pass.into_bytes());
+        let hash = hash_func.hash(&norm_pass);
+        let hash = match &self.xhmac {
+            XHMAC::After(salt) => self.apply_xhmac(&hash, &salt)?,
+            _ => hash,
+        };
         let lc = match self.length_calculation {
             LengthCalculationMethod::Bytes => "bytes",
             LengthCalculationMethod::Characters => "chars",
@@ -475,6 +576,13 @@ impl Hasher {
         params.insert("pmin".to_string(), format!("{}", self.min_len));
         params.insert("pmax".to_string(), format!("{}", self.max_len));
         params.insert("ver".to_string(), format!("{}", self.version));
+        params.insert("xhmac".to_string(), self.xhmac.to_string());
+        if self.xhmac.is_some() {
+            params.insert(
+                "xhmac-alg".to_string(),
+                self.xhmax_alg.to_string().to_lowercase(),
+            );
+        }
         let phc = PHCData {
             id: hash_func.get_id(),
             parameters: params,
@@ -592,6 +700,8 @@ pub struct HashBuilder {
     salt_len: usize,
     length_calculation: LengthCalculationMethod,
     version: usize,
+    xhmac: XHMAC,
+    xhmax_alg: HashFunction,
 }
 
 impl Default for HashBuilder {
@@ -621,6 +731,8 @@ impl HashBuilder {
                 salt_len: std_default::DEFAULT_SALT_LEN,
                 length_calculation: std_default::DEFAULT_LENGTH_CALCULATION,
                 version: DEFAULT_USER_VERSION + INTERNAL_VERSION,
+                xhmac: XHMAC::None,
+                xhmax_alg: std_default::DEFAULT_XHMAC_ALGORITHM,
             },
             PasswordStorageStandard::Nist80063b => HashBuilder {
                 standard: PasswordStorageStandard::Nist80063b,
@@ -634,15 +746,34 @@ impl HashBuilder {
                 salt_len: std_nist::DEFAULT_SALT_LEN,
                 length_calculation: std_nist::DEFAULT_LENGTH_CALCULATION,
                 version: DEFAULT_USER_VERSION + INTERNAL_VERSION,
+                xhmac: XHMAC::None,
+                xhmax_alg: std_nist::DEFAULT_XHMAC_ALGORITHM,
             },
         }
     }
 
     /// Create a new Hasher object from a PHC formatted string.
     pub fn from_phc(data: &str) -> Result<Hasher, ErrorCode> {
+        HashBuilder::from_phc_internal(data, None)
+    }
+
+    /// Create a new Hasher object from a PHC formatted string and an external salt for an additional HMAC.
+    pub fn from_phc_xhmac(data: &str, salt: &[u8]) -> Result<Hasher, ErrorCode> {
+        HashBuilder::from_phc_internal(data, Some(salt.to_vec()))
+    }
+
+    fn from_phc_internal(data: &str, salt: Option<Vec<u8>>) -> Result<Hasher, ErrorCode> {
         let mut phc = match PHCData::from_str(data) {
             Ok(v) => v,
             Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+        };
+        let lc = match phc.parameters.remove("len-calc") {
+            Some(v) => match v.as_str() {
+                "bytes" => LengthCalculationMethod::Bytes,
+                "chars" => LengthCalculationMethod::Characters,
+                _ => return Err(ErrorCode::InvalidPasswordFormat),
+            },
+            None => LengthCalculationMethod::Characters,
         };
         let norm = match phc.parameters.remove("norm") {
             Some(v) => match v.as_str() {
@@ -655,12 +786,12 @@ impl HashBuilder {
             },
             None => Normalization::Nfkc,
         };
-        let version = match phc.parameters.remove("ver") {
+        let max_l = match phc.parameters.remove("pmax") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
                 Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
             },
-            None => DEFAULT_USER_VERSION + INTERNAL_VERSION,
+            None => std_default::DEFAULT_PASSWORD_MAX_LEN,
         };
         let min_l = match phc.parameters.remove("pmin") {
             Some(v) => match v.parse::<usize>() {
@@ -669,20 +800,30 @@ impl HashBuilder {
             },
             None => std_default::DEFAULT_PASSWORD_MIN_LEN,
         };
-        let max_l = match phc.parameters.remove("pmax") {
+        let version = match phc.parameters.remove("ver") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
                 Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
             },
-            None => std_default::DEFAULT_PASSWORD_MAX_LEN,
+            None => DEFAULT_USER_VERSION + INTERNAL_VERSION,
         };
-        let lc = match phc.parameters.remove("len-calc") {
-            Some(v) => match v.as_str() {
-                "bytes" => LengthCalculationMethod::Bytes,
-                "chars" => LengthCalculationMethod::Characters,
+        let xhmac = match phc.parameters.remove("xhmac") {
+            Some(when) => match when.to_lowercase().as_str() {
+                "before" => XHMAC::Before(get_salt!(salt)),
+                "after" => XHMAC::After(get_salt!(salt)),
+                "none" => XHMAC::None,
                 _ => return Err(ErrorCode::InvalidPasswordFormat),
             },
-            None => LengthCalculationMethod::Characters,
+            None => XHMAC::None,
+        };
+        if xhmac == XHMAC::None && salt.is_some() {
+            return Err(ErrorCode::InvalidPasswordFormat);
+        }
+        let xhmax_alg = match phc.parameters.remove("xhmac-alg") {
+            Some(alg_str) => {
+                HashFunction::from_str(&alg_str).map_err(|_| ErrorCode::InvalidPasswordFormat)?
+            }
+            None => std_default::DEFAULT_XHMAC_ALGORITHM,
         };
         let hash_builder = HashBuilder {
             standard: PasswordStorageStandard::NoStandard,
@@ -703,6 +844,8 @@ impl HashBuilder {
             ref_salt: phc.salt,
             length_calculation: lc,
             version,
+            xhmac,
+            xhmax_alg,
         };
         hash_builder.finalize()
     }
@@ -728,6 +871,8 @@ impl HashBuilder {
             salt_len: self.salt_len,
             length_calculation: self.length_calculation,
             version: self.version,
+            xhmac: self.xhmac.clone(),
+            xhmax_alg: self.xhmax_alg,
         })
     }
 
@@ -779,6 +924,24 @@ impl HashBuilder {
     /// Set the hashing scheme version number.
     pub fn version(&mut self, version: usize) -> &mut HashBuilder {
         self.version = version + INTERNAL_VERSION;
+        self
+    }
+
+    /// Set the hash function that will be used to compute the additional HMAC.
+    pub fn xhmac(&mut self, hash_func: HashFunction) -> &mut HashBuilder {
+        self.xhmax_alg = hash_func;
+        self
+    }
+
+    /// Add an additional HMAC with a salt before hashing the password.
+    pub fn xhmac_before(&mut self, salt: &[u8]) -> &mut HashBuilder {
+        self.xhmac = XHMAC::Before(salt.to_vec());
+        self
+    }
+
+    /// Add an additional HMAC with a salt after hashing the password.
+    pub fn xhmac_after(&mut self, salt: &[u8]) -> &mut HashBuilder {
+        self.xhmac = XHMAC::After(salt.to_vec());
         self
     }
 }
@@ -982,8 +1145,8 @@ pub use self::cbindings::libreauth_pass_is_valid;
 #[cfg(test)]
 mod tests {
     use super::{
-        std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
-        PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
+        std_default, std_nist, Algorithm, HashBuilder, HashFunction, LengthCalculationMethod,
+        Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
     };
 
     #[test]
@@ -994,6 +1157,7 @@ mod tests {
         assert_eq!(hb.version, DEFAULT_USER_VERSION + INTERNAL_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
+        assert_eq!(hb.xhmac, XHMAC::None);
         match hb.standard {
             PasswordStorageStandard::NoStandard => assert!(true),
             _ => assert!(false),
@@ -1016,6 +1180,7 @@ mod tests {
         assert_eq!(hb.version, DEFAULT_USER_VERSION + INTERNAL_VERSION);
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
+        assert_eq!(hb.xhmac, XHMAC::None);
         match hb.length_calculation {
             std_nist::DEFAULT_LENGTH_CALCULATION => assert!(true),
             _ => assert!(false),
@@ -1051,6 +1216,7 @@ mod tests {
         assert_eq!(hb.ref_salt, None);
         assert_eq!(hb.ref_hash, None);
         assert_eq!(hb.version, 5 + INTERNAL_VERSION);
+        assert_eq!(hb.xhmac, XHMAC::None);
         match hb.length_calculation {
             LengthCalculationMethod::Characters => assert!(true),
             _ => assert!(false),
@@ -1070,16 +1236,16 @@ mod tests {
         match hb.parameters.get("hmac") {
             Some(h) => match h.as_str() {
                 "sha512t256" => assert!(true),
-                _ => assert!(false),
+                v => assert!(false, "{} invalid hmac parameter value", v),
             },
-            None => assert!(false),
+            None => assert!(false, "hmac: parameter not found"),
         }
         match hb.parameters.get("iter") {
             Some(i) => match i.as_str() {
                 "80000" => assert!(true),
-                _ => assert!(false),
+                v => assert!(false, "{} invalid iter parameter value", v),
             },
-            None => assert!(false),
+            None => assert!(false, "iter: parameter not found"),
         }
     }
 
@@ -1283,5 +1449,73 @@ mod tests {
             .add_param("iter", "8000")
             .finalize()
             .unwrap();
+    }
+
+    #[test]
+    fn test_xhmac_none() {
+        let password = "correct horse battery staple";
+        let hasher = HashBuilder::new().finalize().unwrap();
+        let hpass = hasher.hash(password).unwrap();
+        let checker = HashBuilder::from_phc(hpass.as_str()).unwrap();
+        assert!(checker.is_valid(password));
+        assert!(hpass.contains("xhmac=none"));
+    }
+
+    #[test]
+    fn test_xhmac_before() {
+        let password = "correct horse battery staple";
+        let extra_salt = b"somesalt";
+        let hasher = HashBuilder::new()
+            .xhmac(HashFunction::Sha384)
+            .xhmac_before(extra_salt)
+            .finalize()
+            .unwrap();
+        let hpass = hasher.hash(password).unwrap();
+        let checker = HashBuilder::from_phc_xhmac(hpass.as_str(), extra_salt).unwrap();
+        assert!(checker.is_valid(password));
+        assert!(hpass.contains("xhmac=before"));
+        assert!(hpass.contains("xhmac-alg=sha384"));
+    }
+
+    #[test]
+    fn test_xhmac_after() {
+        let password = "correct horse battery staple";
+        let extra_salt = b"somesalt";
+        let hasher = HashBuilder::new()
+            .xhmac(HashFunction::Sha384)
+            .xhmac_after(extra_salt)
+            .finalize()
+            .unwrap();
+        let hpass = hasher.hash(password).unwrap();
+        let checker = HashBuilder::from_phc_xhmac(hpass.as_str(), extra_salt).unwrap();
+        assert!(checker.is_valid(password));
+        assert!(hpass.contains("xhmac=after"));
+        assert!(hpass.contains("xhmac-alg=sha384"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_xhmac_no_salt_check() {
+        let password = "correct horse battery staple";
+        let extra_salt = b"somesalt";
+        let hasher = HashBuilder::new()
+            .xhmac(HashFunction::Sha384)
+            .xhmac_after(extra_salt)
+            .finalize()
+            .unwrap();
+        let hpass = hasher.hash(password).unwrap();
+        let checker = HashBuilder::from_phc(hpass.as_str()).unwrap();
+        assert!(!checker.is_valid(password));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_xhmac_no_salt_create() {
+        let password = "correct horse battery staple";
+        let extra_salt = b"somesalt";
+        let hasher = HashBuilder::new().finalize().unwrap();
+        let hpass = hasher.hash(password).unwrap();
+        let checker = HashBuilder::from_phc_xhmac(hpass.as_str(), extra_salt).unwrap();
+        assert!(!checker.is_valid(password));
     }
 }

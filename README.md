@@ -18,6 +18,7 @@ LibreAuth is a collection of tools for user authentication.
   - [x] strong, evolutive and retro-compatible password hashing functions
   - [x] NFKC normalization for Unicode passwords
   - [x] optional NIST Special Publication 800-63B compatibility
+  - [x] optional additional HMAC with an external salt before or after hashing the password
 - HOTP - HMAC-based One-time Password Algorithm ([OATH](http://www.openauthentication.org/) - [RFC 4226](https://tools.ietf.org/html/rfc4226))
   - [x] the key can be passed as bytes, an ASCII string, an hexadicimal string, a base32 string or a base64 string
   - [x] customizable counter

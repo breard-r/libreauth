@@ -24,11 +24,12 @@ cbindings = ["libc"]
 hash = ["hmac", "sha-1", "sha2", "sha3"]
 key = ["base32", "base64", "hex", "rand_core"]
 oath = ["base32", "base64", "hash", "hex", "time", "url"]
-pass = ["base64", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
+pass = ["base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
 
 [dependencies]
 base32 = { version = "^0.4", optional = true }
 base64 = { version = "^0.10", optional = true }
+crypto-mac = { version = "^0.7", optional = true }
 hex = { version = "^0.3", optional = true }
 hmac = { version = "^0.7", optional = true }
 libc = { version = "^0.2", optional = true }
