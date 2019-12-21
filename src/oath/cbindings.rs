@@ -184,14 +184,14 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
         .finalize()
-        {
-            Ok(hotp) => {
-                let ref_code = hotp.generate().into_bytes();
-                write_code(&ref_code, code);
-                ErrorCode::Success
-            }
-            Err(errno) => errno,
+    {
+        Ok(hotp) => {
+            let ref_code = hotp.generate().into_bytes();
+            write_code(&ref_code, code);
+            ErrorCode::Success
         }
+        Err(errno) => errno,
+    }
 }
 
 /// [C binding] Check whether or not the supplied HOTP code is valid.
@@ -227,13 +227,13 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) 
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
         .finalize()
-        {
-            Ok(hotp) => match hotp.is_valid(&code) {
-                true => 1,
-                false => 0,
-            },
-            Err(_) => 0,
-        }
+    {
+        Ok(hotp) => match hotp.is_valid(&code) {
+            true => 1,
+            false => 0,
+        },
+        Err(_) => 0,
+    }
 }
 
 #[no_mangle]
@@ -243,7 +243,7 @@ pub extern "C" fn libreauth_hotp_get_uri(
     account_name: *const libc::c_char,
     uri_buff: *mut u8,
     uri_buff_len: libc::size_t,
-    ) -> ErrorCode {
+) -> ErrorCode {
     let cfg = get_value_or_errno!(get_cfg(cfg));
     let issuer = get_string!(issuer);
     let acc_name = get_string!(account_name);
@@ -257,24 +257,24 @@ pub extern "C" fn libreauth_hotp_get_uri(
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
         .finalize()
-        {
-            Ok(hotp) => {
-                let b = hotp
-                    .key_uri_format(&issuer, &acc_name)
-                    .finalize()
-                    .into_bytes();
-                let len = b.len();
-                if len >= uri_buff_len {
-                    return ErrorCode::NotEnoughSpace;
-                }
-                for i in 0..len {
-                    buff[i] = b[i];
-                }
-                buff[len] = 0;
-                ErrorCode::Success
+    {
+        Ok(hotp) => {
+            let b = hotp
+                .key_uri_format(&issuer, &acc_name)
+                .finalize()
+                .into_bytes();
+            let len = b.len();
+            if len >= uri_buff_len {
+                return ErrorCode::NotEnoughSpace;
             }
-            Err(errno) => errno,
+            for i in 0..len {
+                buff[i] = b[i];
+            }
+            buff[len] = 0;
+            ErrorCode::Success
         }
+        Err(errno) => errno,
+    }
 }
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
@@ -350,14 +350,14 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
         .period(cfg.period)
         .initial_time(cfg.initial_time)
         .finalize()
-        {
-            Ok(hotp) => {
-                let ref_code = hotp.generate().into_bytes();
-                write_code(&ref_code, code);
-                ErrorCode::Success
-            }
-            Err(errno) => errno,
+    {
+        Ok(hotp) => {
+            let ref_code = hotp.generate().into_bytes();
+            write_code(&ref_code, code);
+            ErrorCode::Success
         }
+        Err(errno) => errno,
+    }
 }
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
@@ -397,13 +397,13 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
         .positive_tolerance(cfg.positive_tolerance)
         .negative_tolerance(cfg.negative_tolerance)
         .finalize()
-        {
-            Ok(totp) => match totp.is_valid(&code) {
-                true => 1,
-                false => 0,
-            },
-            Err(_) => 0,
-        }
+    {
+        Ok(totp) => match totp.is_valid(&code) {
+            true => 1,
+            false => 0,
+        },
+        Err(_) => 0,
+    }
 }
 
 #[no_mangle]
@@ -413,7 +413,7 @@ pub extern "C" fn libreauth_totp_get_uri(
     account_name: *const libc::c_char,
     uri_buff: *mut u8,
     uri_buff_len: libc::size_t,
-    ) -> ErrorCode {
+) -> ErrorCode {
     let cfg = get_value_or_errno!(get_cfg(cfg));
     let issuer = get_string!(issuer);
     let acc_name = get_string!(account_name);
@@ -431,23 +431,22 @@ pub extern "C" fn libreauth_totp_get_uri(
         .positive_tolerance(cfg.positive_tolerance)
         .negative_tolerance(cfg.negative_tolerance)
         .finalize()
-        {
-            Ok(totp) => {
-                let b = totp
-                    .key_uri_format(&issuer, &acc_name)
-                    .finalize()
-                    .into_bytes();
-                let len = b.len();
-                if len >= uri_buff_len {
-                    return ErrorCode::NotEnoughSpace;
-                }
-                for i in 0..len {
-                    buff[i] = b[i];
-                }
-                buff[len] = 0;
-                ErrorCode::Success
+    {
+        Ok(totp) => {
+            let b = totp
+                .key_uri_format(&issuer, &acc_name)
+                .finalize()
+                .into_bytes();
+            let len = b.len();
+            if len >= uri_buff_len {
+                return ErrorCode::NotEnoughSpace;
             }
-            Err(errno) => errno,
+            for i in 0..len {
+                buff[i] = b[i];
+            }
+            buff[len] = 0;
+            ErrorCode::Success
         }
+        Err(errno) => errno,
+    }
 }
-

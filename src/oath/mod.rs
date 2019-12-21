@@ -187,7 +187,6 @@ macro_rules! builder_common {
     }
 }
 
-
 mod key_uri;
 pub use self::key_uri::{KeyUriBuilder, ParametersVisibility};
 
