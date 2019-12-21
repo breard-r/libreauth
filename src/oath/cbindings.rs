@@ -297,7 +297,7 @@ pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
         TOTPcfg,
         cfg,
         timestamp,
-        time::now().to_timespec().sec,
+        time::PrimitiveDateTime::now().timestamp(),
         positive_tolerance,
         0,
         negative_tolerance,

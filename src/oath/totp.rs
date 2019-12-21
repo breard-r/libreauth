@@ -24,7 +24,7 @@ pub struct TOTP {
 
 impl TOTP {
     fn get_counter(&self) -> u64 {
-        let timestamp = time::now().to_timespec().sec + self.timestamp_offset;
+        let timestamp = time::PrimitiveDateTime::now().timestamp() + self.timestamp_offset;
         let timestamp = timestamp as u64;
         if timestamp < self.initial_time {
             panic!("The current Unix time is below the initial time.");
@@ -230,7 +230,7 @@ impl TOTPBuilder {
 
     /// Sets a custom value for the current Unix time instead of the real one.
     pub fn timestamp(&mut self, timestamp: i64) -> &mut TOTPBuilder {
-        let current_timestamp = time::now().to_timespec().sec;
+        let current_timestamp = time::PrimitiveDateTime::now().timestamp();
         self.timestamp_offset = timestamp - current_timestamp;
         self
     }
