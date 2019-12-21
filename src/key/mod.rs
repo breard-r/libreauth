@@ -5,12 +5,8 @@
 //! Many random generators are available, but not all of them are
 //! cryptographically secure. That is a problem because if a secret key may
 //! be predictable, the security of your system crumbles into pieces. This
-//! key generation module is a wrapper upon `rand_core::OsRng` which, as its
-//! name stands, is a rust wrapper around the operating system's RNG. If the
-//! OS's entropy source is not available, it fails instead of falling back
-//! to a less secure source.
-//!
-//! You may read more about cryptographic security in [rand_core's documentation](https://rust-random.github.io/rand/rand_core/trait.CryptoRng.html).
+//! key generation module uses the `getrandom` crate which is an interface
+//! to the operating system's preferred random number source.
 //!
 //! ## Examples
 //!
@@ -43,8 +39,8 @@ mod cbindings;
 pub use self::cbindings::libreauth_keygen;
 use base32;
 use base64;
+use getrandom::getrandom;
 use hex;
-use rand_core::{CryptoRng, OsRng, RngCore};
 
 /// Random key builder.
 #[derive(Default)]
@@ -73,16 +69,14 @@ impl KeyBuilder {
     }
 
     /// Generate a random key.
-    pub fn generate(self) -> Self {
-        self.do_generate(OsRng)
-    }
-
-    fn do_generate<T: RngCore + CryptoRng>(mut self, mut rng: T) -> Self {
+    pub fn generate(mut self) -> Self {
         if self.size == 0 {
             panic!();
         }
         let mut key: Vec<u8> = vec![0; self.size];
-        rng.fill_bytes(&mut key.as_mut_slice());
+        if let Err(e) = getrandom(&mut key.as_mut_slice()) {
+            panic!("Fatal error: {}", e);
+        }
         self.key = Some(key);
         self
     }
