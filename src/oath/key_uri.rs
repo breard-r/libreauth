@@ -204,8 +204,8 @@ impl<'a> KeyUriBuilder<'a> {
         uri.set_host(Some(uri_type_final)).unwrap();
 
         let label_final = match self.custom_label {
-            Some(label) => label.to_string(),
-            None => format!("{}:{}", self.issuer, self.account_name),
+            Some(label) => format!("/{}", label),
+            None => format!("/{}:{}", self.issuer, self.account_name),
         };
         uri.set_path(&label_final);
 
