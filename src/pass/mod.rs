@@ -179,6 +179,8 @@ pub use self::cbindings::libreauth_pass_init_from_phc;
 pub use self::cbindings::libreauth_pass_init_std;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_is_valid;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::PassCfg;
 pub use error::ErrorCode;
 pub use hash_builder::HashBuilder;
 pub use hasher::Hasher;

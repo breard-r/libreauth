@@ -203,6 +203,8 @@ mod cbindings;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_generate;
 #[cfg(feature = "cbindings")]
+pub use self::cbindings::libreauth_hotp_get_uri;
+#[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_init;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_is_valid;
@@ -211,6 +213,8 @@ pub use self::cbindings::HOTPcfg;
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_generate;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::libreauth_totp_get_uri;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_init;
 #[cfg(feature = "cbindings")]

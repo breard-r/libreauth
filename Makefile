@@ -36,8 +36,15 @@ test: debug
 tests: test
 
 test_nightly:
+	@cargo +nightly build --all-features
 	@cargo +nightly test --all-features
 	@make -C tests clean test
+	@echo
+	@echo "All tests completed successfully."
+
+test_valgrind: debug
+	@cargo test --all-features
+	@make -C tests clean test_valgrind
 	@echo
 	@echo "All tests completed successfully."
 

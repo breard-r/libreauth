@@ -1,6 +1,10 @@
 use super::HOTPBuilder;
 use super::TOTPBuilder;
 use crate::oath::{ErrorCode, HashFunction};
+use crate::{
+    deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string, get_value_or_errno,
+    get_value_or_false,
+};
 use libc;
 use std;
 use std::ffi::CStr;
@@ -10,7 +14,7 @@ macro_rules! otp_init {
     ($cfg_type: ty, $cfg: ident, $($field: ident, $value: expr), *) => {
         match $cfg.is_null() {
             false => {
-                let c: &mut $cfg_type = unsafe { &mut *$cfg };
+                let c: &mut $cfg_type = deref_ptr_mut!($cfg, ErrorCode::NullPtr);
                 c.key = std::ptr::null();
                 c.key_len = 0;
                 c.output_len = crate::oath::DEFAULT_OTP_OUT_LEN;
@@ -26,25 +30,16 @@ macro_rules! otp_init {
     }
 }
 
-macro_rules! get_value_or_errno {
-    ($val: expr) => {{
-        match $val {
-            Ok(v) => v,
-            Err(errno) => return errno,
-        }
-    }};
-}
-
-macro_rules! get_value_or_false {
-    ($val: expr) => {{
-        match $val {
-            Ok(v) => v,
-            Err(_) => return 0,
-        }
-    }};
-}
-
 /// [C binding] HOTP configuration storage
+///
+/// The `struct libreauth_hotp_cfg` contains the following fields:
+///
+/// - [key](./struct.HOTPBuilder.html#method.key)
+/// - `key_len`: key's length, in bytes
+/// - [counter](./struct.HOTPBuilder.html#method.counter)
+/// - [output_len](./struct.HOTPBuilder.html#method.output_len)
+/// - [output_base](./struct.HOTPBuilder.html#method.output_base)
+/// - [hash_function](../hash/enum.HashFunction.html#c-interface)
 #[repr(C)]
 pub struct HOTPcfg {
     key: *const u8,
@@ -56,6 +51,19 @@ pub struct HOTPcfg {
 }
 
 /// [C binding] TOTP configuration storage
+///
+/// The `struct libreauth_totp_cfg` contains the following fields:
+///
+/// - [key](./struct.TOTPBuilder.html#method.key)
+/// - `key_len`: key's length, in bytes
+/// - [timestamp](./struct.TOTPBuilder.html#method.timestamp)
+/// - [positive_tolerance](./struct.TOTPBuilder.html#method.positive_tolerance)
+/// - [negative_tolerance](./struct.TOTPBuilder.html#method.negative_tolerance)
+/// - [period](./struct.TOTPBuilder.html#method.period)
+/// - [initial_time](./struct.TOTPBuilder.html#method.initial_time)
+/// - [output_len](./struct.TOTPBuilder.html#method.output_len)
+/// - [output_base](./struct.TOTPBuilder.html#method.output_base)
+/// - [hash_function](../hash/enum.HashFunction.html#c-interface)
 #[repr(C)]
 pub struct TOTPcfg {
     key: *const u8,
@@ -70,7 +78,7 @@ pub struct TOTPcfg {
     hash_function: HashFunction,
 }
 
-pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
+fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
     let len = code.len();
     for i in 0..len {
         dest[i] = code[i];
@@ -78,55 +86,58 @@ pub fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
     dest[len] = 0;
 }
 
-pub fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
+fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
     if cfg.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    let cfg: &T = unsafe { &*cfg };
+    let cfg: &T = deref_ptr!(cfg, Err(ErrorCode::NullPtr));
     Ok(cfg)
 }
 
-pub fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
+fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
     if code.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    let code = unsafe { std::slice::from_raw_parts(code, code_len).to_owned() };
+    let code = get_slice!(code, code_len);
     match String::from_utf8(code) {
         Ok(code) => Ok(code),
         Err(_) => Err(ErrorCode::InvalidUTF8),
     }
 }
 
-pub fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
+fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
     if code.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    Ok(unsafe { std::slice::from_raw_parts_mut(code, code_len + 1) })
+    Ok(get_slice_mut!(code, code_len + 1))
 }
 
-pub fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
+fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
     if output_base.is_null() {
         return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
     }
-    let raw_str = unsafe { CStr::from_ptr(output_base).to_bytes().to_vec() };
-    let output_base = String::from_utf8(raw_str).map_err(|_| ErrorCode::InvalidUTF8)?;
+    let output_base = get_string!(output_base);
     match output_base.len() {
         0 | 1 => Err(ErrorCode::InvalidBaseLen),
         _ => Ok(output_base),
     }
 }
 
-pub fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
+fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
     match key.is_null() {
         false => match key_len {
             0 => Err(ErrorCode::InvalidKeyLen),
-            l => Ok(unsafe { std::slice::from_raw_parts(key, l).to_owned() }),
+            l => Ok(get_slice!(key, l)),
         },
         true => Err(ErrorCode::NullPtr),
     }
 }
 
 /// [C binding] Initialize a `struct libreauth_hotp_cfg` with the default values.
+///
+/// ## Parameter
+///
+/// `cfg`: pointer to a `struct libreauth_hotp_cfg`
 ///
 /// ## Examples
 /// ```c
@@ -150,6 +161,11 @@ pub extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 }
 
 /// [C binding] Generate an HOTP code according to the given configuration and stores it in the supplied buffer.
+///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
+/// - `code`: buffer that will hold the string representing the code
 ///
 /// ## Examples
 /// ```c
@@ -196,6 +212,11 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 
 /// [C binding] Check whether or not the supplied HOTP code is valid.
 ///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
+/// - `code`: string representing the code to check
+///
 /// ## Examples
 /// ```c
 /// struct libreauth_hotp_cfg cfg;
@@ -236,6 +257,15 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) 
     }
 }
 
+/// [C binding] Generate the key URI.
+///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
+/// - `issuer`: string representing issuer's name
+/// - `account_name`: string representing name of the user account
+/// - `uri_buff`: buffer that will hold the string representing the URI
+/// - `uri_buff_len`: buffer's size, in bytes
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_get_uri(
     cfg: *const HOTPcfg,
@@ -279,6 +309,10 @@ pub extern "C" fn libreauth_hotp_get_uri(
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
 ///
+/// ## Parameter
+///
+/// `cfg`: pointer to a `struct libreauth_totp_cfg`
+///
 /// ## Examples
 /// ```c
 /// struct libreauth_totp_cfg cfg;
@@ -314,6 +348,11 @@ pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 }
 
 /// [C binding] Generate a TOTP code according to the given configuration and stores it in the supplied buffer.
+///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_totp_cfg`
+/// - `code`: pointer to a buffer large enough to hold the null-terminated string representing the code
 ///
 /// ## Examples
 /// ```c
@@ -362,6 +401,11 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
 ///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_totp_cfg`
+/// - `code`: string representing the code to check
+///
 /// ## Examples
 /// ```c
 /// struct libreauth_totp_cfg cfg;
@@ -406,6 +450,15 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
     }
 }
 
+/// [C binding] Generate the key URI.
+///
+/// ## Parameters
+///
+/// - `cfg`: pointer to a `struct libreauth_totp_cfg`
+/// - `issuer`: string representing issuer's name
+/// - `account_name`: string representing name of the user account
+/// - `uri_buff`: buffer that will hold the string representing the URI
+/// - `uri_buff_len`: buffer's size, in bytes
 #[no_mangle]
 pub extern "C" fn libreauth_totp_get_uri(
     cfg: *const TOTPcfg,

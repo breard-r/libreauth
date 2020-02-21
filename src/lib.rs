@@ -7,13 +7,8 @@
 //!
 //!
 
-#[allow(unused_macros)]
-macro_rules! get_string {
-    ($ptr: expr) => {{
-        unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() }
-    }};
-}
-
+#[cfg(feature = "cbindings")]
+pub(crate) mod c_helpers;
 #[cfg(feature = "hash")]
 pub mod hash;
 #[cfg(feature = "key")]

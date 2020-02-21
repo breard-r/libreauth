@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Optional additional HMAC with an external salt before or after hashing the password.
+- The C-bindings documentation has been improved.
 
 ### Changed
 - The output base for HOTP and TOTP must now be valid UTF-8.
