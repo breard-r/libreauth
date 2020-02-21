@@ -3,6 +3,7 @@ language: rust
 sudo: true
 
 rust:
+    - "1.40.0"
     - "stable"
     - "beta"
     - "nightly"
@@ -13,7 +14,7 @@ matrix:
 
 before_script:
     - sudo apt-get update -qq
-    - sudo apt-get install -y valgrind python3
+    - sudo apt-get install -y python3
 
 script:
     - make test
