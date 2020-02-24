@@ -8,7 +8,7 @@ use crate::{
 use libc;
 use std;
 use std::ffi::CStr;
-use time;
+use std::time::SystemTime;
 
 macro_rules! otp_init {
     ($cfg_type: ty, $cfg: ident, $($field: ident, $value: expr), *) => {
@@ -331,7 +331,10 @@ pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
         TOTPcfg,
         cfg,
         timestamp,
-        time::PrimitiveDateTime::now().timestamp(),
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         positive_tolerance,
         0,
         negative_tolerance,

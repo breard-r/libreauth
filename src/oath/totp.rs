@@ -7,7 +7,7 @@ use base32;
 use base64;
 use hex;
 use std::collections::HashMap;
-use time;
+use std::time::SystemTime;
 
 /// Generates and checks TOTP codes.
 pub struct TOTP {
@@ -24,7 +24,11 @@ pub struct TOTP {
 
 impl TOTP {
     fn get_counter(&self) -> u64 {
-        let timestamp = time::PrimitiveDateTime::now().timestamp() + self.timestamp_offset;
+        let timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let timestamp = timestamp + self.timestamp_offset;
         let timestamp = timestamp as u64;
         if timestamp < self.initial_time {
             panic!("The current Unix time is below the initial time.");
@@ -230,7 +234,10 @@ impl TOTPBuilder {
 
     /// Sets a custom value for the current Unix time instead of the real one.
     pub fn timestamp(&mut self, timestamp: i64) -> &mut TOTPBuilder {
-        let current_timestamp = time::PrimitiveDateTime::now().timestamp();
+        let current_timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
         self.timestamp_offset = timestamp - current_timestamp;
         self
     }
