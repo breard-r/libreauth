@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The PBKDF2 `hash` parameter has been renamed `hmac`.
 - The HashFunction has been moved to a dedicated module and its C-bindings renamed accordingly.
 
+### Fixed
+- The project now compiles on Microsoft Windows.
+
 
 ## [0.12.0] - 2019-08-27
 
