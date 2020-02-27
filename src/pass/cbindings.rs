@@ -2,10 +2,45 @@ use super::{
     std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
     Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
 };
-use crate::{deref_ptr, deref_ptr_mut, get_slice_mut, get_string};
+use crate::hash::HashFunction;
+use crate::pass::XHMAC;
+use crate::{deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string};
 use libc;
 use std;
 use std::ffi::CStr;
+
+/// [C binding]
+///
+/// The C interface uses an enum named `libreauth_pass_xhmac` and the members has been renamed
+/// as follows:
+/// <table>
+///     <thead>
+///         <tr>
+///             <th>Rust</th>
+///             <th>C</th>
+///         </tr>
+///     </thead>
+///     <tbody>
+///         <tr>
+///             <td>None</td>
+///             <td>LIBREAUTH_PASS_XHMAC_NONE</td>
+///         </tr>
+///         <tr>
+///             <td>Before</td>
+///             <td>LIBREAUTH_PASS_XHMAC_BEFORE</td>
+///         </tr>
+///         <tr>
+///             <td>After</td>
+///             <td>LIBREAUTH_PASS_XHMAC_AFTER</td>
+///         </tr>
+///     </tbody>
+/// </table>
+#[repr(C)]
+pub enum XHMACType {
+    None = 0,
+    Before = 1,
+    After = 2,
+}
 
 /// [C binding] Password hasher configuration storage
 ///
@@ -19,6 +54,10 @@ use std::ffi::CStr;
 /// - [normalization](./enum.Normalization.html#c-interface)
 /// - [standard](./enum.PasswordStorageStandard.html#c-interface)
 /// - [version](./struct.HashBuilder.html#method.version)
+/// - [xhmac_type](./enum.XHMACType.html)
+/// - [xhmac_alg](../hash/enum.HashFunction.html)
+/// - `xhmac_key` (*const u8): Key used for the XHMAC. NULL if no XHMAC is used.
+/// - `xhmac_key_len` (size_t): Length of the XHMAC key, in bytes.
 #[repr(C)]
 pub struct PassCfg {
     min_len: libc::size_t,
@@ -29,6 +68,10 @@ pub struct PassCfg {
     normalization: Normalization,
     standard: PasswordStorageStandard,
     version: libc::size_t,
+    xhmac_type: XHMACType,
+    xhmac_alg: HashFunction,
+    xhmac_key: *const u8,
+    xhmac_key_len: libc::size_t,
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values.
@@ -64,6 +107,10 @@ pub extern "C" fn libreauth_pass_init_std(
             c.normalization = std_default::DEFAULT_NORMALIZATION;
             c.standard = std;
             c.version = DEFAULT_USER_VERSION;
+            c.xhmac_type = XHMACType::None;
+            c.xhmac_alg = std_default::DEFAULT_XHMAC_ALGORITHM;
+            c.xhmac_key = std::ptr::null();
+            c.xhmac_key_len = 0;
         }
         PasswordStorageStandard::Nist80063b => {
             c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
@@ -74,6 +121,10 @@ pub extern "C" fn libreauth_pass_init_std(
             c.normalization = std_nist::DEFAULT_NORMALIZATION;
             c.standard = std;
             c.version = DEFAULT_USER_VERSION;
+            c.xhmac_type = XHMACType::None;
+            c.xhmac_alg = std_nist::DEFAULT_XHMAC_ALGORITHM;
+            c.xhmac_key = std::ptr::null();
+            c.xhmac_key_len = 0;
         }
     };
     ErrorCode::Success
@@ -110,6 +161,24 @@ pub extern "C" fn libreauth_pass_init_from_phc(
     } else {
         checker.version
     };
+    c.xhmac_alg = checker.xhmax_alg;
+    match checker.xhmac {
+        XHMAC::Before(k) => {
+            c.xhmac_type = XHMACType::Before;
+            c.xhmac_key = k.as_ptr();
+            c.xhmac_key_len = k.len();
+        }
+        XHMAC::After(k) => {
+            c.xhmac_type = XHMACType::After;
+            c.xhmac_key = k.as_ptr();
+            c.xhmac_key_len = k.len();
+        }
+        XHMAC::None => {
+            c.xhmac_type = XHMACType::None;
+            c.xhmac_key = std::ptr::null();
+            c.xhmac_key_len = 0;
+        }
+    };
     ErrorCode::Success
 }
 
@@ -134,7 +203,8 @@ pub extern "C" fn libreauth_pass_hash(
         return ErrorCode::NullPtr;
     }
     let buff = get_slice_mut!(dest, dest_len);
-    let hasher = match HashBuilder::new()
+    let mut builder = HashBuilder::new();
+    builder
         .min_len(c.min_len)
         .max_len(c.max_len)
         .salt_len(c.salt_len)
@@ -142,8 +212,26 @@ pub extern "C" fn libreauth_pass_hash(
         .length_calculation(c.length_calculation)
         .normalization(c.normalization)
         .version(c.version)
-        .finalize()
-    {
+        .xhmac(c.xhmac_alg);
+    let key = match c.xhmac_key.is_null() {
+        false => match c.xhmac_key_len {
+            0 => return ErrorCode::InvalidKeyLen,
+            l => get_slice!(c.xhmac_key, l),
+        },
+        true => vec![],
+    };
+    if !key.is_empty() {
+        match c.xhmac_type {
+            XHMACType::Before => {
+                builder.xhmac_before(&key);
+            }
+            XHMACType::After => {
+                builder.xhmac_after(&key);
+            }
+            XHMACType::None => {}
+        };
+    }
+    let hasher = match builder.finalize() {
         Ok(ch) => ch,
         Err(e) => {
             return e;
@@ -177,9 +265,33 @@ pub extern "C" fn libreauth_pass_is_valid(
     pass: *const libc::c_char,
     reference: *const libc::c_char,
 ) -> i32 {
+    libreauth_pass_is_valid_xhmac(pass, reference, std::ptr::null(), 0)
+}
+
+/// [C binding] Check whether or not the supplied password is valid using a XHMAC key.
+///
+/// ## Parameters
+///
+/// - `pass`: password to check
+/// - `reference`: string representing a previously hashed password using LibreAuth's PHC notation
+/// - `key`: XHMAC key
+/// - `key_len`: XHMAC key length, in bytes
+#[no_mangle]
+pub extern "C" fn libreauth_pass_is_valid_xhmac(
+    pass: *const libc::c_char,
+    reference: *const libc::c_char,
+    key: *const u8,
+    key_len: libc::size_t,
+) -> i32 {
     let p = get_string!(pass);
     let r = get_string!(reference);
-    let checker = match HashBuilder::from_phc(r.as_str()) {
+    let checker = if !key.is_null() {
+        let k = get_slice!(key, key_len);
+        HashBuilder::from_phc_xhmac(r.as_str(), &k)
+    } else {
+        HashBuilder::from_phc(r.as_str())
+    };
+    let checker = match checker {
         Ok(ch) => ch,
         Err(_) => {
             return 0;

@@ -85,7 +85,8 @@ typedef enum {
     LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT  = 10,
     LIBREAUTH_PASS_INCOMPATIBLE_OPTION      = 11,
     LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20,
-    LIBREAUTH_PASS_NULL_PTR                 = 12
+    LIBREAUTH_PASS_NULL_PTR                 = 12,
+    LIBREAUTH_PASS_INVALID_KEY_LEN          = 22
 } libreauth_pass_errno;
 
 typedef enum {
@@ -106,6 +107,12 @@ typedef enum {
     LIBREAUTH_PASS_NIST80063B   = 1
 } libreauth_pass_standard;
 
+typedef enum {
+    LIBREAUTH_PASS_XHMAC_NONE   = 0,
+    LIBREAUTH_PASS_XHMAC_BEFORE = 1,
+    LIBREAUTH_PASS_XHMAC_AFTER  = 2,
+} libreauth_pass_xhmac;
+
 struct libreauth_pass_cfg {
     size_t                          min_len;
     size_t                          max_len;
@@ -115,6 +122,10 @@ struct libreauth_pass_cfg {
     libreauth_pass_normalization    normalization;
     libreauth_pass_standard         standard;
     size_t                          version;
+    libreauth_pass_xhmac            xhmac_type;
+    libreauth_hash_function         xhmac_alg;
+    const void                     *xhmac_key;
+    size_t                          xhmac_key_len;
 };
 
 libreauth_pass_errno    libreauth_pass_init(struct libreauth_pass_cfg *cfg);
@@ -122,6 +133,7 @@ libreauth_pass_errno    libreauth_pass_init_std(struct libreauth_pass_cfg *cfg, 
 libreauth_pass_errno    libreauth_pass_init_from_phc(struct libreauth_pass_cfg *cfg, const char *phc);
 libreauth_pass_errno    libreauth_pass_hash(const struct libreauth_pass_cfg *cfg, const char *pass, char *hash, size_t hash_len);
 int32_t                 libreauth_pass_is_valid(const char *pass, const char *ref);
+int32_t                 libreauth_pass_is_valid_xhmac(const char *pass, const char *ref, const void *key, size_t key_len);
 
 
 /*

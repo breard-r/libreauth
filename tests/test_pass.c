@@ -35,6 +35,7 @@
 
 #include <assert.h>
 #include <libreauth.h>
+#include <string.h>
 #include "libreauth_tests.h"
 
 
@@ -141,12 +142,39 @@ static uint32_t test_invalid_pass(void) {
     return 1;
 }
 
+static uint32_t test_xhmac(void) {
+    test_name("pass: test_xhmac");
+
+    struct libreauth_pass_cfg   cfg;
+    const char password[] = "correct horse battery staple";
+    char storage[LIBREAUTH_PASSWORD_STORAGE_LEN];
+
+    uint32_t ret = libreauth_pass_init(&cfg);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    cfg.xhmac_type = LIBREAUTH_PASS_XHMAC_AFTER;
+    cfg.xhmac_alg = LIBREAUTH_HASH_SHA_384;
+    cfg.xhmac_key = "123";
+    cfg.xhmac_key_len = 3;
+
+    ret = libreauth_pass_hash(&cfg, password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN);
+    assert(ret == LIBREAUTH_PASS_SUCCESS);
+    assert(strstr(storage, "xhmac=after") != NULL);
+    assert(strstr(storage, "xhmac-alg=sha384") != NULL);
+
+    assert(libreauth_pass_is_valid_xhmac(password, storage, cfg.xhmac_key, cfg.xhmac_key_len));
+    assert(!libreauth_pass_is_valid_xhmac(password, storage, cfg.xhmac_key, cfg.xhmac_key_len - 1));
+    assert(!libreauth_pass_is_valid(password, storage));
+
+    return 1;
+}
+
 uint32_t test_pass(void) {
     int nb_tests = 0;
 
     nb_tests += test_valid_pass();
     nb_tests += test_nist_pass();
     nb_tests += test_invalid_pass();
+    nb_tests += test_xhmac();
 
     return nb_tests;
 }

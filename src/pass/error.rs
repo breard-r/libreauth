@@ -39,6 +39,10 @@
 ///             <td>NullPtr</td>
 ///             <td>LIBREAUTH_PASS_NULL_PTR</td>
 ///         </tr>
+///         <tr>
+///             <td>InvalidKeyLen</td>
+///             <td>LIBREAUTH_PASS_INVALID_KEY_LEN</td>
+///         </tr>
 ///     </tbody>
 /// </table>
 #[repr(C)]
@@ -64,6 +68,8 @@ pub enum ErrorCode {
     NotEnoughSpace = 20,
     /// Used in C-bindings to indicate a NULL pointer.
     NullPtr = 21,
+    /// Used in C-bindings to indicate an invalid key length.
+    InvalidKeyLen = 22,
 }
 
 impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
