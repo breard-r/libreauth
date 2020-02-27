@@ -85,7 +85,7 @@ typedef enum {
     LIBREAUTH_PASS_INVALID_PASSWORD_FORMAT  = 10,
     LIBREAUTH_PASS_INCOMPATIBLE_OPTION      = 11,
     LIBREAUTH_PASS_NOT_ENOUGH_SPACE         = 20,
-    LIBREAUTH_PASS_NULL_PTR                 = 12,
+    LIBREAUTH_PASS_NULL_PTR                 = 21,
     LIBREAUTH_PASS_INVALID_KEY_LEN          = 22
 } libreauth_pass_errno;
 
