@@ -57,7 +57,7 @@ typedef enum {
     LIBREAUTH_HASH_KECCAK_256           = 13,
     LIBREAUTH_HASH_KECCAK_384           = 14,
     LIBREAUTH_HASH_KECCAK_512           = 15,
-} libreauth_oath_hash_function;
+} libreauth_hash_function;
 
 
 /*
@@ -153,7 +153,7 @@ struct libreauth_hotp_cfg {
     uint64_t                      counter;
     size_t                        output_len;
     const char                   *output_base;
-    libreauth_oath_hash_function  hash_function;
+    libreauth_hash_function  hash_function;
 };
 
 libreauth_oath_errno libreauth_hotp_init(struct libreauth_hotp_cfg *cfg);
@@ -173,7 +173,7 @@ struct libreauth_totp_cfg {
     uint64_t                      initial_time;
     size_t                        output_len;
     const void                   *output_base;
-    libreauth_oath_hash_function  hash_function;
+    libreauth_hash_function  hash_function;
 };
 
 libreauth_oath_errno libreauth_totp_init(struct libreauth_totp_cfg *cfg);

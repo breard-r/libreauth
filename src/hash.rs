@@ -8,7 +8,7 @@ pub enum HashFunctionError {
 }
 
 /// ## C interface
-/// The C interface uses an enum of type `libreauth_oath_hash_function` and
+/// The C interface uses an enum of type `libreauth_hash_function` and
 /// the members has been renamed as follows:
 /// <table>
 ///     <thead>
