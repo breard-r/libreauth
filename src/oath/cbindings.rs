@@ -12,8 +12,9 @@ use std::time::SystemTime;
 
 macro_rules! otp_init {
     ($cfg_type: ty, $cfg: ident, $($field: ident, $value: expr), *) => {
-        match $cfg.is_null() {
-            false => {
+        if $cfg.is_null() {
+            Err(ErrorCode::NullPtr)
+        } else {
                 let c: &mut $cfg_type = deref_ptr_mut!($cfg, ErrorCode::NullPtr);
                 c.key = std::ptr::null();
                 c.key_len = 0;
@@ -24,8 +25,6 @@ macro_rules! otp_init {
                     c.$field = $value;
                 )*
                 Ok(c)
-            }
-            true => Err(ErrorCode::NullPtr),
         }
     }
 }
@@ -78,11 +77,9 @@ pub struct TOTPcfg {
     hash_function: HashFunction,
 }
 
-fn write_code(code: &Vec<u8>, dest: &mut [u8]) {
+fn write_code(code: &[u8], dest: &mut [u8]) {
     let len = code.len();
-    for i in 0..len {
-        dest[i] = code[i];
-    }
+    dest[..len].clone_from_slice(&code[..len]);
     dest[len] = 0;
 }
 
@@ -90,7 +87,7 @@ fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
     if cfg.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    let cfg: &T = deref_ptr!(cfg, Err(ErrorCode::NullPtr));
+    let cfg: &T = unsafe { deref_ptr!(cfg, Err(ErrorCode::NullPtr)) };
     Ok(cfg)
 }
 
@@ -98,7 +95,7 @@ fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
     if code.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    let code = get_slice!(code, code_len);
+    let code = unsafe { get_slice!(code, code_len) };
     match String::from_utf8(code) {
         Ok(code) => Ok(code),
         Err(_) => Err(ErrorCode::InvalidUTF8),
@@ -109,14 +106,14 @@ fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], Err
     if code.is_null() {
         return Err(ErrorCode::NullPtr);
     }
-    Ok(get_slice_mut!(code, code_len + 1))
+    Ok(unsafe { get_slice_mut!(code, code_len + 1) })
 }
 
 fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
     if output_base.is_null() {
         return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
     }
-    let output_base = get_string!(output_base);
+    let output_base = unsafe { get_string!(output_base) };
     match output_base.len() {
         0 | 1 => Err(ErrorCode::InvalidBaseLen),
         _ => Ok(output_base),
@@ -124,22 +121,24 @@ fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode
 }
 
 fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
-    match key.is_null() {
-        false => match key_len {
+    if key.is_null() {
+        Err(ErrorCode::NullPtr)
+    } else {
+        match key_len {
             0 => Err(ErrorCode::InvalidKeyLen),
-            l => Ok(get_slice!(key, l)),
-        },
-        true => Err(ErrorCode::NullPtr),
+            l => Ok(unsafe { get_slice!(key, l) }),
+        }
     }
 }
 
 /// [C binding] Initialize a `struct libreauth_hotp_cfg` with the default values.
 ///
-/// ## Parameter
+/// # Parameter
 ///
 /// `cfg`: pointer to a `struct libreauth_hotp_cfg`
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_hotp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -151,8 +150,12 @@ fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
 /// cfg.key = key;
 /// cfg.key_len = strlen(key);
 /// ```
+///
+/// # Safety
+///
+/// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
-pub extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
+pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
     let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
     match res {
         Ok(_) => ErrorCode::Success,
@@ -162,12 +165,13 @@ pub extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 
 /// [C binding] Generate an HOTP code according to the given configuration and stores it in the supplied buffer.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
 /// - `code`: buffer that will hold the string representing the code
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_hotp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -212,12 +216,13 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 
 /// [C binding] Check whether or not the supplied HOTP code is valid.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
 /// - `code`: string representing the code to check
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_hotp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -249,25 +254,32 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) 
         .counter(cfg.counter)
         .finalize()
     {
-        Ok(hotp) => match hotp.is_valid(&code) {
-            true => 1,
-            false => 0,
-        },
+        Ok(hotp) => {
+            if hotp.is_valid(&code) {
+                1
+            } else {
+                0
+            }
+        }
         Err(_) => 0,
     }
 }
 
 /// [C binding] Generate the key URI.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
 /// - `issuer`: string representing issuer's name
 /// - `account_name`: string representing name of the user account
 /// - `uri_buff`: buffer that will hold the string representing the URI
 /// - `uri_buff_len`: buffer's size, in bytes
+///
+/// # Safety
+///
+/// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
-pub extern "C" fn libreauth_hotp_get_uri(
+pub unsafe extern "C" fn libreauth_hotp_get_uri(
     cfg: *const HOTPcfg,
     issuer: *const libc::c_char,
     account_name: *const libc::c_char,
@@ -297,9 +309,7 @@ pub extern "C" fn libreauth_hotp_get_uri(
             if len >= uri_buff_len {
                 return ErrorCode::NotEnoughSpace;
             }
-            for i in 0..len {
-                buff[i] = b[i];
-            }
+            buff[..len].clone_from_slice(&b[..len]);
             buff[len] = 0;
             ErrorCode::Success
         }
@@ -309,11 +319,12 @@ pub extern "C" fn libreauth_hotp_get_uri(
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
 ///
-/// ## Parameter
+/// # Parameter
 ///
 /// `cfg`: pointer to a `struct libreauth_totp_cfg`
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_totp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -325,8 +336,12 @@ pub extern "C" fn libreauth_hotp_get_uri(
 /// cfg.key = key;
 /// cfg.key_len = strlen(key);
 /// ```
+///
+/// # Safety
+///
+/// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
-pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
+pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
     let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(
         TOTPcfg,
         cfg,
@@ -352,12 +367,13 @@ pub extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 
 /// [C binding] Generate a TOTP code according to the given configuration and stores it in the supplied buffer.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_totp_cfg`
 /// - `code`: pointer to a buffer large enough to hold the null-terminated string representing the code
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_totp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -404,12 +420,13 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_totp_cfg`
 /// - `code`: string representing the code to check
 ///
-/// ## Examples
+/// # Examples
+///
 /// ```c
 /// struct libreauth_totp_cfg cfg;
 /// const char key[] = "12345678901234567890";
@@ -445,25 +462,32 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
         .negative_tolerance(cfg.negative_tolerance)
         .finalize()
     {
-        Ok(totp) => match totp.is_valid(&code) {
-            true => 1,
-            false => 0,
-        },
+        Ok(totp) => {
+            if totp.is_valid(&code) {
+                1
+            } else {
+                0
+            }
+        }
         Err(_) => 0,
     }
 }
 
 /// [C binding] Generate the key URI.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// - `cfg`: pointer to a `struct libreauth_totp_cfg`
 /// - `issuer`: string representing issuer's name
 /// - `account_name`: string representing name of the user account
 /// - `uri_buff`: buffer that will hold the string representing the URI
 /// - `uri_buff_len`: buffer's size, in bytes
+///
+/// # Safety
+///
+/// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
-pub extern "C" fn libreauth_totp_get_uri(
+pub unsafe extern "C" fn libreauth_totp_get_uri(
     cfg: *const TOTPcfg,
     issuer: *const libc::c_char,
     account_name: *const libc::c_char,
@@ -497,9 +521,7 @@ pub extern "C" fn libreauth_totp_get_uri(
             if len >= uri_buff_len {
                 return ErrorCode::NotEnoughSpace;
             }
-            for i in 0..len {
-                buff[i] = b[i];
-            }
+            buff[..len].clone_from_slice(&b[..len]);
             buff[len] = 0;
             ErrorCode::Success
         }
