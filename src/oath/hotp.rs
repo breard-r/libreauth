@@ -1,7 +1,7 @@
-use super::{
-    ErrorCode, HashFunction, DEFAULT_KEY_URI_PARAM_POLICY, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
-    DEFAULT_OTP_OUT_LEN,
-};
+#[cfg(feature = "oath-uri")]
+use super::DEFAULT_KEY_URI_PARAM_POLICY;
+use super::{ErrorCode, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN};
+#[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
@@ -10,6 +10,7 @@ use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
+#[cfg(feature = "oath-uri")]
 use std::collections::HashMap;
 
 macro_rules! compute_hmac {
@@ -228,6 +229,7 @@ impl HOTP {
     ///     "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0"
     /// );
     /// ```
+    #[cfg(feature = "oath-uri")]
     pub fn key_uri_format<'a>(
         &'a self,
         issuer: &'a str,
@@ -363,6 +365,7 @@ impl HOTPBuilder {
 mod tests {
     use super::HOTPBuilder;
     use crate::hash::HashFunction;
+    #[cfg(feature = "oath-uri")]
     use crate::oath::ParametersVisibility;
 
     #[test]
@@ -1243,6 +1246,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -1258,6 +1262,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_hide_all() {
         let key_ascii = "12345678901234567890".to_owned();
         let hotp = HOTPBuilder::new()
@@ -1279,6 +1284,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_overwrite_label() {
         let key_ascii = "12345678901234567890".to_owned();
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -1295,6 +1301,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_add_parameter() {
         let key_ascii = "12345678901234567890".to_owned();
         let hotp = HOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();

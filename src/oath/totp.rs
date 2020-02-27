@@ -1,11 +1,15 @@
+#[cfg(feature = "oath-uri")]
+use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{
-    ErrorCode, HOTPBuilder, HashFunction, DEFAULT_KEY_URI_PARAM_POLICY, DEFAULT_OTP_HASH,
-    DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
+    ErrorCode, HOTPBuilder, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
+    DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
 };
+#[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use base32;
 use base64;
 use hex;
+#[cfg(feature = "oath-uri")]
 use std::collections::HashMap;
 use std::time::SystemTime;
 
@@ -124,6 +128,7 @@ impl TOTP {
     ///     "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
     /// );
     /// ```
+    #[cfg(feature = "oath-uri")]
     pub fn key_uri_format<'a>(
         &'a self,
         issuer: &'a str,
@@ -877,6 +882,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format() {
         let key_ascii = "12345678901234567890".to_owned();
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -892,6 +898,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_label() {
         let key_ascii = "12345678901234567890".to_owned();
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -907,6 +914,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_overwrite_label() {
         let key_ascii = "12345678901234567890".to_owned();
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -923,6 +931,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_add_parameter() {
         let key_ascii = "12345678901234567890".to_owned();
         let totp = TOTPBuilder::new().ascii_key(&key_ascii).finalize().unwrap();
@@ -939,6 +948,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_output_base() {
         let key_ascii = "12345678901234567890".to_owned();
         let base = "qwertyuiop";
@@ -955,6 +965,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "oath-uri")]
     fn test_key_uri_format_output_base_utf8() {
         let key_ascii = "12345678901234567890".to_owned();
         let base = "è_éö€…÷—☺";

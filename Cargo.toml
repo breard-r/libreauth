@@ -12,7 +12,7 @@ license = "CECILL-C OR CECILL-2.1"
 include = ["src/**/*", "Cargo.toml", "Licence_*.txt"]
 
 [package.metadata.docs.rs]
-features = ["cbindings", "key", "oath", "pass"]
+features = ["cbindings", "key", "oath-uri", "pass"]
 
 [lib]
 name = "libreauth"
@@ -23,7 +23,8 @@ default = ["hash", "key", "oath", "pass"]
 cbindings = ["libc"]
 hash = ["hmac", "sha-1", "sha2", "sha3"]
 key = ["base32", "base64", "hex", "getrandom"]
-oath = ["base32", "base64", "hash", "hex", "url"]
+oath = ["base32", "base64", "hash", "hex"]
+oath-uri = ["oath", "url"]
 pass = ["base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
 
 [dependencies]

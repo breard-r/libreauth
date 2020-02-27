@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+- The HOTP/TOTP key URI feature, which requires an external dependency, can now be deactivated.
+
 
 ## [0.13.0] - 2020-02-27
 

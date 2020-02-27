@@ -33,6 +33,7 @@
 
 use crate::hash::HashFunction;
 
+#[cfg(feature = "oath-uri")]
 const DEFAULT_KEY_URI_PARAM_POLICY: ParametersVisibility = ParametersVisibility::ShowNonDefault;
 const DEFAULT_OTP_HASH: HashFunction = HashFunction::Sha1;
 const DEFAULT_OTP_OUT_BASE: &str = "0123456789";
@@ -187,7 +188,9 @@ macro_rules! builder_common {
     }
 }
 
+#[cfg(feature = "oath-uri")]
 mod key_uri;
+#[cfg(feature = "oath-uri")]
 pub use self::key_uri::{KeyUriBuilder, ParametersVisibility};
 
 mod hotp;
@@ -202,7 +205,7 @@ pub use self::totp::TOTP;
 mod cbindings;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_generate;
-#[cfg(feature = "cbindings")]
+#[cfg(all(feature = "cbindings", feature = "oath-uri"))]
 pub use self::cbindings::libreauth_hotp_get_uri;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_init;
@@ -213,7 +216,7 @@ pub use self::cbindings::HOTPcfg;
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_generate;
-#[cfg(feature = "cbindings")]
+#[cfg(all(feature = "cbindings", feature = "oath-uri"))]
 pub use self::cbindings::libreauth_totp_get_uri;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_init;

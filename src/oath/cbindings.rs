@@ -278,6 +278,7 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) 
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
+#[cfg(feature = "oath-uri")]
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_hotp_get_uri(
     cfg: *const HOTPcfg,
@@ -486,6 +487,7 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
+#[cfg(feature = "oath-uri")]
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_totp_get_uri(
     cfg: *const TOTPcfg,
