@@ -8,7 +8,7 @@ rust:
     - "beta"
     - "nightly"
 
-matrix:
+jobs:
     allow_failure:
         - rust: "nightly"
 
