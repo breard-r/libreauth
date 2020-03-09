@@ -67,24 +67,24 @@ impl Hasher {
         }
     }
 
-    fn get_hash_func(&self) -> Box<dyn HashingFunction> {
+    fn get_hash_func(&self) -> Result<Box<dyn HashingFunction>, ErrorCode> {
         let mut hash_func: Box<dyn HashingFunction> = match self.algorithm {
             Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
             Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
         };
-        hash_func.set_normalization(self.normalization).unwrap();
+        hash_func.set_normalization(self.normalization)?;
         for (k, v) in &self.parameters {
-            hash_func.set_parameter(k, v).unwrap();
+            hash_func.set_parameter(k, v)?;
         }
         match self.ref_salt {
             Some(ref s) => {
-                hash_func.set_salt(s.to_vec()).unwrap();
+                hash_func.set_salt(s.to_vec())?;
             }
             None => {
-                hash_func.set_salt_len(self.salt_len).unwrap();
+                hash_func.set_salt_len(self.salt_len)?;
             }
         };
-        hash_func
+        Ok(hash_func)
     }
 
     fn apply_xhmac(&self, password: &[u8], salt: &[u8]) -> Result<Vec<u8>, ErrorCode> {
@@ -119,7 +119,7 @@ impl Hasher {
             XHMAC::Before(salt) => self.apply_xhmac(password.as_bytes(), &salt)?,
             _ => norm_pass.into_bytes(),
         };
-        let hash_func = self.get_hash_func();
+        let hash_func = self.get_hash_func()?;
         let hash = hash_func.hash(&norm_pass);
         let hash = match &self.xhmac {
             XHMAC::After(salt) => self.apply_xhmac(&hash, &salt)?,
