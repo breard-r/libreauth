@@ -4,6 +4,7 @@ sudo: true
 
 rust:
     - "1.40.0"
+    - "1.41.1"
     - "stable"
     - "beta"
     - "nightly"
