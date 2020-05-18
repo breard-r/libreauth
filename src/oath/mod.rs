@@ -1,4 +1,5 @@
-//! HOTP and TOTP authentication module.
+//! Implementation of standards which are part of the [OATH Reference
+//! Architecture](https://openauthentication.org/specifications-technical-resources/).
 //!
 //! ## Examples
 //!
