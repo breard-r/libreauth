@@ -1,4 +1,3 @@
-use base64;
 use nom::bytes::complete::{tag, take_while, take_while1};
 use nom::combinator::{map_res, opt};
 use nom::multi::fold_many0;

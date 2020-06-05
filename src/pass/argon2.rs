@@ -1,6 +1,5 @@
 use super::{std_default, ErrorCode, HashingFunction, Normalization};
 use crate::key::KeyBuilder;
-use argon2;
 use std::collections::HashMap;
 
 const MIN_SALT_LENGTH: usize = 8; // in bytes

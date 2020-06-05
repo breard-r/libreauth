@@ -37,10 +37,7 @@ mod cbindings;
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_keygen;
-use base32;
-use base64;
 use getrandom::getrandom;
-use hex;
 
 /// Random key builder.
 #[derive(Default)]

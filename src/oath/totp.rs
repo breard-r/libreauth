@@ -6,9 +6,6 @@ use super::{
 };
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
-use base32;
-use base64;
-use hex;
 #[cfg(feature = "oath-uri")]
 use std::collections::HashMap;
 use std::time::SystemTime;

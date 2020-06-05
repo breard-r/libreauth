@@ -3,9 +3,6 @@ use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{ErrorCode, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN};
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
-use base32;
-use base64;
-use hex;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
@@ -58,7 +55,7 @@ impl HOTP {
             nb /= base_len;
         }
         while code.len() != self.output_len {
-            code.push(self.output_base.chars().nth(0).unwrap());
+            code.push(self.output_base.chars().next().unwrap());
         }
         code.reverse();
         code.iter().collect()
