@@ -14,7 +14,8 @@ use unicode_normalization::UnicodeNormalization;
 
 macro_rules! get_hmac {
     ($hash_func: ty, $salt: ident, $pass: ident) => {{
-        let mut hasher = Hmac::<$hash_func>::new_varkey(&$salt)?;
+        let mut hasher =
+            Hmac::<$hash_func>::new_varkey(&$salt).map_err(|_| ErrorCode::InvalidPasswordFormat)?;
         hasher.input($pass);
         Ok(hasher.result().code().as_slice().to_vec())
     }};
