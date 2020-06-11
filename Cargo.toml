@@ -40,6 +40,6 @@ pbkdf2 = { version = "^0.3", optional = true, default-features = false }
 rust-argon2 = { version = "^0.8", optional = true }
 sha-1 = { version = "^0.8", optional = true }
 sha2 = { version = "^0.8", optional = true }
-sha3 = { version = "^0.8", optional = true }
+sha3 = { version = "^0.9", optional = true }
 unicode-normalization = { version = "^0.1", optional = true }
 url = { version = "^2.1", optional = true }
