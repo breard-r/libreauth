@@ -3,7 +3,7 @@ use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{ErrorCode, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN};
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, Mac, NewMac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
@@ -13,8 +13,8 @@ use std::collections::HashMap;
 macro_rules! compute_hmac {
     ($obj: ident, $hash: ty, $input: ident) => {{
         let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
-        hmac.input(&$input);
-        hmac.result().code().to_vec()
+        hmac.update(&$input);
+        hmac.finalize().into_bytes().to_vec()
     }};
 }
 

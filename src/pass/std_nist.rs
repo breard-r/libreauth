@@ -12,7 +12,7 @@ pub const DEFAULT_XHMAC_ALGORITHM: HashFunction = HashFunction::Sha512;
 pub const MIN_SALT_LEN: usize = 4; // In bytes
 pub const PASS_MIN_MIN_LEN: usize = 8;
 pub const PASS_MIN_MAX_LEN: usize = 64;
-pub const NB_ITER_MIN: usize = 10_000;
+pub const NB_ITER_MIN: u32 = 10_000;
 
 pub fn is_valid(h: &HashBuilder) -> bool {
     // Length calculation
@@ -47,7 +47,7 @@ pub fn is_valid(h: &HashBuilder) -> bool {
         }
         Algorithm::Pbkdf2 => {
             match h.parameters.get("iter") {
-                Some(si) => match si.parse::<usize>() {
+                Some(si) => match si.parse::<u32>() {
                     Ok(i) => {
                         if i < NB_ITER_MIN {
                             return false;

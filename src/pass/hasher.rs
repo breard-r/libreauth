@@ -5,7 +5,7 @@ use super::{
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use crate::pass::phc::PHCData;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, Mac, NewMac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
@@ -14,10 +14,9 @@ use unicode_normalization::UnicodeNormalization;
 
 macro_rules! get_hmac {
     ($hash_func: ty, $salt: ident, $pass: ident) => {{
-        let mut hasher =
-            Hmac::<$hash_func>::new_varkey(&$salt).map_err(|_| ErrorCode::InvalidPasswordFormat)?;
-        hasher.input($pass);
-        Ok(hasher.result().code().as_slice().to_vec())
+        let mut hasher = Hmac::<$hash_func>::new_varkey(&$salt)?;
+        hasher.update($pass);
+        Ok(hasher.finalize().into_bytes().to_vec())
     }};
 }
 
@@ -175,7 +174,7 @@ impl Hasher {
                             return false;
                         }
                     };
-                    ref_hmac.input(rh.as_slice());
+                    ref_hmac.update(rh.as_slice());
 
                     let mut pass_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
                         Ok(h) => h,
@@ -183,9 +182,9 @@ impl Hasher {
                             return false;
                         }
                     };
-                    pass_hmac.input(hash_duo.raw.as_slice());
+                    pass_hmac.update(hash_duo.raw.as_slice());
 
-                    ref_hmac.result().code() == pass_hmac.result().code()
+                    ref_hmac.finalize().into_bytes() == pass_hmac.finalize().into_bytes()
                 }
                 Err(_) => false,
             },

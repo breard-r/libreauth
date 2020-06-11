@@ -12,9 +12,9 @@ use std::str::FromStr;
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
 const MIN_SALT_LENGTH: usize = 4; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
-const MIN_ITER: usize = 10_000;
-const MAX_ITER: usize = 200_000;
-pub const DEFAULT_ITER: usize = 45_000;
+const MIN_ITER: u32 = 10_000;
+const MAX_ITER: u32 = 200_000;
+pub const DEFAULT_ITER: u32 = 45_000;
 
 macro_rules! process_pbkdf2 {
     ($obj: ident, $input: ident, $hash: ty, $len: expr) => {{
@@ -26,7 +26,7 @@ macro_rules! process_pbkdf2 {
 
 pub struct Pbkdf2Hash {
     hash_function: HashFunction,
-    nb_iter: usize,
+    nb_iter: u32,
     salt: Vec<u8>,
     norm: Normalization,
 }
@@ -62,7 +62,7 @@ impl HashingFunction for Pbkdf2Hash {
 
     fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode> {
         match name {
-            "iter" => match value.parse::<usize>() {
+            "iter" => match value.parse::<u32>() {
                 Ok(i) => match i {
                     MIN_ITER..=MAX_ITER => {
                         self.nb_iter = i;
