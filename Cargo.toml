@@ -36,7 +36,7 @@ hex = { version = "^0.4", optional = true }
 hmac = { version = "^0.7", optional = true }
 libc = { version = "^0.2", optional = true }
 nom = { version = "^5.1.1", optional = true }
-pbkdf2 = { version = "^0.3", optional = true, default-features = false }
+pbkdf2 = { version = "^0.4", optional = true, default-features = false }
 rust-argon2 = { version = "^0.8", optional = true }
 sha-1 = { version = "^0.8", optional = true }
 sha2 = { version = "^0.8", optional = true }
