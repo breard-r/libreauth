@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The HOTP/TOTP key URI feature, which requires an external dependency, can now be deactivated.
+- HOTP now support a look-ahead range.
+- The HOTP counter can be synchronized (within the look-ahead range) during validation using `is_valid_sync`.
+
+### Changed
+- The prototype of the `libreauth_hotp_is_valid` C-binding function has been changed so it is possible to specify whether or not the counter should be synchronized.
 
 
 ## [0.13.0] - 2020-02-27

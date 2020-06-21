@@ -159,19 +159,23 @@ typedef enum {
 
 /* HOTP */
 
+#define LIBREAUTH_OATH_CTR_SYNC     1
+#define LIBREAUTH_OATH_CTR_NOSYNC   0
+
 struct libreauth_hotp_cfg {
     const void                   *key;
     size_t                        key_len;
     uint64_t                      counter;
     size_t                        output_len;
     const char                   *output_base;
-    libreauth_hash_function  hash_function;
+    libreauth_hash_function       hash_function;
+    uint64_t                      look_ahead;
 };
 
 libreauth_oath_errno libreauth_hotp_init(struct libreauth_hotp_cfg *cfg);
 libreauth_oath_errno libreauth_hotp_generate(const struct libreauth_hotp_cfg *cfg, char *code);
 libreauth_oath_errno libreauth_hotp_get_uri(const struct libreauth_hotp_cfg *cfg, const char *issuer, const char *account_name, char *uri_buff, size_t uri_buff_len);
-int32_t              libreauth_hotp_is_valid(const struct libreauth_hotp_cfg *cfg, const char *code);
+int32_t              libreauth_hotp_is_valid(const struct libreauth_hotp_cfg *cfg, const char *code, int32_t sync);
 
 /* TOTP */
 
@@ -185,7 +189,7 @@ struct libreauth_totp_cfg {
     uint64_t                      initial_time;
     size_t                        output_len;
     const void                   *output_base;
-    libreauth_hash_function  hash_function;
+    libreauth_hash_function       hash_function;
 };
 
 libreauth_oath_errno libreauth_totp_init(struct libreauth_totp_cfg *cfg);

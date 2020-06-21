@@ -47,6 +47,7 @@ pub struct HOTPcfg {
     output_len: libc::size_t,
     output_base: *const libc::c_char,
     hash_function: HashFunction,
+    look_ahead: u64,
 }
 
 /// [C binding] TOTP configuration storage
@@ -88,6 +89,14 @@ fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
         return Err(ErrorCode::NullPtr);
     }
     let cfg: &T = unsafe { deref_ptr!(cfg, Err(ErrorCode::NullPtr)) };
+    Ok(cfg)
+}
+
+fn get_mut_cfg<T>(cfg: *mut T) -> Result<&'static mut T, ErrorCode> {
+    if cfg.is_null() {
+        return Err(ErrorCode::NullPtr);
+    }
+    let cfg: &mut T = unsafe { deref_ptr_mut!(cfg, Err(ErrorCode::NullPtr)) };
     Ok(cfg)
 }
 
@@ -156,7 +165,7 @@ fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
-    let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0);
+    let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0, look_ahead, 0);
     match res {
         Ok(_) => ErrorCode::Success,
         Err(errno) => errno,
@@ -203,6 +212,7 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
+        .look_ahead(cfg.look_ahead)
         .finalize()
     {
         Ok(hotp) => {
@@ -220,6 +230,7 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 ///
 /// - `cfg`: pointer to a `struct libreauth_hotp_cfg`
 /// - `code`: string representing the code to check
+/// - `sync`: indicates whether or not the counter's value should be synchronized (`LIBREAUTH_OATH_CTR_SYNC` or `LIBREAUTH_OATH_CTR_NOSYNC`)
 ///
 /// # Examples
 ///
@@ -234,15 +245,15 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 /// cfg.key = key;
 /// cfg.key_len = strlen(key);
 ///
-/// if (libreauth_hotp_is_valid(&cfg, "755224")) {
+/// if (libreauth_hotp_is_valid(&cfg, "755224", LIBREAUTH_OATH_CTR_SYNC)) {
 ///     printf("Valid HOTP code\n");
 /// } else {
 ///     printf("Invalid HOTP code\n");
 /// }
 /// ```
 #[no_mangle]
-pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) -> i32 {
-    let cfg = get_value_or_false!(get_cfg(cfg));
+pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sync: i32) -> i32 {
+    let mut cfg = get_value_or_false!(get_mut_cfg(cfg));
     let code = get_value_or_false!(get_code(code, cfg.output_len as usize));
     let output_base = get_value_or_false!(get_output_base(cfg.output_base));
     let key = get_value_or_false!(get_key(cfg.key, cfg.key_len as usize));
@@ -252,13 +263,23 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *const HOTPcfg, code: *const u8) 
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
+        .look_ahead(cfg.look_ahead)
         .finalize()
     {
-        Ok(hotp) => {
-            if hotp.is_valid(&code) {
-                1
+        Ok(mut hotp) => {
+            if sync == 0 {
+                if hotp.is_valid(&code) {
+                    1
+                } else {
+                    0
+                }
             } else {
-                0
+                if hotp.is_valid_sync(&code) {
+                    cfg.counter = hotp.get_counter();
+                    1
+                } else {
+                    0
+                }
             }
         }
         Err(_) => 0,
@@ -299,6 +320,7 @@ pub unsafe extern "C" fn libreauth_hotp_get_uri(
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
+        .look_ahead(cfg.look_ahead)
         .finalize()
     {
         Ok(hotp) => {

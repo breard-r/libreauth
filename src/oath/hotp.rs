@@ -1,13 +1,15 @@
 #[cfg(feature = "oath-uri")]
 use super::DEFAULT_KEY_URI_PARAM_POLICY;
-use super::{ErrorCode, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN};
+use super::{
+    ErrorCode, HashFunction, DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
+    DEFAULT_OTP_OUT_LEN,
+};
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use hmac::{Hmac, Mac, NewMac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
-#[cfg(feature = "oath-uri")]
 use std::collections::HashMap;
 
 macro_rules! compute_hmac {
@@ -25,6 +27,7 @@ pub struct HOTP {
     output_len: usize,
     output_base: String,
     hash_function: HashFunction,
+    look_ahead: u64,
 }
 
 impl HOTP {
@@ -61,31 +64,16 @@ impl HOTP {
         code.iter().collect()
     }
 
-    /// Generate the HOTP value.
-    ///
-    /// ## Examples
-    /// ```
-    /// let key_ascii = "12345678901234567890".to_owned();
-    /// let mut hotp = libreauth::oath::HOTPBuilder::new()
-    ///     .ascii_key(&key_ascii)
-    ///     .finalize()
-    ///     .unwrap();
-    ///
-    /// let code = hotp.generate();
-    /// assert_eq!(code, "755224");
-    /// let code = hotp.increment_counter().generate();
-    /// assert_eq!(code, "287082");
-    /// ```
-    pub fn generate(&self) -> String {
+    fn raw_generate(&self, counter: u64) -> String {
         let msg = [
-            ((self.counter >> 56) & 0xff) as u8,
-            ((self.counter >> 48) & 0xff) as u8,
-            ((self.counter >> 40) & 0xff) as u8,
-            ((self.counter >> 32) & 0xff) as u8,
-            ((self.counter >> 24) & 0xff) as u8,
-            ((self.counter >> 16) & 0xff) as u8,
-            ((self.counter >> 8) & 0xff) as u8,
-            (self.counter & 0xff) as u8,
+            ((counter >> 56) & 0xff) as u8,
+            ((counter >> 48) & 0xff) as u8,
+            ((counter >> 40) & 0xff) as u8,
+            ((counter >> 32) & 0xff) as u8,
+            ((counter >> 24) & 0xff) as u8,
+            ((counter >> 16) & 0xff) as u8,
+            ((counter >> 8) & 0xff) as u8,
+            (counter & 0xff) as u8,
         ];
         let result: Vec<u8> = match self.hash_function {
             HashFunction::Sha1 => compute_hmac!(self, Sha1, msg),
@@ -109,13 +97,120 @@ impl HOTP {
         self.format_result(nb)
     }
 
+    /// Generate the HOTP value.
+    ///
+    /// ## Examples
+    /// ```
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut hotp = libreauth::oath::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// let code = hotp.generate();
+    /// assert_eq!(code, "755224");
+    /// let code = hotp.increment_counter().generate();
+    /// assert_eq!(code, "287082");
+    /// ```
+    pub fn generate(&self) -> String {
+        self.raw_generate(self.counter)
+    }
+
+    /// Returns the internal counter value.
+    pub fn get_counter(&self) -> u64 {
+        self.counter
+    }
+
     /// Increments the internal counter.
     pub fn increment_counter(&mut self) -> &mut HOTP {
         self.counter += 1;
         self
     }
 
-    /// Checks if the given code is valid. This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
+    fn raw_is_valid(&self, code: &str) -> (bool, u64) {
+        if code.len() != self.output_len {
+            return (false, self.counter);
+        }
+        let mut results = HashMap::new();
+        let end = self.counter + 1 + self.look_ahead;
+        for counter in self.counter..end {
+            let r1 = self.raw_generate(counter);
+            let ref_code = r1.as_str().as_bytes();
+            let code = code.as_bytes();
+            let (code, ref_code) = match self.hash_function {
+                HashFunction::Sha1 => (
+                    compute_hmac!(self, Sha1, code),
+                    compute_hmac!(self, Sha1, ref_code),
+                ),
+                HashFunction::Sha224 => (
+                    compute_hmac!(self, Sha224, code),
+                    compute_hmac!(self, Sha224, ref_code),
+                ),
+                HashFunction::Sha256 => (
+                    compute_hmac!(self, Sha256, code),
+                    compute_hmac!(self, Sha256, ref_code),
+                ),
+                HashFunction::Sha384 => (
+                    compute_hmac!(self, Sha384, code),
+                    compute_hmac!(self, Sha384, ref_code),
+                ),
+                HashFunction::Sha512 => (
+                    compute_hmac!(self, Sha512, code),
+                    compute_hmac!(self, Sha512, ref_code),
+                ),
+                HashFunction::Sha512Trunc224 => (
+                    compute_hmac!(self, Sha512Trunc224, code),
+                    compute_hmac!(self, Sha512Trunc224, ref_code),
+                ),
+                HashFunction::Sha512Trunc256 => (
+                    compute_hmac!(self, Sha512Trunc256, code),
+                    compute_hmac!(self, Sha512Trunc256, ref_code),
+                ),
+                HashFunction::Sha3_224 => (
+                    compute_hmac!(self, Sha3_224, code),
+                    compute_hmac!(self, Sha3_224, ref_code),
+                ),
+                HashFunction::Sha3_256 => (
+                    compute_hmac!(self, Sha3_256, code),
+                    compute_hmac!(self, Sha3_256, ref_code),
+                ),
+                HashFunction::Sha3_384 => (
+                    compute_hmac!(self, Sha3_384, code),
+                    compute_hmac!(self, Sha3_384, ref_code),
+                ),
+                HashFunction::Sha3_512 => (
+                    compute_hmac!(self, Sha3_512, code),
+                    compute_hmac!(self, Sha3_512, ref_code),
+                ),
+                HashFunction::Keccak224 => (
+                    compute_hmac!(self, Keccak224, code),
+                    compute_hmac!(self, Keccak224, ref_code),
+                ),
+                HashFunction::Keccak256 => (
+                    compute_hmac!(self, Keccak256, code),
+                    compute_hmac!(self, Keccak256, ref_code),
+                ),
+                HashFunction::Keccak384 => (
+                    compute_hmac!(self, Keccak384, code),
+                    compute_hmac!(self, Keccak384, ref_code),
+                ),
+                HashFunction::Keccak512 => (
+                    compute_hmac!(self, Keccak512, code),
+                    compute_hmac!(self, Keccak512, ref_code),
+                ),
+            };
+            results.insert(code == ref_code, counter);
+        }
+        match results.get(&true) {
+            Some(c) => (true, c + 1),
+            None => (false, self.counter),
+        }
+    }
+
+    /// Checks if the given code is valid within the look-ahead range.
+    /// For most usages, you might want to use [is_valid_sync](#method.is_valid_sync) instead.
+    ///
+    /// This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
     ///
     /// ## Examples
     /// ```
@@ -129,75 +224,52 @@ impl HOTP {
     /// assert!(valid);
     /// ```
     pub fn is_valid(&self, code: &str) -> bool {
-        if code.len() != self.output_len {
-            return false;
-        }
-        let r1 = self.generate();
-        let ref_code = r1.as_str().as_bytes();
-        let code = code.as_bytes();
-        let (code, ref_code) = match self.hash_function {
-            HashFunction::Sha1 => (
-                compute_hmac!(self, Sha1, code),
-                compute_hmac!(self, Sha1, ref_code),
-            ),
-            HashFunction::Sha224 => (
-                compute_hmac!(self, Sha224, code),
-                compute_hmac!(self, Sha224, ref_code),
-            ),
-            HashFunction::Sha256 => (
-                compute_hmac!(self, Sha256, code),
-                compute_hmac!(self, Sha256, ref_code),
-            ),
-            HashFunction::Sha384 => (
-                compute_hmac!(self, Sha384, code),
-                compute_hmac!(self, Sha384, ref_code),
-            ),
-            HashFunction::Sha512 => (
-                compute_hmac!(self, Sha512, code),
-                compute_hmac!(self, Sha512, ref_code),
-            ),
-            HashFunction::Sha512Trunc224 => (
-                compute_hmac!(self, Sha512Trunc224, code),
-                compute_hmac!(self, Sha512Trunc224, ref_code),
-            ),
-            HashFunction::Sha512Trunc256 => (
-                compute_hmac!(self, Sha512Trunc256, code),
-                compute_hmac!(self, Sha512Trunc256, ref_code),
-            ),
-            HashFunction::Sha3_224 => (
-                compute_hmac!(self, Sha3_224, code),
-                compute_hmac!(self, Sha3_224, ref_code),
-            ),
-            HashFunction::Sha3_256 => (
-                compute_hmac!(self, Sha3_256, code),
-                compute_hmac!(self, Sha3_256, ref_code),
-            ),
-            HashFunction::Sha3_384 => (
-                compute_hmac!(self, Sha3_384, code),
-                compute_hmac!(self, Sha3_384, ref_code),
-            ),
-            HashFunction::Sha3_512 => (
-                compute_hmac!(self, Sha3_512, code),
-                compute_hmac!(self, Sha3_512, ref_code),
-            ),
-            HashFunction::Keccak224 => (
-                compute_hmac!(self, Keccak224, code),
-                compute_hmac!(self, Keccak224, ref_code),
-            ),
-            HashFunction::Keccak256 => (
-                compute_hmac!(self, Keccak256, code),
-                compute_hmac!(self, Keccak256, ref_code),
-            ),
-            HashFunction::Keccak384 => (
-                compute_hmac!(self, Keccak384, code),
-                compute_hmac!(self, Keccak384, ref_code),
-            ),
-            HashFunction::Keccak512 => (
-                compute_hmac!(self, Keccak512, code),
-                compute_hmac!(self, Keccak512, ref_code),
-            ),
-        };
-        code == ref_code
+        self.raw_is_valid(code).0
+    }
+
+    /// Checks if the given code is valid within the look-ahead range. If the code was valid, updates the counter's value.
+    ///
+    /// This implementation uses the [double HMAC verification](https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2011/february/double-hmac-verification/) in order to prevent a timing side channel attack.
+    ///
+    /// ## Examples
+    /// ```
+    /// // Counter: code
+    /// // 0: 755224
+    /// // 1: 287082
+    /// // 2: 359152
+    /// // 3: 969429
+    /// // 4: 338314
+    /// // 5: 254676
+    /// let key_ascii = "12345678901234567890".to_owned();
+    /// let mut checker = libreauth::oath::HOTPBuilder::new()
+    ///     .ascii_key(&key_ascii)
+    ///     .look_ahead(3)
+    ///     .finalize()
+    ///     .unwrap();
+    ///
+    /// // The counter starts at 0.
+    /// assert_eq!(checker.get_counter(), 0);
+    ///
+    /// // The client's counter is synchronized.
+    /// assert!(checker.is_valid_sync("755224"));
+    /// assert_eq!(checker.get_counter(), 1);
+    ///
+    /// // The client's counter is not synchronized and out of the look-ahead range.
+    /// assert!(!checker.is_valid_sync("254676"));
+    /// assert_eq!(checker.get_counter(), 1);
+    ///
+    /// // The client's counter is not synchronized and within the look-ahead range.
+    /// assert!(checker.is_valid_sync("338314"));
+    /// assert_eq!(checker.get_counter(), 5);
+    ///
+    /// // The client's counter is synchronized.
+    /// assert!(checker.is_valid_sync("254676"));
+    /// assert_eq!(checker.get_counter(), 6);
+    /// ```
+    pub fn is_valid_sync(&mut self, code: &str) -> bool {
+        let (result, new_counter) = self.raw_is_valid(code);
+        self.counter = new_counter;
+        result
     }
 
     /// Creates the Key Uri Format according to the [Google authenticator
@@ -306,6 +378,7 @@ pub struct HOTPBuilder {
     output_base: String,
     hash_function: HashFunction,
     runtime_error: Option<ErrorCode>,
+    look_ahead: u64,
 }
 
 impl Default for HOTPBuilder {
@@ -324,6 +397,7 @@ impl HOTPBuilder {
             output_base: DEFAULT_OTP_OUT_BASE.to_string(),
             hash_function: DEFAULT_OTP_HASH,
             runtime_error: None,
+            look_ahead: DEFAULT_LOOK_AHEAD,
         }
     }
 
@@ -332,6 +406,12 @@ impl HOTPBuilder {
     /// Sets the counter. Default is 0.
     pub fn counter(&mut self, counter: u64) -> &mut HOTPBuilder {
         self.counter = counter;
+        self
+    }
+
+    /// Sets a look-ahead parameter. Default is 0.
+    pub fn look_ahead(&mut self, nb: u64) -> &mut HOTPBuilder {
+        self.look_ahead = nb;
         self
     }
 
@@ -352,6 +432,7 @@ impl HOTPBuilder {
                 output_len: self.output_len,
                 output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
+                look_ahead: self.look_ahead,
             }),
             None => Err(ErrorCode::InvalidKey),
         }
@@ -1311,7 +1392,7 @@ mod tests {
 
         assert_eq!(uri.len(), 141);
         assert!(uri.starts_with(
-            "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&"
+                "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&"
         ));
         assert!(uri.contains("&foo=bar+baz"));
         assert!(uri.contains("&foo+2=%C3%A8_%C3%A9"));

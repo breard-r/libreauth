@@ -58,6 +58,7 @@ static uint32_t test_basic_hotp(void) {
     assert(cfg.output_len == DEFAULT_BUFF_LEN);
     assert(cfg.output_base == NULL);
     assert(cfg.hash_function == LIBREAUTH_HASH_SHA_1);
+    assert(cfg.look_ahead == 0);
 
     cfg.key = key;
     cfg.key_len = strlen(key);
@@ -67,13 +68,55 @@ static uint32_t test_basic_hotp(void) {
     assert(strlen(code) == DEFAULT_BUFF_LEN);
     assert(strncmp(code, "755224", DEFAULT_BUFF_LEN + 1) == 0);
 
-    assert(libreauth_hotp_is_valid(&cfg, "755224"));
-    assert(!libreauth_hotp_is_valid(NULL, "755224"));
-    assert(!libreauth_hotp_is_valid(&cfg, "755225"));
-    assert(!libreauth_hotp_is_valid(&cfg, "4755224"));
-    assert(!libreauth_hotp_is_valid(&cfg, "!@#$%^"));
-    assert(!libreauth_hotp_is_valid(&cfg, ""));
-    assert(!libreauth_hotp_is_valid(&cfg, NULL));
+    assert(libreauth_hotp_is_valid(&cfg, "755224", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(NULL, "755224", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(&cfg, "755225", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(&cfg, "4755224", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(&cfg, "!@#$%^", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(&cfg, "", LIBREAUTH_OATH_CTR_NOSYNC));
+    assert(!libreauth_hotp_is_valid(&cfg, NULL, LIBREAUTH_OATH_CTR_NOSYNC));
+
+    return 1;
+}
+
+static uint32_t test_hotp_sync(void) {
+    test_name("hotp: test_hotp_sync");
+
+    struct libreauth_hotp_cfg cfg;
+    const char key[] = "12345678901234567890";
+
+    uint32_t ret = libreauth_hotp_init(&cfg);
+    assert(ret == LIBREAUTH_OATH_SUCCESS);
+    assert(cfg.key == NULL);
+    assert(cfg.key_len == 0);
+    assert(cfg.counter == 0);
+    assert(cfg.output_len == DEFAULT_BUFF_LEN);
+    assert(cfg.output_base == NULL);
+    assert(cfg.hash_function == LIBREAUTH_HASH_SHA_1);
+    assert(cfg.look_ahead == 0);
+
+    cfg.look_ahead = 3;
+    cfg.key = key;
+    cfg.key_len = strlen(key);
+
+    // The counter starts at 0.
+    assert(cfg.counter == 0);
+
+    // The client's counter is synchronized.
+    assert(libreauth_hotp_is_valid(&cfg, "755224", LIBREAUTH_OATH_CTR_SYNC));
+    assert(cfg.counter == 1);
+
+    // The client's counter is not synchronized and out of the look-ahead range.
+    assert(libreauth_hotp_is_valid(&cfg, "254676", LIBREAUTH_OATH_CTR_SYNC) == 0);
+    assert(cfg.counter == 1);
+
+    // The client's counter is not synchronized and within the look-ahead range.
+    assert(libreauth_hotp_is_valid(&cfg, "338314", LIBREAUTH_OATH_CTR_SYNC));
+    assert(cfg.counter == 5);
+
+    // The client's counter is synchronized.
+    assert(libreauth_hotp_is_valid(&cfg, "254676", LIBREAUTH_OATH_CTR_SYNC));
+    assert(cfg.counter == 6);
 
     return 1;
 }
@@ -263,6 +306,7 @@ uint32_t test_hotp(void) {
     uint32_t nb_tests = 0;
 
     nb_tests += test_basic_hotp();
+    nb_tests += test_hotp_sync();
     nb_tests += test_basic_key_uri();
     nb_tests += test_init_null_ptr();
     nb_tests += test_generate_null_ptr();
