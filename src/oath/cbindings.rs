@@ -5,8 +5,6 @@ use crate::{
     deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string, get_value_or_errno,
     get_value_or_false,
 };
-use libc;
-use std;
 use std::ffi::CStr;
 use std::time::SystemTime;
 
@@ -273,13 +271,11 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sy
                 } else {
                     0
                 }
+            } else if hotp.is_valid_sync(&code) {
+                cfg.counter = hotp.get_counter();
+                1
             } else {
-                if hotp.is_valid_sync(&code) {
-                    cfg.counter = hotp.get_counter();
-                    1
-                } else {
-                    0
-                }
+                0
             }
         }
         Err(_) => 0,

@@ -1,7 +1,5 @@
 use super::KeyBuilder;
 use crate::get_slice_mut;
-use libc;
-use std;
 
 /// [C binding] Generate a random key.
 ///

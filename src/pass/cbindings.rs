@@ -5,8 +5,6 @@ use super::{
 use crate::hash::HashFunction;
 use crate::pass::XHMAC;
 use crate::{deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string};
-use libc;
-use std;
 use std::ffi::CStr;
 
 /// [C binding]
