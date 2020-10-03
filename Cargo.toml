@@ -1,14 +1,15 @@
 [package]
 name = "libreauth"
 version = "0.14.0-dev"
-edition = "2018"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
+edition = "2018"
 description = "Collection of tools for user authentication."
-keywords = ["authentication", "password", "oath", "hotp", "totp"]
 documentation = "https://docs.rs/libreauth/"
-repository = "https://github.com/breard-r/libreauth"
 readme = "README.md"
+repository = "https://github.com/breard-r/libreauth"
 license = "CECILL-C OR CECILL-2.1"
+keywords = ["authentication", "password", "oath", "hotp", "totp"]
+categories = ["authentication", "cryptography"]
 include = ["src/**/*", "Cargo.toml", "Licence_*.txt"]
 
 [package.metadata.docs.rs]
