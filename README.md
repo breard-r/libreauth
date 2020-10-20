@@ -49,11 +49,11 @@ The project itself is still in development and therefore should not be used in p
 
 - OATH HOTP/TOTP: almost ready!
   * :white_check_mark: lot of features
-  * :warning: almost stable API
+  * :white_check_mark: stable API
   * :warning: lack of peer review
 - Password / passphrase authentication: not ready yet.
-  * :bangbang: incomplete
-  * :bangbang: unstable API
+  * :white_check_mark: sane defaults
+  * :bangbang: almost stable API
   * :warning: lack of peer review
 - Random key generation: almost ready!
   * :warning: almost stable API
