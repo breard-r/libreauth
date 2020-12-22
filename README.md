@@ -140,10 +140,6 @@ $ ./totp
 848085
 ```
 
-### Python
-
-Python bindings are available. See the [Python LibreAuth](https://github.com/breard-r/py-libreauth) project.
-
 
 ## License
 
