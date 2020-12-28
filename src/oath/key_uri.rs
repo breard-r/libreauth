@@ -71,8 +71,8 @@ pub enum ParametersVisibility {
 
 /// Creates the Key Uri Format according to the [Google authenticator
 /// specification](https://github.com/google/google-authenticator/wiki/Key-Uri-Format) by calling
-/// `key_uri_format()` on [`HOTP`] or [`TOTP`]. This value can be used to generete QR
-/// codes which allow easy scanning by the end user.
+/// `key_uri_format()` on [`HOTP`](crate::oath::HOTP::key_uri_format) or [`TOTP`](crate::oath::TOTP::key_uri_format).
+/// This value can be used to generete QR codes which allow easy scanning by the end user.
 ///
 /// **WARNING**: The finalized value contains the secret key of the authentication process and
 /// should only be displayed to the corresponding user!

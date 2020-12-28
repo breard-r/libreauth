@@ -50,17 +50,11 @@
 pub enum ErrorCode {
     /// Used in C-bindings to indicate the absence of errors.
     Success = 0,
-    /// The password is shorter than the minimal length (default: [DEFAULT_PASSWORD_MIN_LEN][1]).
-    ///
-    /// [1]: constant.DEFAULT_PASSWORD_MIN_LEN.html
+    /// The password is shorter than the minimal length.
     PasswordTooShort = 1,
-    /// The password is longer than the maximal length (default: [DEFAULT_PASSWORD_MAX_LEN][1]).
-    ///
-    /// [1]: constant.DEFAULT_PASSWORD_MAX_LEN.html
+    /// The password is longer than the maximal length.
     PasswordTooLong = 2,
-    /// The input does not respect the [storage format][1].
-    ///
-    /// [1]: index.html#storage-format
+    /// The input does not respect the [storage format](crate::pass).
     InvalidPasswordFormat = 10,
     /// Some options you specified are incompatible.
     IncompatibleOption = 11,

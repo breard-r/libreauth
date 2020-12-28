@@ -31,12 +31,12 @@ macro_rules! otp_init {
 ///
 /// The `struct libreauth_hotp_cfg` contains the following fields:
 ///
-/// - [key](./struct.HOTPBuilder.html#method.key)
+/// - [key](crate::oath::HOTPBuilder::key)
 /// - `key_len`: key's length, in bytes
-/// - [counter](./struct.HOTPBuilder.html#method.counter)
-/// - [output_len](./struct.HOTPBuilder.html#method.output_len)
-/// - [output_base](./struct.HOTPBuilder.html#method.output_base)
-/// - [hash_function](../hash/enum.HashFunction.html#c-interface)
+/// - [counter](crate::oath::HOTPBuilder::counter)
+/// - [output_len](crate::oath::HOTPBuilder::output_len)
+/// - [output_base](crate::oath::HOTPBuilder::output_base)
+/// - [hash_function](crate::hash::HashFunction)
 #[repr(C)]
 pub struct HOTPcfg {
     key: *const u8,
@@ -52,16 +52,16 @@ pub struct HOTPcfg {
 ///
 /// The `struct libreauth_totp_cfg` contains the following fields:
 ///
-/// - [key](./struct.TOTPBuilder.html#method.key)
+/// - [key](crate::oath::TOTPBuilder::method.key)
 /// - `key_len`: key's length, in bytes
-/// - [timestamp](./struct.TOTPBuilder.html#method.timestamp)
-/// - [positive_tolerance](./struct.TOTPBuilder.html#method.positive_tolerance)
-/// - [negative_tolerance](./struct.TOTPBuilder.html#method.negative_tolerance)
-/// - [period](./struct.TOTPBuilder.html#method.period)
-/// - [initial_time](./struct.TOTPBuilder.html#method.initial_time)
-/// - [output_len](./struct.TOTPBuilder.html#method.output_len)
-/// - [output_base](./struct.TOTPBuilder.html#method.output_base)
-/// - [hash_function](../hash/enum.HashFunction.html#c-interface)
+/// - [timestamp](crate::oath::TOTPBuilder::timestamp)
+/// - [positive_tolerance](crate::oath::TOTPBuilder::positive_tolerance)
+/// - [negative_tolerance](crate::oath::TOTPBuilder::negative_tolerance)
+/// - [period](crate::oath::TOTPBuilder::period)
+/// - [initial_time](crate::oath::TOTPBuilder::initial_time)
+/// - [output_len](crate::oath::TOTPBuilder::output_len)
+/// - [output_base](crate::oath::TOTPBuilder::output_base)
+/// - [hash_function](crate::hash::HashFunction)
 #[repr(C)]
 pub struct TOTPcfg {
     key: *const u8,

@@ -44,16 +44,16 @@ pub enum XHMACType {
 ///
 /// The `struct libreauth_pass_cfg` contains the following fields:
 ///
-/// - [min_len](./struct.HashBuilder.html#method.min_len)
-/// - [max_len](./struct.HashBuilder.html#method.max_len)
-/// - [salt_len](./struct.HashBuilder.html#method.salt_len)
-/// - [algorithm](./enum.Algorithm.html#c-interface)
-/// - [length_calculation](./enum.LengthCalculationMethod.html#c-interface)
-/// - [normalization](./enum.Normalization.html#c-interface)
-/// - [standard](./enum.PasswordStorageStandard.html#c-interface)
-/// - [version](./struct.HashBuilder.html#method.version)
-/// - [xhmac_type](./enum.XHMACType.html)
-/// - [xhmac_alg](../hash/enum.HashFunction.html)
+/// - [min_len](crate::pass::HashBuilder::min_len)
+/// - [max_len](crate::pass::HashBuilder::max_len)
+/// - [salt_len](crate::pass::HashBuilder::salt_len)
+/// - [algorithm](crate::pass::Algorithm)
+/// - [length_calculation](crate::pass::LengthCalculationMethod)
+/// - [normalization](crate::pass::Normalization)
+/// - [standard](crate::pass::PasswordStorageStandard)
+/// - [version](crate::pass::HashBuilder::version)
+/// - [xhmac_type](crate::pass::XHMACType)
+/// - [xhmac_alg](crate::hash::HashFunction)
 /// - `pepper` (*const u8): Key used for the XHMAC. NULL if no XHMAC is used.
 /// - `pepper_len` (size_t): Length of the XHMAC key, in bytes.
 #[repr(C)]
