@@ -124,8 +124,8 @@ struct libreauth_pass_cfg {
     size_t                          version;
     libreauth_pass_xhmac            xhmac_type;
     libreauth_hash_function         xhmac_alg;
-    const void                     *xhmac_key;
-    size_t                          xhmac_key_len;
+    const void                     *pepper;
+    size_t                          pepper_len;
 };
 
 libreauth_pass_errno    libreauth_pass_init(struct libreauth_pass_cfg *cfg);

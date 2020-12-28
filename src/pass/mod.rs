@@ -65,7 +65,7 @@
 //!         <tr>
 //!             <td>xhmac</td>
 //!             <td>string: none | before | after</td>
-//!             <td>If not none, apply an additional HMAC with an external salt before or after hashing the password.</td>
+//!             <td>If not none, apply an additional HMAC with an external pepper before or after hashing the password.</td>
 //!             <td>none</td>
 //!         </tr>
 //!         <tr>

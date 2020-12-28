@@ -54,8 +54,8 @@ pub enum XHMACType {
 /// - [version](./struct.HashBuilder.html#method.version)
 /// - [xhmac_type](./enum.XHMACType.html)
 /// - [xhmac_alg](../hash/enum.HashFunction.html)
-/// - `xhmac_key` (*const u8): Key used for the XHMAC. NULL if no XHMAC is used.
-/// - `xhmac_key_len` (size_t): Length of the XHMAC key, in bytes.
+/// - `pepper` (*const u8): Key used for the XHMAC. NULL if no XHMAC is used.
+/// - `pepper_len` (size_t): Length of the XHMAC key, in bytes.
 #[repr(C)]
 pub struct PassCfg {
     min_len: libc::size_t,
@@ -68,8 +68,8 @@ pub struct PassCfg {
     version: libc::size_t,
     xhmac_type: XHMACType,
     xhmac_alg: HashFunction,
-    xhmac_key: *const u8,
-    xhmac_key_len: libc::size_t,
+    pepper: *const u8,
+    pepper_len: libc::size_t,
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values.
@@ -115,8 +115,8 @@ pub unsafe extern "C" fn libreauth_pass_init_std(
             c.version = DEFAULT_USER_VERSION;
             c.xhmac_type = XHMACType::None;
             c.xhmac_alg = std_default::DEFAULT_XHMAC_ALGORITHM;
-            c.xhmac_key = std::ptr::null();
-            c.xhmac_key_len = 0;
+            c.pepper = std::ptr::null();
+            c.pepper_len = 0;
         }
         PasswordStorageStandard::Nist80063b => {
             c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
@@ -129,8 +129,8 @@ pub unsafe extern "C" fn libreauth_pass_init_std(
             c.version = DEFAULT_USER_VERSION;
             c.xhmac_type = XHMACType::None;
             c.xhmac_alg = std_nist::DEFAULT_XHMAC_ALGORITHM;
-            c.xhmac_key = std::ptr::null();
-            c.xhmac_key_len = 0;
+            c.pepper = std::ptr::null();
+            c.pepper_len = 0;
         }
     };
     ErrorCode::Success
@@ -175,18 +175,18 @@ pub unsafe extern "C" fn libreauth_pass_init_from_phc(
     match checker.xhmac {
         XHMAC::Before(k) => {
             c.xhmac_type = XHMACType::Before;
-            c.xhmac_key = k.as_ptr();
-            c.xhmac_key_len = k.len();
+            c.pepper = k.as_ptr();
+            c.pepper_len = k.len();
         }
         XHMAC::After(k) => {
             c.xhmac_type = XHMACType::After;
-            c.xhmac_key = k.as_ptr();
-            c.xhmac_key_len = k.len();
+            c.pepper = k.as_ptr();
+            c.pepper_len = k.len();
         }
         XHMAC::None => {
             c.xhmac_type = XHMACType::None;
-            c.xhmac_key = std::ptr::null();
-            c.xhmac_key_len = 0;
+            c.pepper = std::ptr::null();
+            c.pepper_len = 0;
         }
     };
     ErrorCode::Success
@@ -227,12 +227,12 @@ pub unsafe extern "C" fn libreauth_pass_hash(
         .normalization(c.normalization)
         .version(c.version)
         .xhmac(c.xhmac_alg);
-    let key = if c.xhmac_key.is_null() {
+    let key = if c.pepper.is_null() {
         vec![]
     } else {
-        match c.xhmac_key_len {
+        match c.pepper_len {
             0 => return ErrorCode::InvalidKeyLen,
-            l => get_slice!(c.xhmac_key, l),
+            l => get_slice!(c.pepper, l),
         }
     };
     if !key.is_empty() {

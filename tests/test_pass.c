@@ -153,16 +153,16 @@ static uint32_t test_xhmac(void) {
     assert(ret == LIBREAUTH_PASS_SUCCESS);
     cfg.xhmac_type = LIBREAUTH_PASS_XHMAC_AFTER;
     cfg.xhmac_alg = LIBREAUTH_HASH_SHA_384;
-    cfg.xhmac_key = "123";
-    cfg.xhmac_key_len = 3;
+    cfg.pepper = "123";
+    cfg.pepper_len = 3;
 
     ret = libreauth_pass_hash(&cfg, password, storage, LIBREAUTH_PASSWORD_STORAGE_LEN);
     assert(ret == LIBREAUTH_PASS_SUCCESS);
     assert(strstr(storage, "xhmac=after") != NULL);
     assert(strstr(storage, "xhmac-alg=sha384") != NULL);
 
-    assert(libreauth_pass_is_valid_xhmac(password, storage, cfg.xhmac_key, cfg.xhmac_key_len));
-    assert(!libreauth_pass_is_valid_xhmac(password, storage, cfg.xhmac_key, cfg.xhmac_key_len - 1));
+    assert(libreauth_pass_is_valid_xhmac(password, storage, cfg.pepper, cfg.pepper_len));
+    assert(!libreauth_pass_is_valid_xhmac(password, storage, cfg.pepper, cfg.pepper_len - 1));
     assert(!libreauth_pass_is_valid(password, storage));
 
     return 1;

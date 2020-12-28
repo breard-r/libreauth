@@ -7,9 +7,9 @@ use crate::pass::phc::PHCData;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-macro_rules! get_salt {
-    ($salt: ident) => {
-        $salt
+macro_rules! get_pepper {
+    ($pepper: ident) => {
+        $pepper
             .as_ref()
             .ok_or(ErrorCode::InvalidPasswordFormat)?
             .to_vec()
@@ -131,12 +131,12 @@ impl HashBuilder {
         HashBuilder::from_phc_internal(data, None)
     }
 
-    /// Create a new Hasher object from a PHC formatted string and an external salt for an additional HMAC.
-    pub fn from_phc_xhmac(data: &str, salt: &[u8]) -> Result<Hasher, ErrorCode> {
-        HashBuilder::from_phc_internal(data, Some(salt.to_vec()))
+    /// Create a new Hasher object from a PHC formatted string and an external pepper for an additional HMAC.
+    pub fn from_phc_xhmac(data: &str, pepper: &[u8]) -> Result<Hasher, ErrorCode> {
+        HashBuilder::from_phc_internal(data, Some(pepper.to_vec()))
     }
 
-    fn from_phc_internal(data: &str, salt: Option<Vec<u8>>) -> Result<Hasher, ErrorCode> {
+    fn from_phc_internal(data: &str, pepper: Option<Vec<u8>>) -> Result<Hasher, ErrorCode> {
         let mut phc = match PHCData::from_str(data) {
             Ok(v) => v,
             Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
@@ -183,14 +183,14 @@ impl HashBuilder {
         };
         let xhmac = match phc.parameters.remove("xhmac") {
             Some(when) => match when.to_lowercase().as_str() {
-                "before" => XHMAC::Before(get_salt!(salt)),
-                "after" => XHMAC::After(get_salt!(salt)),
+                "before" => XHMAC::Before(get_pepper!(pepper)),
+                "after" => XHMAC::After(get_pepper!(pepper)),
                 "none" => XHMAC::None,
                 _ => return Err(ErrorCode::InvalidPasswordFormat),
             },
             None => XHMAC::None,
         };
-        if xhmac == XHMAC::None && salt.is_some() {
+        if xhmac == XHMAC::None && pepper.is_some() {
             return Err(ErrorCode::InvalidPasswordFormat);
         }
         let xhmax_alg = match phc.parameters.remove("xhmac-alg") {
@@ -307,15 +307,15 @@ impl HashBuilder {
         self
     }
 
-    /// Add an additional HMAC with a salt before hashing the password.
-    pub fn xhmac_before(&mut self, salt: &[u8]) -> &mut HashBuilder {
-        self.xhmac = XHMAC::Before(salt.to_vec());
+    /// Add an additional HMAC with a pepper before hashing the password.
+    pub fn xhmac_before(&mut self, pepper: &[u8]) -> &mut HashBuilder {
+        self.xhmac = XHMAC::Before(pepper.to_vec());
         self
     }
 
-    /// Add an additional HMAC with a salt after hashing the password.
-    pub fn xhmac_after(&mut self, salt: &[u8]) -> &mut HashBuilder {
-        self.xhmac = XHMAC::After(salt.to_vec());
+    /// Add an additional HMAC with a pepper after hashing the password.
+    pub fn xhmac_after(&mut self, pepper: &[u8]) -> &mut HashBuilder {
+        self.xhmac = XHMAC::After(pepper.to_vec());
         self
     }
 }
