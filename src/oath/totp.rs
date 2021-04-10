@@ -61,7 +61,7 @@ impl TOTP {
             .finalize();
         match hotp {
             Ok(h) => h.generate(),
-            Err(e) => panic!(e),
+            Err(e) => panic!("{:?}", e),
         }
     }
 
@@ -90,7 +90,7 @@ impl TOTP {
                 .finalize();
             let is_valid = match hotp {
                 Ok(h) => h.is_valid(code),
-                Err(e) => panic!(e),
+                Err(e) => panic!("{:?}", e),
             };
             if is_valid {
                 return true;
