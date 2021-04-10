@@ -17,7 +17,7 @@ features = ["cbindings", "key", "oath-uri", "pass"]
 
 [lib]
 name = "libreauth"
-crate-type = ["rlib", "staticlib", "dylib"]
+crate-type = ["rlib", "staticlib", "cdylib"]
 
 [features]
 default = ["hash", "key", "oath", "pass"]
