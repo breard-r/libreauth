@@ -14,7 +14,7 @@ use unicode_normalization::UnicodeNormalization;
 
 macro_rules! get_hmac {
     ($hash_func: ty, $salt: ident, $pass: ident) => {{
-        let mut hasher = Hmac::<$hash_func>::new_varkey(&$salt)?;
+        let mut hasher = Hmac::<$hash_func>::new_from_slice(&$salt)?;
         hasher.update($pass);
         Ok(hasher.finalize().into_bytes().to_vec())
     }};
@@ -168,7 +168,7 @@ impl Hasher {
                         .size(std_default::DEFAULT_SALT_LEN)
                         .as_vec();
 
-                    let mut ref_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
+                    let mut ref_hmac = match Hmac::<Sha512>::new_from_slice(&salt) {
                         Ok(h) => h,
                         Err(_) => {
                             return false;
@@ -176,7 +176,7 @@ impl Hasher {
                     };
                     ref_hmac.update(rh.as_slice());
 
-                    let mut pass_hmac = match Hmac::<Sha512>::new_varkey(&salt) {
+                    let mut pass_hmac = match Hmac::<Sha512>::new_from_slice(&salt) {
                         Ok(h) => h,
                         Err(_) => {
                             return false;

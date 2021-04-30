@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 macro_rules! compute_hmac {
     ($obj: ident, $hash: ty, $input: ident) => {{
-        let mut hmac = Hmac::<$hash>::new_varkey(&$obj.key.as_slice()).unwrap();
+        let mut hmac = Hmac::<$hash>::new_from_slice(&$obj.key.as_slice()).unwrap();
         hmac.update(&$input);
         hmac.finalize().into_bytes().to_vec()
     }};
