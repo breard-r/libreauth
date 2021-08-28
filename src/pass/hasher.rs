@@ -116,13 +116,13 @@ impl Hasher {
             }
         };
         let norm_pass = match &self.xhmac {
-            XHMAC::Before(salt) => self.apply_xhmac(password.as_bytes(), &salt)?,
+            XHMAC::Before(salt) => self.apply_xhmac(password.as_bytes(), salt)?,
             _ => norm_pass.into_bytes(),
         };
         let hash_func = self.get_hash_func()?;
         let hash = hash_func.hash(&norm_pass);
         let hash = match &self.xhmac {
-            XHMAC::After(salt) => self.apply_xhmac(&hash, &salt)?,
+            XHMAC::After(salt) => self.apply_xhmac(&hash, salt)?,
             _ => hash,
         };
         let lc = match self.length_calculation {

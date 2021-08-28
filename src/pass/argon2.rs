@@ -118,7 +118,7 @@ impl HashingFunction for Argon2Hash {
             variant: argon2::Variant::Argon2i,
             version: argon2::Version::Version13,
         };
-        argon2::hash_raw(input, &self.salt.as_slice(), &config).unwrap()
+        argon2::hash_raw(input, self.salt.as_slice(), &config).unwrap()
     }
 }
 

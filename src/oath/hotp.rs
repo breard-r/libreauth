@@ -93,7 +93,7 @@ impl HOTP {
             HashFunction::Keccak512 => compute_hmac!(self, Keccak512, msg),
         };
         let hs = result.as_slice();
-        let nb = self.reduce_result(&hs);
+        let nb = self.reduce_result(hs);
         self.format_result(nb)
     }
 
