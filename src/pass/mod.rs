@@ -359,10 +359,7 @@ impl fmt::Display for XHMAC {
 
 impl XHMAC {
     pub(crate) fn is_none(&self) -> bool {
-        match *self {
-            XHMAC::None => true,
-            _ => false,
-        }
+        matches!(*self, XHMAC::None)
     }
 
     pub(crate) fn is_some(&self) -> bool {
