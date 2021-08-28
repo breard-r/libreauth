@@ -240,9 +240,9 @@ impl<'a> KeyUriBuilder<'a> {
             for (k, v) in &self.custom_parameters {
                 uri.query_pairs_mut().append_pair(k, v);
             }
-            return uri.into_string();
+            return uri.into();
         }
 
-        uri.into_string()
+        uri.into()
     }
 }
