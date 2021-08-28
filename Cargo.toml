@@ -36,7 +36,7 @@ getrandom = { version = "^0.2", optional = true }
 hex = { version = "^0.4", optional = true }
 hmac = { version = "^0.11", optional = true }
 libc = { version = "^0.2", optional = true }
-nom = { version = "^6.0", optional = true, default-features = false }
+nom = { version = "^7.0", optional = true, default-features = false }
 pbkdf2 = { version = "^0.8", optional = true, default-features = false }
 rust-argon2 = { version = "^0.8", optional = true }
 sha-1 = { version = "^0.9", optional = true }
