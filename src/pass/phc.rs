@@ -69,7 +69,7 @@ fn get_param_elem(input: &str) -> IResult<&str, (&str, &str)> {
 fn get_params(input: &str) -> IResult<&str, HashMap<String, String>> {
     fold_many0(
         get_param_elem,
-        || HashMap::new(),
+        HashMap::new,
         |mut hm: HashMap<_, _>, (k, v)| {
             hm.insert(k.to_string(), v.to_string());
             hm
