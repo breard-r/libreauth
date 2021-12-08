@@ -6,9 +6,9 @@ use super::{
 };
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
-use hmac::{Hmac, Mac, NewMac};
+use hmac::{Hmac, Mac};
 use sha1::Sha1;
-use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
 
@@ -81,8 +81,8 @@ impl HOTP {
             HashFunction::Sha256 => compute_hmac!(self, Sha256, msg),
             HashFunction::Sha384 => compute_hmac!(self, Sha384, msg),
             HashFunction::Sha512 => compute_hmac!(self, Sha512, msg),
-            HashFunction::Sha512Trunc224 => compute_hmac!(self, Sha512Trunc224, msg),
-            HashFunction::Sha512Trunc256 => compute_hmac!(self, Sha512Trunc256, msg),
+            HashFunction::Sha512Trunc224 => compute_hmac!(self, Sha512_224, msg),
+            HashFunction::Sha512Trunc256 => compute_hmac!(self, Sha512_256, msg),
             HashFunction::Sha3_224 => compute_hmac!(self, Sha3_224, msg),
             HashFunction::Sha3_256 => compute_hmac!(self, Sha3_256, msg),
             HashFunction::Sha3_384 => compute_hmac!(self, Sha3_384, msg),
@@ -159,12 +159,12 @@ impl HOTP {
                     compute_hmac!(self, Sha512, ref_code),
                 ),
                 HashFunction::Sha512Trunc224 => (
-                    compute_hmac!(self, Sha512Trunc224, code),
-                    compute_hmac!(self, Sha512Trunc224, ref_code),
+                    compute_hmac!(self, Sha512_224, code),
+                    compute_hmac!(self, Sha512_224, ref_code),
                 ),
                 HashFunction::Sha512Trunc256 => (
-                    compute_hmac!(self, Sha512Trunc256, code),
-                    compute_hmac!(self, Sha512Trunc256, ref_code),
+                    compute_hmac!(self, Sha512_256, code),
+                    compute_hmac!(self, Sha512_256, ref_code),
                 ),
                 HashFunction::Sha3_224 => (
                     compute_hmac!(self, Sha3_224, code),

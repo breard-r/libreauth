@@ -5,9 +5,9 @@ use super::{
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use crate::pass::phc::PHCData;
-use hmac::{Hmac, Mac, NewMac};
+use hmac::{Hmac, Mac};
 use sha1::Sha1;
-use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
@@ -94,8 +94,8 @@ impl Hasher {
             HashFunction::Sha256 => get_hmac!(Sha256, salt, password),
             HashFunction::Sha384 => get_hmac!(Sha384, salt, password),
             HashFunction::Sha512 => get_hmac!(Sha512, salt, password),
-            HashFunction::Sha512Trunc224 => get_hmac!(Sha512Trunc224, salt, password),
-            HashFunction::Sha512Trunc256 => get_hmac!(Sha512Trunc256, salt, password),
+            HashFunction::Sha512Trunc224 => get_hmac!(Sha512_224, salt, password),
+            HashFunction::Sha512Trunc256 => get_hmac!(Sha512_256, salt, password),
             HashFunction::Sha3_224 => get_hmac!(Sha3_224, salt, password),
             HashFunction::Sha3_256 => get_hmac!(Sha3_256, salt, password),
             HashFunction::Sha3_384 => get_hmac!(Sha3_384, salt, password),

@@ -4,7 +4,7 @@ use crate::key::KeyBuilder;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use sha1::Sha1;
-use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512Trunc224, Sha512Trunc256};
+use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256};
 use sha3::{Keccak224, Keccak256, Keccak384, Keccak512, Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -114,8 +114,8 @@ impl HashingFunction for Pbkdf2Hash {
             HashFunction::Sha256 => process_pbkdf2!(self, input, Sha256, 32),
             HashFunction::Sha384 => process_pbkdf2!(self, input, Sha384, 48),
             HashFunction::Sha512 => process_pbkdf2!(self, input, Sha512, 64),
-            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, input, Sha512Trunc224, 28),
-            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, input, Sha512Trunc256, 32),
+            HashFunction::Sha512Trunc224 => process_pbkdf2!(self, input, Sha512_224, 28),
+            HashFunction::Sha512Trunc256 => process_pbkdf2!(self, input, Sha512_256, 32),
             HashFunction::Keccak224 => process_pbkdf2!(self, input, Keccak224, 32),
             HashFunction::Keccak256 => process_pbkdf2!(self, input, Keccak256, 32),
             HashFunction::Keccak384 => process_pbkdf2!(self, input, Keccak384, 32),

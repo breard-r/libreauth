@@ -71,3 +71,9 @@ impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
         ErrorCode::InvalidPasswordFormat
     }
 }
+
+impl From<hmac::digest::InvalidLength> for ErrorCode {
+    fn from(_error: hmac::digest::InvalidLength) -> Self {
+        ErrorCode::InvalidPasswordFormat
+    }
+}
