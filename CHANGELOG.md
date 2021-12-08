@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.1] - 2021-04-10
 
+### Changed
+- The minimal required Rust version is now Rust 1.51.
+
 ### Fixed
 - Fixed compilation issues caused by the `dylib` crate type.
 
