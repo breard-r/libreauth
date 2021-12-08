@@ -71,7 +71,7 @@ impl KeyBuilder {
             panic!();
         }
         let mut key: Vec<u8> = vec![0; self.size];
-        if let Err(e) = getrandom(&mut key.as_mut_slice()) {
+        if let Err(e) = getrandom(key.as_mut_slice()) {
             panic!("Fatal error: {}", e);
         }
         self.key = Some(key);
