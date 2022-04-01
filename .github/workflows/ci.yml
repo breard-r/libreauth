@@ -34,6 +34,4 @@ jobs:
           command: test
           args: --verbose --all-features
       - name: Run C bindings tests
-        with:
-          command: make
-          args: -C tests clean test_valgrind
+        run: make -C tests clean test_valgrind
