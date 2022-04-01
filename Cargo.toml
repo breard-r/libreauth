@@ -2,7 +2,7 @@
 name = "libreauth"
 version = "0.14.1"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
-edition = "2018"
+edition = "2021"
 description = "Collection of tools for user authentication."
 documentation = "https://docs.rs/libreauth/"
 readme = "README.md"
