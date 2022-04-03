@@ -51,12 +51,12 @@ The project itself is still in development and therefore should not be used in p
   * :white_check_mark: lot of features
   * :white_check_mark: stable API
   * :warning: lack of peer review
-- Password / passphrase authentication: not ready yet.
+- Password / passphrase authentication: almost ready!
   * :white_check_mark: sane defaults
-  * :bangbang: almost stable API
+  * :white_check_mark: stable API
   * :warning: lack of peer review
 - Random key generation: almost ready!
-  * :warning: almost stable API
+  * :warning: stable API
   * :warning: lack of peer review
 
 
