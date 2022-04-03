@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The minimal required Rust version is now Rust 1.57.
+- Uses the Rust 2021 edition.
 
 
 ## [0.14.1] - 2021-04-10
