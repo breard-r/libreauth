@@ -37,3 +37,9 @@ jobs:
           args: --verbose --all-features
       - name: Run C bindings tests
         run: make -C tests clean test_valgrind
+  cargo-deny:
+    name: Check dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: EmbarkStudios/cargo-deny-action@v1
