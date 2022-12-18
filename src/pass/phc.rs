@@ -5,10 +5,16 @@ use nom::sequence::{preceded, separated_pair, terminated};
 use nom::IResult;
 use std::collections::HashMap;
 
+const STANDARD_NO_PAD: base64::engine::fast_portable::FastPortable =
+    base64::engine::fast_portable::FastPortable::from(
+        &base64::alphabet::STANDARD,
+        base64::engine::fast_portable::NO_PAD,
+    );
+
 fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
     Ok(match data.len() {
         0 => None,
-        _ => match base64::decode_config(data.as_bytes(), base64::STANDARD_NO_PAD) {
+        _ => match base64::decode_engine(data.as_bytes(), &STANDARD_NO_PAD) {
             Ok(r) => Some(r),
             Err(_) => None,
         },
@@ -16,7 +22,7 @@ fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
 }
 
 fn to_b64(data: &[u8]) -> String {
-    base64::encode_config(data, base64::STANDARD_NO_PAD)
+    base64::encode_engine(data, &STANDARD_NO_PAD)
 }
 
 fn is_b64(chr: char) -> bool {
