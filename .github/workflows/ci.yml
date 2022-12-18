@@ -42,7 +42,7 @@ jobs:
           command: test
           args: --verbose --all-features
       - name: Run C bindings tests
-        run: make -C tests clean test_valgrind
+        run: make -C tests clean test
   formatting:
     name: Cargo fmt
     runs-on: ubuntu-latest
