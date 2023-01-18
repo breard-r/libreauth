@@ -37,6 +37,8 @@ mod cbindings;
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_keygen;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use getrandom::getrandom;
 
 /// Random key builder.
@@ -98,7 +100,7 @@ impl KeyBuilder {
 
     /// Return the current key as a base 64 encoded string.
     pub fn as_base64(&self) -> String {
-        base64::encode(self.key.clone().unwrap().as_slice())
+        STANDARD.encode(self.key.clone().unwrap().as_slice())
     }
 }
 

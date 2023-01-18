@@ -159,7 +159,8 @@ macro_rules! builder_common {
 
         /// Sets the shared secret. This secret is passed as a base64 encoded string.
         pub fn base64_key(&mut self, key: &str) -> &mut $t {
-            match base64::decode(key) {
+            use base64::Engine;
+            match base64::engine::general_purpose::STANDARD.decode(key) {
                 Ok(k) => {
                     self.key = Some(k);
                 }

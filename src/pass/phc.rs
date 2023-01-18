@@ -1,3 +1,5 @@
+use base64::engine::general_purpose::STANDARD_NO_PAD;
+use base64::Engine;
 use nom::bytes::complete::{tag, take_while, take_while1};
 use nom::combinator::{map_res, opt};
 use nom::multi::fold_many0;
@@ -5,16 +7,10 @@ use nom::sequence::{preceded, separated_pair, terminated};
 use nom::IResult;
 use std::collections::HashMap;
 
-const STANDARD_NO_PAD: base64::engine::fast_portable::FastPortable =
-    base64::engine::fast_portable::FastPortable::from(
-        &base64::alphabet::STANDARD,
-        base64::engine::fast_portable::NO_PAD,
-    );
-
 fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
     Ok(match data.len() {
         0 => None,
-        _ => match base64::decode_engine(data.as_bytes(), &STANDARD_NO_PAD) {
+        _ => match STANDARD_NO_PAD.decode(data.as_bytes()) {
             Ok(r) => Some(r),
             Err(_) => None,
         },
@@ -22,7 +18,7 @@ fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
 }
 
 fn to_b64(data: &[u8]) -> String {
-    base64::encode_engine(data, &STANDARD_NO_PAD)
+    STANDARD_NO_PAD.encode(data)
 }
 
 fn is_b64(chr: char) -> bool {

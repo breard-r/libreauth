@@ -31,7 +31,7 @@ pass = ["base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "
 
 [dependencies]
 base32 = { version = "^0.4", optional = true }
-base64 = { version = "^0.20", optional = true }
+base64 = { version = "^0.21", optional = true }
 crypto-mac = { version = "^0.11", optional = true }
 getrandom = { version = "^0.2", optional = true }
 hex = { version = "^0.4", optional = true }
