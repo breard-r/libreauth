@@ -340,6 +340,7 @@ pub enum PasswordStorageStandard {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) enum XHMAC {
     Before(Vec<u8>),
     After(Vec<u8>),
