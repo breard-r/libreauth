@@ -19,7 +19,8 @@ pub const DEFAULT_ITER: u32 = 45_000;
 macro_rules! process_pbkdf2 {
     ($obj: ident, $input: ident, $hash: ty, $len: expr) => {{
         let mut out = [0u8; $len];
-        pbkdf2::<Hmac<$hash>>($input, $obj.salt.as_slice(), $obj.nb_iter, &mut out[..$len]);
+        pbkdf2::<Hmac<$hash>>($input, $obj.salt.as_slice(), $obj.nb_iter, &mut out[..$len])
+            .unwrap();
         out.to_vec()
     }};
 }
