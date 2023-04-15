@@ -1,4 +1,4 @@
-use super::{std_default, ErrorCode, HashingFunction, Normalization};
+use super::{error::Error, std_default, HashingFunction, Normalization};
 use crate::key::KeyBuilder;
 use std::collections::HashMap;
 
@@ -25,9 +25,9 @@ macro_rules! set_param {
                     $obj.$attr = i;
                     Ok(())
                 }
-                _ => Err(ErrorCode::InvalidPasswordFormat),
+                _ => Err(Error::InvalidPasswordFormat),
             },
-            Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+            Err(_) => Err(Error::InvalidPasswordFormat),
         }
     }};
 }
@@ -71,13 +71,13 @@ impl HashingFunction for Argon2Hash {
         params
     }
 
-    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode> {
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), Error> {
         match name {
             "passes" => set_param!(self, passes, value, u32, MIN_PASSES, MAX_PASSES),
             "mem" => set_param!(self, mem_cost, value, u32, MIN_MEM_COST, MAX_MEM_COST),
             "lanes" => set_param!(self, lanes, value, u32, MIN_LANES, MAX_LANES),
             "len" => set_param!(self, output_len, value, u32, MIN_OUTPUT_LEN, MAX_OUTPUT_LEN),
-            _ => Err(ErrorCode::InvalidPasswordFormat),
+            _ => Err(Error::InvalidPasswordFormat),
         }
     }
 
@@ -85,22 +85,22 @@ impl HashingFunction for Argon2Hash {
         Some(self.salt.clone())
     }
 
-    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode> {
+    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), Error> {
         match salt.len() {
             MIN_SALT_LENGTH..=MAX_SALT_LENGTH => {
                 self.salt = salt;
                 Ok(())
             }
-            _ => Err(ErrorCode::InvalidPasswordFormat),
+            _ => Err(Error::InvalidPasswordFormat),
         }
     }
 
-    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode> {
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), Error> {
         let salt = KeyBuilder::new().size(salt_len).as_vec();
         self.set_salt(salt)
     }
 
-    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode> {
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), Error> {
         self.norm = norm;
         Ok(())
     }

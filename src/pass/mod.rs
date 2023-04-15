@@ -183,6 +183,7 @@ pub use self::cbindings::libreauth_pass_is_valid;
 pub use self::cbindings::PassCfg;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::XHMACType;
+pub use self::error::Error;
 pub use error::ErrorCode;
 pub use hash_builder::HashBuilder;
 pub use hasher::Hasher;
@@ -371,11 +372,11 @@ impl XHMAC {
 trait HashingFunction {
     fn get_id(&self) -> String;
     fn get_parameters(&self) -> HashMap<String, String>;
-    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode>;
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), Error>;
     fn get_salt(&self) -> Option<Vec<u8>>;
-    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode>;
-    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode>;
-    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode>;
+    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), Error>;
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), Error>;
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), Error>;
     fn hash(&self, input: &[u8]) -> Vec<u8>;
 }
 
