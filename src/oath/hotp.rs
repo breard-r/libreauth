@@ -1,7 +1,7 @@
 #[cfg(feature = "oath-uri")]
 use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{
-    ErrorCode, HashFunction, DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
+    Error, HashFunction, DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
     DEFAULT_OTP_OUT_LEN,
 };
 #[cfg(feature = "oath-uri")]
@@ -377,7 +377,7 @@ pub struct HOTPBuilder {
     output_len: usize,
     output_base: String,
     hash_function: HashFunction,
-    runtime_error: Option<ErrorCode>,
+    runtime_error: Option<Error>,
     look_ahead: u64,
 }
 
@@ -416,13 +416,13 @@ impl HOTPBuilder {
     }
 
     /// Returns the finalized HOTP object.
-    pub fn finalize(&self) -> Result<HOTP, ErrorCode> {
+    pub fn finalize(&self) -> Result<HOTP, Error> {
         if let Some(e) = self.runtime_error {
             return Err(e);
         }
         match self.code_length() {
-            n if n < 1_000_000 => return Err(ErrorCode::CodeTooSmall),
-            n if n > 2_147_483_648 => return Err(ErrorCode::CodeTooBig),
+            n if n < 1_000_000 => return Err(Error::CodeTooSmall),
+            n if n > 2_147_483_648 => return Err(Error::CodeTooBig),
             _ => (),
         }
         match self.key {
@@ -434,7 +434,7 @@ impl HOTPBuilder {
                 hash_function: self.hash_function,
                 look_ahead: self.look_ahead,
             }),
-            None => Err(ErrorCode::InvalidKey),
+            None => Err(Error::InvalidKey),
         }
     }
 }

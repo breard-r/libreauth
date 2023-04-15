@@ -43,7 +43,7 @@ const DEFAULT_TOTP_PERIOD: u32 = 30;
 const DEFAULT_TOTP_T0: u64 = 0;
 const DEFAULT_LOOK_AHEAD: u64 = 0;
 
-/// Error codes used both in the rust and C interfaces.
+/// Error codes used in the C interface.
 ///
 /// ## C interface
 /// The C interface uses an enum of type `libreauth_oath_errno` and the
@@ -117,6 +117,27 @@ pub enum ErrorCode {
     InvalidUTF8 = 30,
 }
 
+/// Errors used for the Rust interface.
+#[derive(Clone, Copy, Debug)]
+pub enum Error {
+    CodeTooSmall,
+    CodeTooBig,
+
+    InvalidKey,
+    InvalidPeriod,
+}
+
+impl From<Error> for ErrorCode {
+    fn from(error: Error) -> Self {
+        match error {
+            Error::CodeTooSmall => ErrorCode::CodeTooSmall,
+            Error::CodeTooBig => ErrorCode::CodeTooBig,
+            Error::InvalidKey => ErrorCode::InvalidKey,
+            Error::InvalidPeriod => ErrorCode::InvalidPeriod,
+        }
+    }
+}
+
 macro_rules! builder_common {
     ($t:ty) => {
         /// Sets the shared secret.
@@ -138,7 +159,7 @@ macro_rules! builder_common {
                     self.key = Some(k);
                 }
                 Err(_) => {
-                    self.runtime_error = Some(ErrorCode::InvalidKey);
+                    self.runtime_error = Some(Error::InvalidKey);
                 }
             }
             self
@@ -151,7 +172,7 @@ macro_rules! builder_common {
                     self.key = Some(k);
                 }
                 None => {
-                    self.runtime_error = Some(ErrorCode::InvalidKey);
+                    self.runtime_error = Some(Error::InvalidKey);
                 }
             }
             self
@@ -165,7 +186,7 @@ macro_rules! builder_common {
                     self.key = Some(k);
                 }
                 Err(_) => {
-                    self.runtime_error = Some(ErrorCode::InvalidKey);
+                    self.runtime_error = Some(Error::InvalidKey);
                 }
             }
             self

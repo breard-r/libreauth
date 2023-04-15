@@ -218,7 +218,7 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
             write_code(&ref_code, code);
             ErrorCode::Success
         }
-        Err(errno) => errno,
+        Err(err) => err.into(),
     }
 }
 
@@ -332,7 +332,7 @@ pub unsafe extern "C" fn libreauth_hotp_get_uri(
             buff[len] = 0;
             ErrorCode::Success
         }
-        Err(errno) => errno,
+        Err(err) => err.into(),
     }
 }
 
@@ -433,7 +433,7 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
             write_code(&ref_code, code);
             ErrorCode::Success
         }
-        Err(errno) => errno,
+        Err(err) => err.into(),
     }
 }
 
@@ -545,6 +545,6 @@ pub unsafe extern "C" fn libreauth_totp_get_uri(
             buff[len] = 0;
             ErrorCode::Success
         }
-        Err(errno) => errno,
+        Err(err) => err.into(),
     }
 }

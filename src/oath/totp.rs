@@ -1,8 +1,8 @@
 #[cfg(feature = "oath-uri")]
 use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{
-    ErrorCode, HOTPBuilder, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
-    DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
+    Error, HOTPBuilder, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN,
+    DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
 };
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
@@ -206,7 +206,7 @@ pub struct TOTPBuilder {
     output_len: usize,
     output_base: String,
     hash_function: HashFunction,
-    runtime_error: Option<ErrorCode>,
+    runtime_error: Option<Error>,
 }
 
 impl Default for TOTPBuilder {
@@ -269,7 +269,7 @@ impl TOTPBuilder {
     /// Sets the time step in seconds (X). May not be zero. Default is 30.
     pub fn period(&mut self, period: u32) -> &mut TOTPBuilder {
         if period == 0 {
-            self.runtime_error = Some(ErrorCode::InvalidPeriod);
+            self.runtime_error = Some(Error::InvalidPeriod);
         } else {
             self.period = period;
         }
@@ -283,13 +283,13 @@ impl TOTPBuilder {
     }
 
     /// Returns the finalized TOTP object.
-    pub fn finalize(&self) -> Result<TOTP, ErrorCode> {
+    pub fn finalize(&self) -> Result<TOTP, Error> {
         if let Some(e) = self.runtime_error {
             return Err(e);
         }
         match self.code_length() {
-            n if n < 1_000_000 => return Err(ErrorCode::CodeTooSmall),
-            n if n > 2_147_483_648 => return Err(ErrorCode::CodeTooBig),
+            n if n < 1_000_000 => return Err(Error::CodeTooSmall),
+            n if n > 2_147_483_648 => return Err(Error::CodeTooBig),
             _ => (),
         }
         match self.key {
@@ -304,7 +304,7 @@ impl TOTPBuilder {
                 output_base: self.output_base.clone(),
                 hash_function: self.hash_function,
             }),
-            None => Err(ErrorCode::InvalidKey),
+            None => Err(Error::InvalidKey),
         }
     }
 }
