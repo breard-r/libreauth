@@ -68,9 +68,22 @@ pub enum ErrorCode {
 
 /// Errors for the Rust interface.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
 pub enum Error {
+    #[cfg_attr(
+        feature = "thiserror",
+        error("Password was shorter than the minimal length (actual {actual}, min {min})")
+    )]
     PasswordTooShort { min: usize, actual: usize },
+    #[cfg_attr(
+        feature = "thiserror",
+        error("Password was longer than the maximal length (actual {actual}, max {max})")
+    )]
     PasswordTooLong { max: usize, actual: usize },
+    #[cfg_attr(
+        feature = "thiserror",
+        error("Input does not respect the storage format")
+    )]
     InvalidPasswordFormat,
 }
 
