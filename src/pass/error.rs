@@ -67,6 +67,8 @@ pub enum ErrorCode {
 }
 
 /// Errors for the Rust interface.
+///
+/// *To implement `std::error::Error`, the `thiserror` feature must be activated*
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
 pub enum Error {
