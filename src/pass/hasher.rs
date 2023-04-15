@@ -1,5 +1,5 @@
 use super::{
-    argon2, pbkdf2, std_default, Algorithm, ErrorCode, HashedDuo, HashingFunction,
+    argon2, error::Error, pbkdf2, std_default, Algorithm, HashedDuo, HashingFunction,
     LengthCalculationMethod, Normalization, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
 };
 use crate::hash::HashFunction;
@@ -37,7 +37,7 @@ pub struct Hasher {
 }
 
 impl Hasher {
-    fn check_password(&self, password: &str) -> Result<(), ErrorCode> {
+    fn check_password(&self, password: &str) -> Result<(), Error> {
         let pass_len = match self.length_calculation {
             LengthCalculationMethod::Bytes => password.len(),
             LengthCalculationMethod::Characters => {
@@ -49,10 +49,16 @@ impl Hasher {
             }
         };
         if pass_len < self.min_len {
-            return Err(ErrorCode::PasswordTooShort);
+            return Err(Error::PasswordTooShort {
+                min: self.min_len,
+                actual: pass_len,
+            });
         }
         if pass_len > self.max_len {
-            return Err(ErrorCode::PasswordTooLong);
+            return Err(Error::PasswordTooLong {
+                max: self.max_len,
+                actual: pass_len,
+            });
         }
         Ok(())
     }
@@ -67,7 +73,7 @@ impl Hasher {
         }
     }
 
-    fn get_hash_func(&self) -> Result<Box<dyn HashingFunction>, ErrorCode> {
+    fn get_hash_func(&self) -> Result<Box<dyn HashingFunction>, Error> {
         let mut hash_func: Box<dyn HashingFunction> = match self.algorithm {
             Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
             Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
@@ -87,7 +93,7 @@ impl Hasher {
         Ok(hash_func)
     }
 
-    fn apply_xhmac(&self, password: &[u8], salt: &[u8]) -> Result<Vec<u8>, ErrorCode> {
+    fn apply_xhmac(&self, password: &[u8], salt: &[u8]) -> Result<Vec<u8>, Error> {
         match self.xhmax_alg {
             HashFunction::Sha1 => get_hmac!(Sha1, salt, password),
             HashFunction::Sha224 => get_hmac!(Sha224, salt, password),
@@ -107,14 +113,9 @@ impl Hasher {
         }
     }
 
-    fn do_hash(&self, password: &str) -> Result<HashedDuo, ErrorCode> {
+    fn do_hash(&self, password: &str) -> Result<HashedDuo, Error> {
         let norm_pass = self.normalize_password(password);
-        match self.check_password(&norm_pass) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(e);
-            }
-        };
+        self.check_password(&norm_pass)?;
         let norm_pass = match &self.xhmac {
             XHMAC::Before(salt) => self.apply_xhmac(password.as_bytes(), salt)?,
             _ => norm_pass.into_bytes(),
@@ -152,11 +153,11 @@ impl Hasher {
                 raw: hash,
                 formated: fmtd,
             }),
-            Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+            Err(_) => Err(Error::InvalidPasswordFormat),
         }
     }
 
-    pub fn hash(&self, password: &str) -> Result<String, ErrorCode> {
+    pub fn hash(&self, password: &str) -> Result<String, Error> {
         Ok(self.do_hash(password)?.formated)
     }
 

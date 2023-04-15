@@ -1,5 +1,6 @@
+use super::error::Error;
 use super::{
-    std_default, std_nist, Algorithm, ErrorCode, Hasher, LengthCalculationMethod, Normalization,
+    std_default, std_nist, Algorithm, Hasher, LengthCalculationMethod, Normalization,
     PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
 };
 use crate::hash::HashFunction;
@@ -11,7 +12,7 @@ macro_rules! get_pepper {
     ($pepper: ident) => {
         $pepper
             .as_ref()
-            .ok_or(ErrorCode::InvalidPasswordFormat)?
+            .ok_or(Error::InvalidPasswordFormat)?
             .to_vec()
     };
 }
@@ -127,25 +128,25 @@ impl HashBuilder {
     }
 
     /// Create a new Hasher object from a PHC formatted string.
-    pub fn from_phc(data: &str) -> Result<Hasher, ErrorCode> {
+    pub fn from_phc(data: &str) -> Result<Hasher, Error> {
         HashBuilder::from_phc_internal(data, None)
     }
 
     /// Create a new Hasher object from a PHC formatted string and an external pepper for an additional HMAC.
-    pub fn from_phc_xhmac(data: &str, pepper: &[u8]) -> Result<Hasher, ErrorCode> {
+    pub fn from_phc_xhmac(data: &str, pepper: &[u8]) -> Result<Hasher, Error> {
         HashBuilder::from_phc_internal(data, Some(pepper.to_vec()))
     }
 
-    fn from_phc_internal(data: &str, pepper: Option<Vec<u8>>) -> Result<Hasher, ErrorCode> {
+    fn from_phc_internal(data: &str, pepper: Option<Vec<u8>>) -> Result<Hasher, Error> {
         let mut phc = match PHCData::from_str(data) {
             Ok(v) => v,
-            Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+            Err(_) => return Err(Error::InvalidPasswordFormat),
         };
         let lc = match phc.parameters.remove("len-calc") {
             Some(v) => match v.as_str() {
                 "bytes" => LengthCalculationMethod::Bytes,
                 "chars" => LengthCalculationMethod::Characters,
-                _ => return Err(ErrorCode::InvalidPasswordFormat),
+                _ => return Err(Error::InvalidPasswordFormat),
             },
             None => LengthCalculationMethod::Characters,
         };
@@ -156,28 +157,28 @@ impl HashBuilder {
                 "nfc" => Normalization::Nfc,
                 "nfkc" => Normalization::Nfkc,
                 "none" => Normalization::None,
-                _ => return Err(ErrorCode::InvalidPasswordFormat),
+                _ => return Err(Error::InvalidPasswordFormat),
             },
             None => Normalization::Nfkc,
         };
         let max_l = match phc.parameters.remove("pmax") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
-                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => return Err(Error::InvalidPasswordFormat),
             },
             None => std_default::DEFAULT_PASSWORD_MAX_LEN,
         };
         let min_l = match phc.parameters.remove("pmin") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
-                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => return Err(Error::InvalidPasswordFormat),
             },
             None => std_default::DEFAULT_PASSWORD_MIN_LEN,
         };
         let version = match phc.parameters.remove("ver") {
             Some(v) => match v.parse::<usize>() {
                 Ok(l) => l,
-                Err(_) => return Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => return Err(Error::InvalidPasswordFormat),
             },
             None => DEFAULT_USER_VERSION + INTERNAL_VERSION,
         };
@@ -186,16 +187,16 @@ impl HashBuilder {
                 "before" => XHMAC::Before(get_pepper!(pepper)),
                 "after" => XHMAC::After(get_pepper!(pepper)),
                 "none" => XHMAC::None,
-                _ => return Err(ErrorCode::InvalidPasswordFormat),
+                _ => return Err(Error::InvalidPasswordFormat),
             },
             None => XHMAC::None,
         };
         if xhmac == XHMAC::None && pepper.is_some() {
-            return Err(ErrorCode::InvalidPasswordFormat);
+            return Err(Error::InvalidPasswordFormat);
         }
         let xhmax_alg = match phc.parameters.remove("xhmac-alg") {
             Some(alg_str) => {
-                HashFunction::from_str(&alg_str).map_err(|_| ErrorCode::InvalidPasswordFormat)?
+                HashFunction::from_str(&alg_str).map_err(|_| Error::InvalidPasswordFormat)?
             }
             None => std_default::DEFAULT_XHMAC_ALGORITHM,
         };
@@ -207,7 +208,7 @@ impl HashBuilder {
             algorithm: match phc.id.as_str() {
                 "argon2" => Algorithm::Argon2,
                 "pbkdf2" => Algorithm::Pbkdf2,
-                _ => return Err(ErrorCode::InvalidPasswordFormat),
+                _ => return Err(Error::InvalidPasswordFormat),
             },
             parameters: phc.parameters.clone(),
             ref_hash: phc.hash,
@@ -225,11 +226,11 @@ impl HashBuilder {
     }
 
     /// Check the compatibility between options and create a Hasher object.
-    pub fn finalize(&self) -> Result<Hasher, ErrorCode> {
+    pub fn finalize(&self) -> Result<Hasher, Error> {
         match self.standard {
             PasswordStorageStandard::Nist80063b => {
                 if !std_nist::is_valid(self) {
-                    return Err(ErrorCode::InvalidPasswordFormat);
+                    return Err(Error::InvalidPasswordFormat);
                 }
             }
             PasswordStorageStandard::NoStandard => {}

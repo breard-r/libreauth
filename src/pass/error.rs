@@ -1,4 +1,4 @@
-/// Error codes used both in the rust and C interfaces.
+/// Error codes used in the C interface.
 ///
 /// ## C interface
 /// The C interface uses an enum of type `libreauth_pass_errno` and the members has been renamed
@@ -66,14 +66,32 @@ pub enum ErrorCode {
     InvalidKeyLen = 22,
 }
 
+/// Errors for the Rust interface.
+#[derive(Clone, Copy, Debug)]
+pub enum Error {
+    PasswordTooShort { min: usize, actual: usize },
+    PasswordTooLong { max: usize, actual: usize },
+    InvalidPasswordFormat,
+}
+
+impl From<Error> for ErrorCode {
+    fn from(error: Error) -> Self {
+        match error {
+            Error::PasswordTooShort { min: _, actual: _ } => ErrorCode::PasswordTooShort,
+            Error::PasswordTooLong { max: _, actual: _ } => ErrorCode::PasswordTooLong,
+            Error::InvalidPasswordFormat => ErrorCode::InvalidPasswordFormat,
+        }
+    }
+}
+
 impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
     fn from(_error: crypto_mac::InvalidKeyLength) -> Self {
         ErrorCode::InvalidPasswordFormat
     }
 }
 
-impl From<hmac::digest::InvalidLength> for ErrorCode {
+impl From<hmac::digest::InvalidLength> for Error {
     fn from(_error: hmac::digest::InvalidLength) -> Self {
-        ErrorCode::InvalidPasswordFormat
+        Error::InvalidPasswordFormat
     }
 }

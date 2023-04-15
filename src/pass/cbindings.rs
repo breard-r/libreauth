@@ -156,7 +156,7 @@ pub unsafe extern "C" fn libreauth_pass_init_from_phc(
     let checker = match HashBuilder::from_phc(p.as_str()) {
         Ok(ch) => ch,
         Err(e) => {
-            return e;
+            return e.into();
         }
     };
     c.min_len = checker.min_len;
@@ -249,7 +249,7 @@ pub unsafe extern "C" fn libreauth_pass_hash(
     let hasher = match builder.finalize() {
         Ok(ch) => ch,
         Err(e) => {
-            return e;
+            return e.into();
         }
     };
     match hasher.hash(&password) {
@@ -263,7 +263,7 @@ pub unsafe extern "C" fn libreauth_pass_hash(
             buff[len] = 0;
             ErrorCode::Success
         }
-        Err(e) => e,
+        Err(e) => e.into(),
     }
 }
 

@@ -1,4 +1,5 @@
-use super::{std_default, ErrorCode, HashingFunction, Normalization};
+use super::error::Error;
+use super::{std_default, HashingFunction, Normalization};
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use hmac::Hmac;
@@ -61,7 +62,7 @@ impl HashingFunction for Pbkdf2Hash {
         params
     }
 
-    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), ErrorCode> {
+    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), Error> {
         match name {
             "iter" => match value.parse::<u32>() {
                 Ok(i) => match i {
@@ -69,18 +70,18 @@ impl HashingFunction for Pbkdf2Hash {
                         self.nb_iter = i;
                         Ok(())
                     }
-                    _ => Err(ErrorCode::InvalidPasswordFormat),
+                    _ => Err(Error::InvalidPasswordFormat),
                 },
-                Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => Err(Error::InvalidPasswordFormat),
             },
             "hash" | "hmac" => match HashFunction::from_str(value) {
                 Ok(h) => {
                     self.hash_function = h;
                     Ok(())
                 }
-                Err(_) => Err(ErrorCode::InvalidPasswordFormat),
+                Err(_) => Err(Error::InvalidPasswordFormat),
             },
-            _ => Err(ErrorCode::InvalidPasswordFormat),
+            _ => Err(Error::InvalidPasswordFormat),
         }
     }
 
@@ -88,22 +89,22 @@ impl HashingFunction for Pbkdf2Hash {
         Some(self.salt.clone())
     }
 
-    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), ErrorCode> {
+    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), Error> {
         match salt.len() {
             MIN_SALT_LENGTH..=MAX_SALT_LENGTH => {
                 self.salt = salt;
                 Ok(())
             }
-            _ => Err(ErrorCode::InvalidPasswordFormat),
+            _ => Err(Error::InvalidPasswordFormat),
         }
     }
 
-    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), ErrorCode> {
+    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), Error> {
         let salt = KeyBuilder::new().size(salt_len).as_vec();
         self.set_salt(salt)
     }
 
-    fn set_normalization(&mut self, norm: Normalization) -> Result<(), ErrorCode> {
+    fn set_normalization(&mut self, norm: Normalization) -> Result<(), Error> {
         self.norm = norm;
         Ok(())
     }
