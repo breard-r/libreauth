@@ -119,11 +119,17 @@ pub enum ErrorCode {
 
 /// Errors used for the Rust interface.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
 pub enum Error {
+    #[cfg_attr(feature = "thiserror", error("Code too small"))]
     CodeTooSmall,
+    #[cfg_attr(feature = "thiserror", error("Code too big"))]
     CodeTooBig,
 
+    #[cfg_attr(feature = "thiserror", error("Invalid key"))]
     InvalidKey,
+
+    #[cfg_attr(feature = "thiserror", error("Invalid period"))]
     InvalidPeriod,
 }
 
