@@ -4,6 +4,19 @@ use super::{
 };
 use crate::hash::HashFunction;
 
+#[cfg(feature = "stderror")]
+#[test]
+fn test_stderror() {
+    let err = super::Error::PasswordTooLong {
+        max: 128,
+        actual: 1024,
+    };
+    assert_eq!(
+        err.to_string(),
+        "Password was longer than the maximal length (actual 1024, max 128)"
+    );
+}
+
 #[test]
 fn test_default_hashbuilder() {
     let hb = HashBuilder::new();
