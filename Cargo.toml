@@ -31,19 +31,19 @@ pass = ["base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "
 stderror = ["thiserror"]
 
 [dependencies]
-base32 = { version = "^0.4", optional = true }
-base64 = { version = "^0.21", optional = true }
-crypto-mac = { version = "^0.11", optional = true }
-getrandom = { version = "^0.2", optional = true }
-hex = { version = "^0.4", optional = true }
-hmac = { version = "^0.12", optional = true }
-libc = { version = "^0.2", optional = true }
-nom = { version = "^7.0", optional = true, default-features = false }
-pbkdf2 = { version = "^0.12", optional = true, default-features = false }
-rust-argon2 = { version = "^1.0", optional = true }
-sha-1 = { version = "^0.10", optional = true }
-sha2 = { version = "^0.10", optional = true }
-sha3 = { version = "^0.10", optional = true }
-thiserror = { version = "1.0.40", optional = true }
-unicode-normalization = { version = "^0.1", optional = true }
-url = { version = "^2.1", optional = true }
+base32 = { version = "0.4.0", default-features = false, optional = true }
+base64 = { version = "0.21.0", default-features = false, optional = true, features = ["std"] }
+crypto-mac = { version = "0.11.1", default-features = false, optional = true }
+getrandom = { version = "0.2.9", default-features = false, optional = true }
+hex = { version = "0.4.3", default-features = false, optional = true, features = ["std"] }
+hmac = { version = "0.12.1", default-features = false, optional = true }
+libc = { version = "0.2.141", default-features = false, optional = true }
+nom = { version = "7.1.3", default-features = false, optional = true }
+pbkdf2 = { version = "0.12.1", default-features = false, optional = true }
+rust-argon2 = { version = "1.0.0", default-features = false, optional = true, features = ["crossbeam-utils"] }
+sha-1 = { version = "0.10.1", default-features = false, optional = true }
+sha2 = { version = "0.10.6", default-features = false, optional = true }
+sha3 = { version = "0.10.7", default-features = false, optional = true }
+thiserror = { version = "1.0.40", default-features = false, optional = true }
+unicode-normalization = { version = "0.1.22", default-features = false, optional = true }
+url = { version = "2.3.1", default-features = false, optional = true }
