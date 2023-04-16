@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The minimal required Rust version is now Rust 1.60.
+- ⚠️ BREAKING: All Rust functions that previously returned `Result<_, ErrorCode>` now return `Result<_, Error>`
 
 
 ## [0.15.0] - 2022-04-03
