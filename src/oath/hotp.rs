@@ -306,7 +306,7 @@ impl HOTP {
     ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
             parameters_visibility: DEFAULT_KEY_URI_PARAM_POLICY,
-            uri_type: UriType::HOTP,
+            uri_type: UriType::Hotp,
             key: &self.key,
             issuer,
             account_name,

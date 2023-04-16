@@ -50,8 +50,8 @@ macro_rules! insert_param_opt_f {
 
 #[derive(Eq, PartialEq)]
 pub(crate) enum UriType {
-    TOTP,
-    HOTP,
+    Totp,
+    Hotp,
 }
 
 /// Defines the base policy for showing or hiding parameters in a Key URI.
@@ -198,8 +198,8 @@ impl<'a> KeyUriBuilder<'a> {
         let mut uri = Url::parse("otpauth://").unwrap();
 
         let uri_type_final = match self.uri_type {
-            UriType::TOTP => "totp",
-            UriType::HOTP => "hotp",
+            UriType::Totp => "totp",
+            UriType::Hotp => "hotp",
         };
         uri.set_host(Some(uri_type_final)).unwrap();
 

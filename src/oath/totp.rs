@@ -133,7 +133,7 @@ impl TOTP {
     ) -> KeyUriBuilder<'a> {
         KeyUriBuilder {
             parameters_visibility: DEFAULT_KEY_URI_PARAM_POLICY,
-            uri_type: UriType::TOTP,
+            uri_type: UriType::Totp,
             key: &self.key,
             issuer,
             account_name,
