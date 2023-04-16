@@ -201,12 +201,12 @@ pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> ErrorCode {
     let cfg = get_value_or_errno!(get_cfg(cfg));
-    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len as usize));
+    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
     let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
     match HOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
@@ -252,12 +252,12 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sync: i32) -> i32 {
     let mut cfg = get_value_or_false!(get_mut_cfg(cfg));
-    let code = get_value_or_false!(get_code(code, cfg.output_len as usize));
+    let code = get_value_or_false!(get_code(code, cfg.output_len));
     let output_base = get_value_or_false!(get_output_base(cfg.output_base));
-    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
     match HOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
@@ -309,10 +309,10 @@ pub unsafe extern "C" fn libreauth_hotp_get_uri(
     let acc_name = get_string!(account_name);
     let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
     let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
     match HOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .counter(cfg.counter)
@@ -415,12 +415,12 @@ pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 #[no_mangle]
 pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> ErrorCode {
     let cfg = get_value_or_errno!(get_cfg(cfg));
-    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len as usize));
+    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
     let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
     match TOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .timestamp(cfg.timestamp)
@@ -466,12 +466,12 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
 #[no_mangle]
 pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> i32 {
     let cfg = get_value_or_false!(get_cfg(cfg));
-    let code = get_value_or_false!(get_code(code, cfg.output_len as usize));
+    let code = get_value_or_false!(get_code(code, cfg.output_len));
     let output_base = get_value_or_false!(get_output_base(cfg.output_base));
-    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
     match TOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .timestamp(cfg.timestamp)
@@ -519,10 +519,10 @@ pub unsafe extern "C" fn libreauth_totp_get_uri(
     let acc_name = get_string!(account_name);
     let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
     let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len as usize));
+    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
     match TOTPBuilder::new()
         .key(&key)
-        .output_len(cfg.output_len as usize)
+        .output_len(cfg.output_len)
         .output_base(&output_base)
         .hash_function(cfg.hash_function)
         .timestamp(cfg.timestamp)
