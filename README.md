@@ -38,9 +38,6 @@ LibreAuth is a collection of tools for user authentication.
   - [x] uses the platform's secure entropy source
   - [x] customizable size
   - [x] customizable output format (Vec<u8>, hexadecimal string, base32 string, base64 string)
-- ~~WebAuthn - Web Authentication: An API for accessing Public Key Credentials Level 1~~ ([W3C](https://www.w3.org/TR/webauthn/)) :warning: Not started yet
-  - [ ] authenticator API
-  - [ ] server API
 
 
 ## Status
