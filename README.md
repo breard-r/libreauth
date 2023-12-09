@@ -53,7 +53,7 @@ The project itself is still in development and therefore should not be used in p
   * :white_check_mark: stable API
   * :warning: lack of peer review
 - Random key generation: almost ready!
-  * :warning: stable API
+  * :white_check_mark: stable API
   * :warning: lack of peer review
 
 
