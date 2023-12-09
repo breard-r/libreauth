@@ -135,7 +135,7 @@ impl HOTP {
         let end = self.counter + 1 + self.look_ahead;
         for counter in self.counter..end {
             let r1 = self.raw_generate(counter);
-            let ref_code = r1.as_str().as_bytes();
+            let ref_code = r1.as_bytes();
             let code = code.as_bytes();
             let (code, ref_code) = match self.hash_function {
                 HashFunction::Sha1 => (
