@@ -251,7 +251,7 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 /// ```
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sync: i32) -> i32 {
-    let mut cfg = get_value_or_false!(get_mut_cfg(cfg));
+    let cfg = get_value_or_false!(get_mut_cfg(cfg));
     let code = get_value_or_false!(get_code(code, cfg.output_len));
     let output_base = get_value_or_false!(get_output_base(cfg.output_base));
     let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
