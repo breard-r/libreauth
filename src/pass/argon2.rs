@@ -113,7 +113,6 @@ impl HashingFunction for Argon2Hash {
             lanes: self.lanes,
             mem_cost: two.pow(self.mem_cost),
             secret: &[],
-            thread_mode: argon2::ThreadMode::Sequential,
             time_cost: self.passes,
             variant: argon2::Variant::Argon2i,
             version: argon2::Version::Version13,
