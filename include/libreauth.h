@@ -75,7 +75,8 @@ int32_t libreauth_keygen(void *buff, size_t buff_len);
 
 typedef enum {
 	LIBREAUTH_PASS_ARGON2	= 0,
-	LIBREAUTH_PASS_PBKDF2	= 1
+	LIBREAUTH_PASS_PBKDF2	= 1,
+	LIBREAUTH_PASS_BALLOON	= 2
 } libreauth_pass_algo;
 
 typedef enum {

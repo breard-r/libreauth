@@ -100,6 +100,25 @@
 //!             <td>3</td>
 //!         </tr>
 //!         <tr>
+//!             <td rowspan="3">balloon</td>
+//!             <td>hash</td>
+//!             <td>string: sha256 | sha384 | sha512 | sha512t256 | keccak256 | keccak384 | keccak512 | sha3-256 | sha3-384 | sha3-512</td>
+//!             <td>The underlying hash function to use.</td>
+//!             <td>sha512</td>
+//!         </tr>
+//!         <tr>
+//!             <td>space</td>
+//!             <td>integer</td>
+//!             <td>Space cost, expressed in number of blocks.</td>
+//!             <td>1024</td>
+//!         </tr>
+//!         <tr>
+//!             <td>time</td>
+//!             <td>integer</td>
+//!             <td>Time cost, expressed in number of rounds.</td>
+//!             <td>3</td>
+//!         </tr>
+//!         <tr>
 //!             <td rowspan="2">pbkdf2</td>
 //!             <td>hmac</td>
 //!             <td>string: sha1 | sha224 | sha256 | sha384 | sha512 | sha512t224 | sha512t256 | keccak224 | keccak256 | keccak384 | keccak512 | sha3-224 | sha3-256 | sha3-384 | sha3-512</td>
@@ -157,6 +176,7 @@ macro_rules! set_normalization {
 }
 
 pub(crate) mod argon2;
+pub(crate) mod balloon;
 #[cfg(feature = "cbindings")]
 mod cbindings;
 mod error;
@@ -221,6 +241,10 @@ pub const PASSWORD_STORAGE_LEN: usize = 512;
 ///             <td>LIBREAUTH_PASS_ARGON2</td>
 ///         </tr>
 ///         <tr>
+///             <td>Balloon</td>
+///             <td>LIBREAUTH_PASS_BALLOON</td>
+///         </tr>
+///         <tr>
 ///             <td>Pbkdf2</td>
 ///             <td>LIBREAUTH_PASS_PBKDF2</td>
 ///         </tr>
@@ -231,6 +255,7 @@ pub const PASSWORD_STORAGE_LEN: usize = 512;
 pub enum Algorithm {
 	Argon2 = 0,
 	Pbkdf2 = 1,
+	Balloon = 2,
 }
 
 /// Available methods to calculate the length of a UTF-8 string.

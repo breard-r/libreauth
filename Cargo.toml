@@ -27,10 +27,11 @@ hash = ["hmac", "sha-1", "sha2", "sha3"]
 key = ["base32", "base64", "hex", "getrandom"]
 oath = ["base32", "base64", "hash", "hex"]
 oath-uri = ["oath", "url"]
-pass = ["base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
+pass = ["balloon-hash", "base64", "crypto-mac", "hash", "key", "nom", "pbkdf2", "rust-argon2", "unicode-normalization"]
 stderror = ["thiserror"]
 
 [dependencies]
+balloon-hash = { version = "0.4.0", default-features = false, optional = true, features = ["alloc"] }
 base32 = { version = "0.4.0", default-features = false, optional = true }
 base64 = { version = "0.21.0", default-features = false, optional = true, features = ["std"] }
 crypto-mac = { version = "0.11.1", default-features = false, optional = true }

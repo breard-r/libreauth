@@ -1,5 +1,5 @@
 use super::{
-	argon2, error::Error, pbkdf2, std_default, Algorithm, HashedDuo, HashingFunction,
+	argon2, balloon, error::Error, pbkdf2, std_default, Algorithm, HashedDuo, HashingFunction,
 	LengthCalculationMethod, Normalization, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
 };
 use crate::hash::HashFunction;
@@ -76,6 +76,7 @@ impl Hasher {
 	fn get_hash_func(&self) -> Result<Box<dyn HashingFunction>, Error> {
 		let mut hash_func: Box<dyn HashingFunction> = match self.algorithm {
 			Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
+			Algorithm::Balloon => Box::new(balloon::BalloonHash::new()),
 			Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
 		};
 		hash_func.set_normalization(self.normalization)?;

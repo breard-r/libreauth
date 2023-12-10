@@ -45,6 +45,9 @@ pub fn is_valid(h: &HashBuilder) -> bool {
 		Algorithm::Argon2 => {
 			return false;
 		}
+		Algorithm::Balloon => {
+			return false; // TODO
+		}
 		Algorithm::Pbkdf2 => {
 			match h.parameters.get("iter") {
 				Some(si) => match si.parse::<u32>() {
