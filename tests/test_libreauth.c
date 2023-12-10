@@ -39,18 +39,18 @@
 
 
 void test_name(const char *name) {
-    printf("Running test: %s\n", name);
+	printf("Running test: %s\n", name);
 }
 
 int main(void) {
-    uint32_t nb_tests = 0;
+	uint32_t nb_tests = 0;
 
-    nb_tests += test_hotp();
-    nb_tests += test_totp();
-    nb_tests += test_pass();
-    nb_tests += test_key();
+	nb_tests += test_hotp();
+	nb_tests += test_totp();
+	nb_tests += test_pass();
+	nb_tests += test_key();
 
-    printf("Ran %d tests.\n", nb_tests);
+	printf("Ran %d tests.\n", nb_tests);
 
-    return 0;
+	return 0;
 }

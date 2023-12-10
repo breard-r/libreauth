@@ -15,97 +15,97 @@ pub const PASS_MIN_MAX_LEN: usize = 64;
 pub const NB_ITER_MIN: u32 = 10_000;
 
 pub fn is_valid(h: &HashBuilder) -> bool {
-    // Length calculation
-    match h.length_calculation {
-        LengthCalculationMethod::Characters => {}
-        LengthCalculationMethod::Bytes => {
-            return false;
-        }
-    }
+	// Length calculation
+	match h.length_calculation {
+		LengthCalculationMethod::Characters => {}
+		LengthCalculationMethod::Bytes => {
+			return false;
+		}
+	}
 
-    // Salt length.
-    let sl = match h.ref_salt {
-        Some(ref s) => s.len(),
-        None => h.salt_len,
-    };
-    if sl < MIN_SALT_LEN {
-        return false;
-    }
+	// Salt length.
+	let sl = match h.ref_salt {
+		Some(ref s) => s.len(),
+		None => h.salt_len,
+	};
+	if sl < MIN_SALT_LEN {
+		return false;
+	}
 
-    // Password length
-    if h.min_len < PASS_MIN_MIN_LEN {
-        return false;
-    }
-    if h.max_len < PASS_MIN_MAX_LEN {
-        return false;
-    }
+	// Password length
+	if h.min_len < PASS_MIN_MIN_LEN {
+		return false;
+	}
+	if h.max_len < PASS_MIN_MAX_LEN {
+		return false;
+	}
 
-    // Hashing function
-    match h.algorithm {
-        Algorithm::Argon2 => {
-            return false;
-        }
-        Algorithm::Pbkdf2 => {
-            match h.parameters.get("iter") {
-                Some(si) => match si.parse::<u32>() {
-                    Ok(i) => {
-                        if i < NB_ITER_MIN {
-                            return false;
-                        }
-                    }
-                    Err(_) => {
-                        return false;
-                    }
-                },
-                None => {
-                    if PBKDF2_DEF_ITER < NB_ITER_MIN {
-                        return false;
-                    }
-                }
-            };
-            match h.parameters.get("hmac") {
-                Some(h) => match h.as_str() {
-                    "sha1" => {}
-                    "sha224" => {}
-                    "sha256" => {}
-                    "sha384" => {}
-                    "sha512" => {}
-                    "sha512t224" => {}
-                    "sha512t256" => {}
-                    "sha3-224" => {}
-                    "sha3-256" => {}
-                    "sha3-384" => {}
-                    "sha3-512" => {}
-                    _ => {
-                        return false;
-                    }
-                },
-                None => match PBKDF2_DEF_HASH {
-                    HashFunction::Sha1 => {}
-                    HashFunction::Sha224 => {}
-                    HashFunction::Sha256 => {}
-                    HashFunction::Sha384 => {}
-                    HashFunction::Sha512 => {}
-                    HashFunction::Sha512Trunc224 => {}
-                    HashFunction::Sha512Trunc256 => {}
-                    HashFunction::Sha3_224 => {}
-                    HashFunction::Sha3_256 => {}
-                    HashFunction::Sha3_384 => {}
-                    HashFunction::Sha3_512 => {}
-                    _ => {
-                        return false;
-                    }
-                },
-            };
-        }
-    };
+	// Hashing function
+	match h.algorithm {
+		Algorithm::Argon2 => {
+			return false;
+		}
+		Algorithm::Pbkdf2 => {
+			match h.parameters.get("iter") {
+				Some(si) => match si.parse::<u32>() {
+					Ok(i) => {
+						if i < NB_ITER_MIN {
+							return false;
+						}
+					}
+					Err(_) => {
+						return false;
+					}
+				},
+				None => {
+					if PBKDF2_DEF_ITER < NB_ITER_MIN {
+						return false;
+					}
+				}
+			};
+			match h.parameters.get("hmac") {
+				Some(h) => match h.as_str() {
+					"sha1" => {}
+					"sha224" => {}
+					"sha256" => {}
+					"sha384" => {}
+					"sha512" => {}
+					"sha512t224" => {}
+					"sha512t256" => {}
+					"sha3-224" => {}
+					"sha3-256" => {}
+					"sha3-384" => {}
+					"sha3-512" => {}
+					_ => {
+						return false;
+					}
+				},
+				None => match PBKDF2_DEF_HASH {
+					HashFunction::Sha1 => {}
+					HashFunction::Sha224 => {}
+					HashFunction::Sha256 => {}
+					HashFunction::Sha384 => {}
+					HashFunction::Sha512 => {}
+					HashFunction::Sha512Trunc224 => {}
+					HashFunction::Sha512Trunc256 => {}
+					HashFunction::Sha3_224 => {}
+					HashFunction::Sha3_256 => {}
+					HashFunction::Sha3_384 => {}
+					HashFunction::Sha3_512 => {}
+					_ => {
+						return false;
+					}
+				},
+			};
+		}
+	};
 
-    // Normalization
-    match h.normalization {
-        Normalization::Nfd => false,
-        Normalization::Nfkd => true,
-        Normalization::Nfc => false,
-        Normalization::Nfkc => true,
-        Normalization::None => false,
-    }
+	// Normalization
+	match h.normalization {
+		Normalization::Nfd => false,
+		Normalization::Nfkd => true,
+		Normalization::Nfc => false,
+		Normalization::Nfkc => true,
+		Normalization::None => false,
+	}
 }

@@ -1,13 +1,13 @@
-PREFIX     = /usr
-INCLUDEDIR = $(PREFIX)/include
-LIBDIR     = $(PREFIX)/lib
-LA_INCDIR  = ./include
-LA_LIBDIR  = ./target/release
-DOC_PATH   = ./target/doc
-CARGO_CNF  = Cargo.toml
-NAME       = $(shell grep name $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
-VERSION    = $(shell grep version $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
-TAG_NAME   = v$(VERSION)
+PREFIX		= /usr
+INCLUDEDIR	= $(PREFIX)/include
+LIBDIR		= $(PREFIX)/lib
+LA_INCDIR	= ./include
+LA_LIBDIR	= ./target/release
+DOC_PATH	= ./target/doc
+CARGO_CNF	= Cargo.toml
+NAME		= $(shell grep name $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
+VERSION		= $(shell grep version $(CARGO_CNF) | head -n1 | cut -d '"' -f2)
+TAG_NAME	= v$(VERSION)
 
 
 all: $(NAME)

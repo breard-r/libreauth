@@ -2,8 +2,8 @@ use super::HOTPBuilder;
 use super::TOTPBuilder;
 use crate::oath::{ErrorCode, HashFunction};
 use crate::{
-    deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string, get_value_or_errno,
-    get_value_or_false,
+	deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string, get_value_or_errno,
+	get_value_or_false,
 };
 use std::ffi::CStr;
 use std::time::SystemTime;
@@ -39,13 +39,13 @@ macro_rules! otp_init {
 /// - [hash_function](crate::hash::HashFunction)
 #[repr(C)]
 pub struct HOTPcfg {
-    key: *const u8,
-    key_len: libc::size_t,
-    counter: u64,
-    output_len: libc::size_t,
-    output_base: *const libc::c_char,
-    hash_function: HashFunction,
-    look_ahead: u64,
+	key: *const u8,
+	key_len: libc::size_t,
+	counter: u64,
+	output_len: libc::size_t,
+	output_base: *const libc::c_char,
+	hash_function: HashFunction,
+	look_ahead: u64,
 }
 
 /// [C binding] TOTP configuration storage
@@ -64,78 +64,78 @@ pub struct HOTPcfg {
 /// - [hash_function](crate::hash::HashFunction)
 #[repr(C)]
 pub struct TOTPcfg {
-    key: *const u8,
-    key_len: libc::size_t,
-    timestamp: i64,
-    positive_tolerance: u64,
-    negative_tolerance: u64,
-    period: u32,
-    initial_time: u64,
-    output_len: libc::size_t,
-    output_base: *const libc::c_char,
-    hash_function: HashFunction,
+	key: *const u8,
+	key_len: libc::size_t,
+	timestamp: i64,
+	positive_tolerance: u64,
+	negative_tolerance: u64,
+	period: u32,
+	initial_time: u64,
+	output_len: libc::size_t,
+	output_base: *const libc::c_char,
+	hash_function: HashFunction,
 }
 
 fn write_code(code: &[u8], dest: &mut [u8]) {
-    let len = code.len();
-    dest[..len].clone_from_slice(&code[..len]);
-    dest[len] = 0;
+	let len = code.len();
+	dest[..len].clone_from_slice(&code[..len]);
+	dest[len] = 0;
 }
 
 fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
-    if cfg.is_null() {
-        return Err(ErrorCode::NullPtr);
-    }
-    let cfg: &T = unsafe { deref_ptr!(cfg, Err(ErrorCode::NullPtr)) };
-    Ok(cfg)
+	if cfg.is_null() {
+		return Err(ErrorCode::NullPtr);
+	}
+	let cfg: &T = unsafe { deref_ptr!(cfg, Err(ErrorCode::NullPtr)) };
+	Ok(cfg)
 }
 
 fn get_mut_cfg<T>(cfg: *mut T) -> Result<&'static mut T, ErrorCode> {
-    if cfg.is_null() {
-        return Err(ErrorCode::NullPtr);
-    }
-    let cfg: &mut T = unsafe { deref_ptr_mut!(cfg, Err(ErrorCode::NullPtr)) };
-    Ok(cfg)
+	if cfg.is_null() {
+		return Err(ErrorCode::NullPtr);
+	}
+	let cfg: &mut T = unsafe { deref_ptr_mut!(cfg, Err(ErrorCode::NullPtr)) };
+	Ok(cfg)
 }
 
 fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
-    if code.is_null() {
-        return Err(ErrorCode::NullPtr);
-    }
-    let code = unsafe { get_slice!(code, code_len) };
-    match String::from_utf8(code) {
-        Ok(code) => Ok(code),
-        Err(_) => Err(ErrorCode::InvalidUTF8),
-    }
+	if code.is_null() {
+		return Err(ErrorCode::NullPtr);
+	}
+	let code = unsafe { get_slice!(code, code_len) };
+	match String::from_utf8(code) {
+		Ok(code) => Ok(code),
+		Err(_) => Err(ErrorCode::InvalidUTF8),
+	}
 }
 
 fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], ErrorCode> {
-    if code.is_null() {
-        return Err(ErrorCode::NullPtr);
-    }
-    Ok(unsafe { get_slice_mut!(code, code_len + 1) })
+	if code.is_null() {
+		return Err(ErrorCode::NullPtr);
+	}
+	Ok(unsafe { get_slice_mut!(code, code_len + 1) })
 }
 
 fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
-    if output_base.is_null() {
-        return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
-    }
-    let output_base = unsafe { get_string!(output_base) };
-    match output_base.len() {
-        0 | 1 => Err(ErrorCode::InvalidBaseLen),
-        _ => Ok(output_base),
-    }
+	if output_base.is_null() {
+		return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
+	}
+	let output_base = unsafe { get_string!(output_base) };
+	match output_base.len() {
+		0 | 1 => Err(ErrorCode::InvalidBaseLen),
+		_ => Ok(output_base),
+	}
 }
 
 fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
-    if key.is_null() {
-        Err(ErrorCode::NullPtr)
-    } else {
-        match key_len {
-            0 => Err(ErrorCode::InvalidKeyLen),
-            l => Ok(unsafe { get_slice!(key, l) }),
-        }
-    }
+	if key.is_null() {
+		Err(ErrorCode::NullPtr)
+	} else {
+		match key_len {
+			0 => Err(ErrorCode::InvalidKeyLen),
+			l => Ok(unsafe { get_slice!(key, l) }),
+		}
+	}
 }
 
 /// [C binding] Initialize a `struct libreauth_hotp_cfg` with the default values.
@@ -163,11 +163,11 @@ fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
-    let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0, look_ahead, 0);
-    match res {
-        Ok(_) => ErrorCode::Success,
-        Err(errno) => errno,
-    }
+	let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0, look_ahead, 0);
+	match res {
+		Ok(_) => ErrorCode::Success,
+		Err(errno) => errno,
+	}
 }
 
 /// [C binding] Generate an HOTP code according to the given configuration and stores it in the supplied buffer.
@@ -200,26 +200,26 @@ pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 /// ```
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> ErrorCode {
-    let cfg = get_value_or_errno!(get_cfg(cfg));
-    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
-    let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
-    match HOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .counter(cfg.counter)
-        .look_ahead(cfg.look_ahead)
-        .finalize()
-    {
-        Ok(hotp) => {
-            let ref_code = hotp.generate().into_bytes();
-            write_code(&ref_code, code);
-            ErrorCode::Success
-        }
-        Err(err) => err.into(),
-    }
+	let cfg = get_value_or_errno!(get_cfg(cfg));
+	let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
+	let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
+	let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
+	match HOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.counter(cfg.counter)
+		.look_ahead(cfg.look_ahead)
+		.finalize()
+	{
+		Ok(hotp) => {
+			let ref_code = hotp.generate().into_bytes();
+			write_code(&ref_code, code);
+			ErrorCode::Success
+		}
+		Err(err) => err.into(),
+	}
 }
 
 /// [C binding] Check whether or not the supplied HOTP code is valid.
@@ -251,35 +251,35 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 /// ```
 #[no_mangle]
 pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sync: i32) -> i32 {
-    let cfg = get_value_or_false!(get_mut_cfg(cfg));
-    let code = get_value_or_false!(get_code(code, cfg.output_len));
-    let output_base = get_value_or_false!(get_output_base(cfg.output_base));
-    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
-    match HOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .counter(cfg.counter)
-        .look_ahead(cfg.look_ahead)
-        .finalize()
-    {
-        Ok(mut hotp) => {
-            if sync == 0 {
-                if hotp.is_valid(&code) {
-                    1
-                } else {
-                    0
-                }
-            } else if hotp.is_valid_sync(&code) {
-                cfg.counter = hotp.get_counter();
-                1
-            } else {
-                0
-            }
-        }
-        Err(_) => 0,
-    }
+	let cfg = get_value_or_false!(get_mut_cfg(cfg));
+	let code = get_value_or_false!(get_code(code, cfg.output_len));
+	let output_base = get_value_or_false!(get_output_base(cfg.output_base));
+	let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
+	match HOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.counter(cfg.counter)
+		.look_ahead(cfg.look_ahead)
+		.finalize()
+	{
+		Ok(mut hotp) => {
+			if sync == 0 {
+				if hotp.is_valid(&code) {
+					1
+				} else {
+					0
+				}
+			} else if hotp.is_valid_sync(&code) {
+				cfg.counter = hotp.get_counter();
+				1
+			} else {
+				0
+			}
+		}
+		Err(_) => 0,
+	}
 }
 
 /// [C binding] Generate the key URI.
@@ -298,42 +298,42 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sy
 #[cfg(feature = "oath-uri")]
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_hotp_get_uri(
-    cfg: *const HOTPcfg,
-    issuer: *const libc::c_char,
-    account_name: *const libc::c_char,
-    uri_buff: *mut u8,
-    uri_buff_len: libc::size_t,
+	cfg: *const HOTPcfg,
+	issuer: *const libc::c_char,
+	account_name: *const libc::c_char,
+	uri_buff: *mut u8,
+	uri_buff_len: libc::size_t,
 ) -> ErrorCode {
-    let cfg = get_value_or_errno!(get_cfg(cfg));
-    let issuer = get_string!(issuer);
-    let acc_name = get_string!(account_name);
-    let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
-    let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
-    match HOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .counter(cfg.counter)
-        .look_ahead(cfg.look_ahead)
-        .finalize()
-    {
-        Ok(hotp) => {
-            let b = hotp
-                .key_uri_format(&issuer, &acc_name)
-                .finalize()
-                .into_bytes();
-            let len = b.len();
-            if len >= uri_buff_len {
-                return ErrorCode::NotEnoughSpace;
-            }
-            buff[..len].clone_from_slice(&b[..len]);
-            buff[len] = 0;
-            ErrorCode::Success
-        }
-        Err(err) => err.into(),
-    }
+	let cfg = get_value_or_errno!(get_cfg(cfg));
+	let issuer = get_string!(issuer);
+	let acc_name = get_string!(account_name);
+	let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
+	let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
+	let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
+	match HOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.counter(cfg.counter)
+		.look_ahead(cfg.look_ahead)
+		.finalize()
+	{
+		Ok(hotp) => {
+			let b = hotp
+				.key_uri_format(&issuer, &acc_name)
+				.finalize()
+				.into_bytes();
+			let len = b.len();
+			if len >= uri_buff_len {
+				return ErrorCode::NotEnoughSpace;
+			}
+			buff[..len].clone_from_slice(&b[..len]);
+			buff[len] = 0;
+			ErrorCode::Success
+		}
+		Err(err) => err.into(),
+	}
 }
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
@@ -361,27 +361,27 @@ pub unsafe extern "C" fn libreauth_hotp_get_uri(
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
-    let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(
-        TOTPcfg,
-        cfg,
-        timestamp,
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64,
-        positive_tolerance,
-        0,
-        negative_tolerance,
-        0,
-        period,
-        30,
-        initial_time,
-        0
-    );
-    match res {
-        Ok(_) => ErrorCode::Success,
-        Err(errno) => errno,
-    }
+	let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(
+		TOTPcfg,
+		cfg,
+		timestamp,
+		SystemTime::now()
+			.duration_since(SystemTime::UNIX_EPOCH)
+			.unwrap()
+			.as_secs() as i64,
+		positive_tolerance,
+		0,
+		negative_tolerance,
+		0,
+		period,
+		30,
+		initial_time,
+		0
+	);
+	match res {
+		Ok(_) => ErrorCode::Success,
+		Err(errno) => errno,
+	}
 }
 
 /// [C binding] Generate a TOTP code according to the given configuration and stores it in the supplied buffer.
@@ -414,27 +414,27 @@ pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 /// ```
 #[no_mangle]
 pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> ErrorCode {
-    let cfg = get_value_or_errno!(get_cfg(cfg));
-    let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
-    let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
-    match TOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .timestamp(cfg.timestamp)
-        .period(cfg.period)
-        .initial_time(cfg.initial_time)
-        .finalize()
-    {
-        Ok(hotp) => {
-            let ref_code = hotp.generate().into_bytes();
-            write_code(&ref_code, code);
-            ErrorCode::Success
-        }
-        Err(err) => err.into(),
-    }
+	let cfg = get_value_or_errno!(get_cfg(cfg));
+	let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
+	let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
+	let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
+	match TOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.timestamp(cfg.timestamp)
+		.period(cfg.period)
+		.initial_time(cfg.initial_time)
+		.finalize()
+	{
+		Ok(hotp) => {
+			let ref_code = hotp.generate().into_bytes();
+			write_code(&ref_code, code);
+			ErrorCode::Success
+		}
+		Err(err) => err.into(),
+	}
 }
 
 /// [C binding] Initialize a `struct libreauth_totp_cfg` with the default values.
@@ -465,31 +465,31 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
 /// ```
 #[no_mangle]
 pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> i32 {
-    let cfg = get_value_or_false!(get_cfg(cfg));
-    let code = get_value_or_false!(get_code(code, cfg.output_len));
-    let output_base = get_value_or_false!(get_output_base(cfg.output_base));
-    let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
-    match TOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .timestamp(cfg.timestamp)
-        .period(cfg.period)
-        .initial_time(cfg.initial_time)
-        .positive_tolerance(cfg.positive_tolerance)
-        .negative_tolerance(cfg.negative_tolerance)
-        .finalize()
-    {
-        Ok(totp) => {
-            if totp.is_valid(&code) {
-                1
-            } else {
-                0
-            }
-        }
-        Err(_) => 0,
-    }
+	let cfg = get_value_or_false!(get_cfg(cfg));
+	let code = get_value_or_false!(get_code(code, cfg.output_len));
+	let output_base = get_value_or_false!(get_output_base(cfg.output_base));
+	let key = get_value_or_false!(get_key(cfg.key, cfg.key_len));
+	match TOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.timestamp(cfg.timestamp)
+		.period(cfg.period)
+		.initial_time(cfg.initial_time)
+		.positive_tolerance(cfg.positive_tolerance)
+		.negative_tolerance(cfg.negative_tolerance)
+		.finalize()
+	{
+		Ok(totp) => {
+			if totp.is_valid(&code) {
+				1
+			} else {
+				0
+			}
+		}
+		Err(_) => 0,
+	}
 }
 
 /// [C binding] Generate the key URI.
@@ -508,43 +508,43 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
 #[cfg(feature = "oath-uri")]
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_totp_get_uri(
-    cfg: *const TOTPcfg,
-    issuer: *const libc::c_char,
-    account_name: *const libc::c_char,
-    uri_buff: *mut u8,
-    uri_buff_len: libc::size_t,
+	cfg: *const TOTPcfg,
+	issuer: *const libc::c_char,
+	account_name: *const libc::c_char,
+	uri_buff: *mut u8,
+	uri_buff_len: libc::size_t,
 ) -> ErrorCode {
-    let cfg = get_value_or_errno!(get_cfg(cfg));
-    let issuer = get_string!(issuer);
-    let acc_name = get_string!(account_name);
-    let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
-    let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
-    let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
-    match TOTPBuilder::new()
-        .key(&key)
-        .output_len(cfg.output_len)
-        .output_base(&output_base)
-        .hash_function(cfg.hash_function)
-        .timestamp(cfg.timestamp)
-        .period(cfg.period)
-        .initial_time(cfg.initial_time)
-        .positive_tolerance(cfg.positive_tolerance)
-        .negative_tolerance(cfg.negative_tolerance)
-        .finalize()
-    {
-        Ok(totp) => {
-            let b = totp
-                .key_uri_format(&issuer, &acc_name)
-                .finalize()
-                .into_bytes();
-            let len = b.len();
-            if len >= uri_buff_len {
-                return ErrorCode::NotEnoughSpace;
-            }
-            buff[..len].clone_from_slice(&b[..len]);
-            buff[len] = 0;
-            ErrorCode::Success
-        }
-        Err(err) => err.into(),
-    }
+	let cfg = get_value_or_errno!(get_cfg(cfg));
+	let issuer = get_string!(issuer);
+	let acc_name = get_string!(account_name);
+	let buff = get_value_or_errno!(get_mut_code(uri_buff, uri_buff_len));
+	let output_base = get_value_or_errno!(get_output_base(cfg.output_base));
+	let key = get_value_or_errno!(get_key(cfg.key, cfg.key_len));
+	match TOTPBuilder::new()
+		.key(&key)
+		.output_len(cfg.output_len)
+		.output_base(&output_base)
+		.hash_function(cfg.hash_function)
+		.timestamp(cfg.timestamp)
+		.period(cfg.period)
+		.initial_time(cfg.initial_time)
+		.positive_tolerance(cfg.positive_tolerance)
+		.negative_tolerance(cfg.negative_tolerance)
+		.finalize()
+	{
+		Ok(totp) => {
+			let b = totp
+				.key_uri_format(&issuer, &acc_name)
+				.finalize()
+				.into_bytes();
+			let len = b.len();
+			if len >= uri_buff_len {
+				return ErrorCode::NotEnoughSpace;
+			}
+			buff[..len].clone_from_slice(&b[..len]);
+			buff[len] = 0;
+			ErrorCode::Success
+		}
+		Err(err) => err.into(),
+	}
 }

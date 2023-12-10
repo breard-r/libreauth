@@ -101,20 +101,20 @@ const DEFAULT_LOOK_AHEAD: u64 = 0;
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
-    Success = 0,
+	Success = 0,
 
-    NullPtr = 1,
-    NotEnoughSpace = 2,
+	NullPtr = 1,
+	NotEnoughSpace = 2,
 
-    InvalidBaseLen = 10,
-    InvalidKeyLen = 11,
-    CodeTooSmall = 12,
-    CodeTooBig = 13,
+	InvalidBaseLen = 10,
+	InvalidKeyLen = 11,
+	CodeTooSmall = 12,
+	CodeTooBig = 13,
 
-    InvalidKey = 20,
-    InvalidPeriod = 21,
+	InvalidKey = 20,
+	InvalidPeriod = 21,
 
-    InvalidUTF8 = 30,
+	InvalidUTF8 = 30,
 }
 
 /// Errors used for the Rust interface.
@@ -123,113 +123,113 @@ pub enum ErrorCode {
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
 pub enum Error {
-    #[cfg_attr(feature = "thiserror", error("Code too small"))]
-    CodeTooSmall,
-    #[cfg_attr(feature = "thiserror", error("Code too big"))]
-    CodeTooBig,
+	#[cfg_attr(feature = "thiserror", error("Code too small"))]
+	CodeTooSmall,
+	#[cfg_attr(feature = "thiserror", error("Code too big"))]
+	CodeTooBig,
 
-    #[cfg_attr(feature = "thiserror", error("Invalid key"))]
-    InvalidKey,
+	#[cfg_attr(feature = "thiserror", error("Invalid key"))]
+	InvalidKey,
 
-    #[cfg_attr(feature = "thiserror", error("Invalid period"))]
-    InvalidPeriod,
+	#[cfg_attr(feature = "thiserror", error("Invalid period"))]
+	InvalidPeriod,
 }
 
 impl From<Error> for ErrorCode {
-    fn from(error: Error) -> Self {
-        match error {
-            Error::CodeTooSmall => ErrorCode::CodeTooSmall,
-            Error::CodeTooBig => ErrorCode::CodeTooBig,
-            Error::InvalidKey => ErrorCode::InvalidKey,
-            Error::InvalidPeriod => ErrorCode::InvalidPeriod,
-        }
-    }
+	fn from(error: Error) -> Self {
+		match error {
+			Error::CodeTooSmall => ErrorCode::CodeTooSmall,
+			Error::CodeTooBig => ErrorCode::CodeTooBig,
+			Error::InvalidKey => ErrorCode::InvalidKey,
+			Error::InvalidPeriod => ErrorCode::InvalidPeriod,
+		}
+	}
 }
 
 macro_rules! builder_common {
-    ($t:ty) => {
-        /// Sets the shared secret.
-        pub fn key(&mut self, key: &[u8]) -> &mut $t {
-            self.key = Some(key.to_owned());
-            self
-        }
+	($t:ty) => {
+		/// Sets the shared secret.
+		pub fn key(&mut self, key: &[u8]) -> &mut $t {
+			self.key = Some(key.to_owned());
+			self
+		}
 
-        /// Sets the shared secret. This secret is passed as an ASCII string.
-        pub fn ascii_key(&mut self, key: &str) -> &mut $t {
-            self.key = Some(key.as_bytes().to_vec());
-            self
-        }
+		/// Sets the shared secret. This secret is passed as an ASCII string.
+		pub fn ascii_key(&mut self, key: &str) -> &mut $t {
+			self.key = Some(key.as_bytes().to_vec());
+			self
+		}
 
-        /// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
-        pub fn hex_key(&mut self, key: &str) -> &mut $t {
-            match hex::decode(key) {
-                Ok(k) => {
-                    self.key = Some(k);
-                }
-                Err(_) => {
-                    self.runtime_error = Some(Error::InvalidKey);
-                }
-            }
-            self
-        }
+		/// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
+		pub fn hex_key(&mut self, key: &str) -> &mut $t {
+			match hex::decode(key) {
+				Ok(k) => {
+					self.key = Some(k);
+				}
+				Err(_) => {
+					self.runtime_error = Some(Error::InvalidKey);
+				}
+			}
+			self
+		}
 
-        /// Sets the shared secret. This secret is passed as a base32 encoded string.
-        pub fn base32_key(&mut self, key: &str) -> &mut $t {
-            match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
-                Some(k) => {
-                    self.key = Some(k);
-                }
-                None => {
-                    self.runtime_error = Some(Error::InvalidKey);
-                }
-            }
-            self
-        }
+		/// Sets the shared secret. This secret is passed as a base32 encoded string.
+		pub fn base32_key(&mut self, key: &str) -> &mut $t {
+			match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
+				Some(k) => {
+					self.key = Some(k);
+				}
+				None => {
+					self.runtime_error = Some(Error::InvalidKey);
+				}
+			}
+			self
+		}
 
-        /// Sets the shared secret. This secret is passed as a base64 encoded string.
-        pub fn base64_key(&mut self, key: &str) -> &mut $t {
-            use base64::Engine;
-            match base64::engine::general_purpose::STANDARD.decode(key) {
-                Ok(k) => {
-                    self.key = Some(k);
-                }
-                Err(_) => {
-                    self.runtime_error = Some(Error::InvalidKey);
-                }
-            }
-            self
-        }
+		/// Sets the shared secret. This secret is passed as a base64 encoded string.
+		pub fn base64_key(&mut self, key: &str) -> &mut $t {
+			use base64::Engine;
+			match base64::engine::general_purpose::STANDARD.decode(key) {
+				Ok(k) => {
+					self.key = Some(k);
+				}
+				Err(_) => {
+					self.runtime_error = Some(Error::InvalidKey);
+				}
+			}
+			self
+		}
 
-        fn code_length(&self) -> usize {
-            let base_len = self.output_base.len();
-            let mut nb_bits = base_len;
-            for _ in 1..self.output_len {
-                nb_bits = match nb_bits.checked_mul(base_len) {
-                    Some(nb_bits) => nb_bits,
-                    None => return ::std::usize::MAX,
-                };
-            }
-            nb_bits
-        }
+		fn code_length(&self) -> usize {
+			let base_len = self.output_base.len();
+			let mut nb_bits = base_len;
+			for _ in 1..self.output_len {
+				nb_bits = match nb_bits.checked_mul(base_len) {
+					Some(nb_bits) => nb_bits,
+					None => return ::std::usize::MAX,
+				};
+			}
+			nb_bits
+		}
 
-        /// Sets the number of characters for the code. The minimum and maximum values depends the base. Default is 6.
-        pub fn output_len(&mut self, output_len: usize) -> &mut $t {
-            self.output_len = output_len;
-            self
-        }
+		/// Sets the number of characters for the code. The minimum and maximum values depends the base. Default is 6.
+		pub fn output_len(&mut self, output_len: usize) -> &mut $t {
+			self.output_len = output_len;
+			self
+		}
 
-        /// Sets the base used to represents the output code. Default is "0123456789".
-        pub fn output_base(&mut self, base: &str) -> &mut $t {
-            self.output_base = base.to_string();
-            self
-        }
+		/// Sets the base used to represents the output code. Default is "0123456789".
+		pub fn output_base(&mut self, base: &str) -> &mut $t {
+			self.output_base = base.to_string();
+			self
+		}
 
-        /// Sets the hash function. Default is Sha1.
-        pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut $t {
-            self.hash_function = hash_function;
-            self
-        }
-    };
+		/// Sets the hash function. Default is Sha1.
+		pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut $t {
+			self.hash_function = hash_function;
+			self
+		}
+	};
 }
 
 #[cfg(feature = "oath-uri")]

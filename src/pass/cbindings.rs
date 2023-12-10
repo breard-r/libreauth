@@ -1,6 +1,6 @@
 use super::{
-    std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-    Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
+	std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
+	Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
 };
 use crate::hash::HashFunction;
 use crate::pass::XHMAC;
@@ -35,9 +35,9 @@ use std::ffi::CStr;
 /// </table>
 #[repr(C)]
 pub enum XHMACType {
-    None = 0,
-    Before = 1,
-    After = 2,
+	None = 0,
+	Before = 1,
+	After = 2,
 }
 
 /// [C binding] Password hasher configuration storage
@@ -58,18 +58,18 @@ pub enum XHMACType {
 /// - `pepper_len` (size_t): Length of the XHMAC key, in bytes.
 #[repr(C)]
 pub struct PassCfg {
-    min_len: libc::size_t,
-    max_len: libc::size_t,
-    salt_len: libc::size_t,
-    algorithm: Algorithm,
-    length_calculation: LengthCalculationMethod,
-    normalization: Normalization,
-    standard: PasswordStorageStandard,
-    version: libc::size_t,
-    xhmac_type: XHMACType,
-    xhmac_alg: HashFunction,
-    pepper: *const u8,
-    pepper_len: libc::size_t,
+	min_len: libc::size_t,
+	max_len: libc::size_t,
+	salt_len: libc::size_t,
+	algorithm: Algorithm,
+	length_calculation: LengthCalculationMethod,
+	normalization: Normalization,
+	standard: PasswordStorageStandard,
+	version: libc::size_t,
+	xhmac_type: XHMACType,
+	xhmac_alg: HashFunction,
+	pepper: *const u8,
+	pepper_len: libc::size_t,
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values.
@@ -83,7 +83,7 @@ pub struct PassCfg {
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
-    libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard)
+	libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard)
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values for a given
@@ -99,41 +99,41 @@ pub unsafe extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_pass_init_std(
-    cfg: *mut PassCfg,
-    std: PasswordStorageStandard,
+	cfg: *mut PassCfg,
+	std: PasswordStorageStandard,
 ) -> ErrorCode {
-    let c: &mut PassCfg = deref_ptr_mut!(cfg, ErrorCode::NullPtr);
-    match std {
-        PasswordStorageStandard::NoStandard => {
-            c.min_len = std_default::DEFAULT_PASSWORD_MIN_LEN;
-            c.max_len = std_default::DEFAULT_PASSWORD_MAX_LEN;
-            c.salt_len = std_default::DEFAULT_SALT_LEN;
-            c.algorithm = std_default::DEFAULT_ALGORITHM;
-            c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
-            c.normalization = std_default::DEFAULT_NORMALIZATION;
-            c.standard = std;
-            c.version = DEFAULT_USER_VERSION;
-            c.xhmac_type = XHMACType::None;
-            c.xhmac_alg = std_default::DEFAULT_XHMAC_ALGORITHM;
-            c.pepper = std::ptr::null();
-            c.pepper_len = 0;
-        }
-        PasswordStorageStandard::Nist80063b => {
-            c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
-            c.max_len = std_nist::DEFAULT_PASSWORD_MAX_LEN;
-            c.salt_len = std_nist::DEFAULT_SALT_LEN;
-            c.algorithm = std_nist::DEFAULT_ALGORITHM;
-            c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
-            c.normalization = std_nist::DEFAULT_NORMALIZATION;
-            c.standard = std;
-            c.version = DEFAULT_USER_VERSION;
-            c.xhmac_type = XHMACType::None;
-            c.xhmac_alg = std_nist::DEFAULT_XHMAC_ALGORITHM;
-            c.pepper = std::ptr::null();
-            c.pepper_len = 0;
-        }
-    };
-    ErrorCode::Success
+	let c: &mut PassCfg = deref_ptr_mut!(cfg, ErrorCode::NullPtr);
+	match std {
+		PasswordStorageStandard::NoStandard => {
+			c.min_len = std_default::DEFAULT_PASSWORD_MIN_LEN;
+			c.max_len = std_default::DEFAULT_PASSWORD_MAX_LEN;
+			c.salt_len = std_default::DEFAULT_SALT_LEN;
+			c.algorithm = std_default::DEFAULT_ALGORITHM;
+			c.length_calculation = std_default::DEFAULT_LENGTH_CALCULATION;
+			c.normalization = std_default::DEFAULT_NORMALIZATION;
+			c.standard = std;
+			c.version = DEFAULT_USER_VERSION;
+			c.xhmac_type = XHMACType::None;
+			c.xhmac_alg = std_default::DEFAULT_XHMAC_ALGORITHM;
+			c.pepper = std::ptr::null();
+			c.pepper_len = 0;
+		}
+		PasswordStorageStandard::Nist80063b => {
+			c.min_len = std_nist::DEFAULT_PASSWORD_MIN_LEN;
+			c.max_len = std_nist::DEFAULT_PASSWORD_MAX_LEN;
+			c.salt_len = std_nist::DEFAULT_SALT_LEN;
+			c.algorithm = std_nist::DEFAULT_ALGORITHM;
+			c.length_calculation = std_nist::DEFAULT_LENGTH_CALCULATION;
+			c.normalization = std_nist::DEFAULT_NORMALIZATION;
+			c.standard = std;
+			c.version = DEFAULT_USER_VERSION;
+			c.xhmac_type = XHMACType::None;
+			c.xhmac_alg = std_nist::DEFAULT_XHMAC_ALGORITHM;
+			c.pepper = std::ptr::null();
+			c.pepper_len = 0;
+		}
+	};
+	ErrorCode::Success
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` from a PHC string.
@@ -148,48 +148,48 @@ pub unsafe extern "C" fn libreauth_pass_init_std(
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_pass_init_from_phc(
-    cfg: *mut PassCfg,
-    phc: *const libc::c_char,
+	cfg: *mut PassCfg,
+	phc: *const libc::c_char,
 ) -> ErrorCode {
-    let c: &mut PassCfg = deref_ptr_mut!(cfg, ErrorCode::NullPtr);
-    let p = get_string!(phc);
-    let checker = match HashBuilder::from_phc(p.as_str()) {
-        Ok(ch) => ch,
-        Err(e) => {
-            return e.into();
-        }
-    };
-    c.min_len = checker.min_len;
-    c.max_len = checker.max_len;
-    c.salt_len = checker.salt_len;
-    c.algorithm = checker.algorithm;
-    c.length_calculation = checker.length_calculation;
-    c.normalization = checker.normalization;
-    c.standard = PasswordStorageStandard::NoStandard;
-    c.version = if checker.version >= INTERNAL_VERSION {
-        checker.version - INTERNAL_VERSION
-    } else {
-        checker.version
-    };
-    c.xhmac_alg = checker.xhmax_alg;
-    match checker.xhmac {
-        XHMAC::Before(k) => {
-            c.xhmac_type = XHMACType::Before;
-            c.pepper = k.as_ptr();
-            c.pepper_len = k.len();
-        }
-        XHMAC::After(k) => {
-            c.xhmac_type = XHMACType::After;
-            c.pepper = k.as_ptr();
-            c.pepper_len = k.len();
-        }
-        XHMAC::None => {
-            c.xhmac_type = XHMACType::None;
-            c.pepper = std::ptr::null();
-            c.pepper_len = 0;
-        }
-    };
-    ErrorCode::Success
+	let c: &mut PassCfg = deref_ptr_mut!(cfg, ErrorCode::NullPtr);
+	let p = get_string!(phc);
+	let checker = match HashBuilder::from_phc(p.as_str()) {
+		Ok(ch) => ch,
+		Err(e) => {
+			return e.into();
+		}
+	};
+	c.min_len = checker.min_len;
+	c.max_len = checker.max_len;
+	c.salt_len = checker.salt_len;
+	c.algorithm = checker.algorithm;
+	c.length_calculation = checker.length_calculation;
+	c.normalization = checker.normalization;
+	c.standard = PasswordStorageStandard::NoStandard;
+	c.version = if checker.version >= INTERNAL_VERSION {
+		checker.version - INTERNAL_VERSION
+	} else {
+		checker.version
+	};
+	c.xhmac_alg = checker.xhmax_alg;
+	match checker.xhmac {
+		XHMAC::Before(k) => {
+			c.xhmac_type = XHMACType::Before;
+			c.pepper = k.as_ptr();
+			c.pepper_len = k.len();
+		}
+		XHMAC::After(k) => {
+			c.xhmac_type = XHMACType::After;
+			c.pepper = k.as_ptr();
+			c.pepper_len = k.len();
+		}
+		XHMAC::None => {
+			c.xhmac_type = XHMACType::None;
+			c.pepper = std::ptr::null();
+			c.pepper_len = 0;
+		}
+	};
+	ErrorCode::Success
 }
 
 /// [C binding] Hash a password according to the given configuration and stores it in the supplied buffer.
@@ -206,65 +206,65 @@ pub unsafe extern "C" fn libreauth_pass_init_from_phc(
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[no_mangle]
 pub unsafe extern "C" fn libreauth_pass_hash(
-    cfg: *const PassCfg,
-    pass: *const libc::c_char,
-    dest: *mut u8,
-    dest_len: libc::size_t,
+	cfg: *const PassCfg,
+	pass: *const libc::c_char,
+	dest: *mut u8,
+	dest_len: libc::size_t,
 ) -> ErrorCode {
-    let c: &PassCfg = deref_ptr!(cfg, ErrorCode::NullPtr);
-    let password = get_string!(pass);
-    if dest.is_null() {
-        return ErrorCode::NullPtr;
-    }
-    let buff = get_slice_mut!(dest, dest_len);
-    let mut builder = HashBuilder::new();
-    builder
-        .min_len(c.min_len)
-        .max_len(c.max_len)
-        .salt_len(c.salt_len)
-        .algorithm(c.algorithm)
-        .length_calculation(c.length_calculation)
-        .normalization(c.normalization)
-        .version(c.version)
-        .xhmac(c.xhmac_alg);
-    let key = if c.pepper.is_null() {
-        vec![]
-    } else {
-        match c.pepper_len {
-            0 => return ErrorCode::InvalidKeyLen,
-            l => get_slice!(c.pepper, l),
-        }
-    };
-    if !key.is_empty() {
-        match c.xhmac_type {
-            XHMACType::Before => {
-                builder.xhmac_before(&key);
-            }
-            XHMACType::After => {
-                builder.xhmac_after(&key);
-            }
-            XHMACType::None => {}
-        };
-    }
-    let hasher = match builder.finalize() {
-        Ok(ch) => ch,
-        Err(e) => {
-            return e.into();
-        }
-    };
-    match hasher.hash(&password) {
-        Ok(h) => {
-            let b = h.into_bytes();
-            let len = b.len();
-            if len >= dest_len {
-                return ErrorCode::NotEnoughSpace;
-            }
-            buff[..len].clone_from_slice(&b[..len]);
-            buff[len] = 0;
-            ErrorCode::Success
-        }
-        Err(e) => e.into(),
-    }
+	let c: &PassCfg = deref_ptr!(cfg, ErrorCode::NullPtr);
+	let password = get_string!(pass);
+	if dest.is_null() {
+		return ErrorCode::NullPtr;
+	}
+	let buff = get_slice_mut!(dest, dest_len);
+	let mut builder = HashBuilder::new();
+	builder
+		.min_len(c.min_len)
+		.max_len(c.max_len)
+		.salt_len(c.salt_len)
+		.algorithm(c.algorithm)
+		.length_calculation(c.length_calculation)
+		.normalization(c.normalization)
+		.version(c.version)
+		.xhmac(c.xhmac_alg);
+	let key = if c.pepper.is_null() {
+		vec![]
+	} else {
+		match c.pepper_len {
+			0 => return ErrorCode::InvalidKeyLen,
+			l => get_slice!(c.pepper, l),
+		}
+	};
+	if !key.is_empty() {
+		match c.xhmac_type {
+			XHMACType::Before => {
+				builder.xhmac_before(&key);
+			}
+			XHMACType::After => {
+				builder.xhmac_after(&key);
+			}
+			XHMACType::None => {}
+		};
+	}
+	let hasher = match builder.finalize() {
+		Ok(ch) => ch,
+		Err(e) => {
+			return e.into();
+		}
+	};
+	match hasher.hash(&password) {
+		Ok(h) => {
+			let b = h.into_bytes();
+			let len = b.len();
+			if len >= dest_len {
+				return ErrorCode::NotEnoughSpace;
+			}
+			buff[..len].clone_from_slice(&b[..len]);
+			buff[len] = 0;
+			ErrorCode::Success
+		}
+		Err(e) => e.into(),
+	}
 }
 
 /// [C binding] Check whether or not the supplied password is valid.
@@ -275,10 +275,10 @@ pub unsafe extern "C" fn libreauth_pass_hash(
 /// - `reference`: string representing a previously hashed password using LibreAuth's PHC notation
 #[no_mangle]
 pub extern "C" fn libreauth_pass_is_valid(
-    pass: *const libc::c_char,
-    reference: *const libc::c_char,
+	pass: *const libc::c_char,
+	reference: *const libc::c_char,
 ) -> i32 {
-    libreauth_pass_is_valid_xhmac(pass, reference, std::ptr::null(), 0)
+	libreauth_pass_is_valid_xhmac(pass, reference, std::ptr::null(), 0)
 }
 
 /// [C binding] Check whether or not the supplied password is valid using a XHMAC key.
@@ -291,28 +291,28 @@ pub extern "C" fn libreauth_pass_is_valid(
 /// - `key_len`: XHMAC key length, in bytes
 #[no_mangle]
 pub extern "C" fn libreauth_pass_is_valid_xhmac(
-    pass: *const libc::c_char,
-    reference: *const libc::c_char,
-    key: *const u8,
-    key_len: libc::size_t,
+	pass: *const libc::c_char,
+	reference: *const libc::c_char,
+	key: *const u8,
+	key_len: libc::size_t,
 ) -> i32 {
-    let p = unsafe { get_string!(pass) };
-    let r = unsafe { get_string!(reference) };
-    let checker = if !key.is_null() {
-        let k = unsafe { get_slice!(key, key_len) };
-        HashBuilder::from_phc_xhmac(r.as_str(), &k)
-    } else {
-        HashBuilder::from_phc(r.as_str())
-    };
-    let checker = match checker {
-        Ok(ch) => ch,
-        Err(_) => {
-            return 0;
-        }
-    };
-    if checker.is_valid(&p) {
-        1
-    } else {
-        0
-    }
+	let p = unsafe { get_string!(pass) };
+	let r = unsafe { get_string!(reference) };
+	let checker = if !key.is_null() {
+		let k = unsafe { get_slice!(key, key_len) };
+		HashBuilder::from_phc_xhmac(r.as_str(), &k)
+	} else {
+		HashBuilder::from_phc(r.as_str())
+	};
+	let checker = match checker {
+		Ok(ch) => ch,
+		Err(_) => {
+			return 0;
+		}
+	};
+	if checker.is_valid(&p) {
+		1
+	} else {
+		0
+	}
 }

@@ -48,22 +48,22 @@
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
-    /// Used in C-bindings to indicate the absence of errors.
-    Success = 0,
-    /// The password is shorter than the minimal length.
-    PasswordTooShort = 1,
-    /// The password is longer than the maximal length.
-    PasswordTooLong = 2,
-    /// The input does not respect the [storage format](crate::pass).
-    InvalidPasswordFormat = 10,
-    /// Some options you specified are incompatible.
-    IncompatibleOption = 11,
-    /// Used in C-bindings to indicate the storage does not have enough space to store the data.
-    NotEnoughSpace = 20,
-    /// Used in C-bindings to indicate a NULL pointer.
-    NullPtr = 21,
-    /// Used in C-bindings to indicate an invalid key length.
-    InvalidKeyLen = 22,
+	/// Used in C-bindings to indicate the absence of errors.
+	Success = 0,
+	/// The password is shorter than the minimal length.
+	PasswordTooShort = 1,
+	/// The password is longer than the maximal length.
+	PasswordTooLong = 2,
+	/// The input does not respect the [storage format](crate::pass).
+	InvalidPasswordFormat = 10,
+	/// Some options you specified are incompatible.
+	IncompatibleOption = 11,
+	/// Used in C-bindings to indicate the storage does not have enough space to store the data.
+	NotEnoughSpace = 20,
+	/// Used in C-bindings to indicate a NULL pointer.
+	NullPtr = 21,
+	/// Used in C-bindings to indicate an invalid key length.
+	InvalidKeyLen = 22,
 }
 
 /// Errors for the Rust interface.
@@ -72,41 +72,41 @@ pub enum ErrorCode {
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
 pub enum Error {
-    #[cfg_attr(
-        feature = "thiserror",
-        error("Password was shorter than the minimal length (actual {actual}, min {min})")
-    )]
-    PasswordTooShort { min: usize, actual: usize },
-    #[cfg_attr(
-        feature = "thiserror",
-        error("Password was longer than the maximal length (actual {actual}, max {max})")
-    )]
-    PasswordTooLong { max: usize, actual: usize },
-    #[cfg_attr(
-        feature = "thiserror",
-        error("Input does not respect the storage format")
-    )]
-    InvalidPasswordFormat,
+	#[cfg_attr(
+		feature = "thiserror",
+		error("Password was shorter than the minimal length (actual {actual}, min {min})")
+	)]
+	PasswordTooShort { min: usize, actual: usize },
+	#[cfg_attr(
+		feature = "thiserror",
+		error("Password was longer than the maximal length (actual {actual}, max {max})")
+	)]
+	PasswordTooLong { max: usize, actual: usize },
+	#[cfg_attr(
+		feature = "thiserror",
+		error("Input does not respect the storage format")
+	)]
+	InvalidPasswordFormat,
 }
 
 impl From<Error> for ErrorCode {
-    fn from(error: Error) -> Self {
-        match error {
-            Error::PasswordTooShort { min: _, actual: _ } => ErrorCode::PasswordTooShort,
-            Error::PasswordTooLong { max: _, actual: _ } => ErrorCode::PasswordTooLong,
-            Error::InvalidPasswordFormat => ErrorCode::InvalidPasswordFormat,
-        }
-    }
+	fn from(error: Error) -> Self {
+		match error {
+			Error::PasswordTooShort { min: _, actual: _ } => ErrorCode::PasswordTooShort,
+			Error::PasswordTooLong { max: _, actual: _ } => ErrorCode::PasswordTooLong,
+			Error::InvalidPasswordFormat => ErrorCode::InvalidPasswordFormat,
+		}
+	}
 }
 
 impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
-    fn from(_error: crypto_mac::InvalidKeyLength) -> Self {
-        ErrorCode::InvalidPasswordFormat
-    }
+	fn from(_error: crypto_mac::InvalidKeyLength) -> Self {
+		ErrorCode::InvalidPasswordFormat
+	}
 }
 
 impl From<hmac::digest::InvalidLength> for Error {
-    fn from(_error: hmac::digest::InvalidLength) -> Self {
-        Error::InvalidPasswordFormat
-    }
+	fn from(_error: hmac::digest::InvalidLength) -> Self {
+		Error::InvalidPasswordFormat
+	}
 }

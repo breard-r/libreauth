@@ -142,18 +142,18 @@
 //! [2]: https://pythonhosted.org/passlib/modular_crypt_format.html
 
 macro_rules! set_normalization {
-    ($obj: ident, $attr: ident, $val: ident, $name: expr) => {
-        $val.insert(
-            $name,
-            match $obj.$attr {
-                Normalization::Nfd => "nfd".to_string(),
-                Normalization::Nfkd => "nfkd".to_string(),
-                Normalization::Nfc => "nfc".to_string(),
-                Normalization::Nfkc => "nfkc".to_string(),
-                Normalization::None => "none".to_string(),
-            },
-        );
-    };
+	($obj: ident, $attr: ident, $val: ident, $name: expr) => {
+		$val.insert(
+			$name,
+			match $obj.$attr {
+				Normalization::Nfd => "nfd".to_string(),
+				Normalization::Nfkd => "nfkd".to_string(),
+				Normalization::Nfc => "nfc".to_string(),
+				Normalization::Nfkc => "nfkc".to_string(),
+				Normalization::None => "none".to_string(),
+			},
+		);
+	};
 }
 
 pub(crate) mod argon2;
@@ -229,8 +229,8 @@ pub const PASSWORD_STORAGE_LEN: usize = 512;
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum Algorithm {
-    Argon2 = 0,
-    Pbkdf2 = 1,
+	Argon2 = 0,
+	Pbkdf2 = 1,
 }
 
 /// Available methods to calculate the length of a UTF-8 string.
@@ -259,8 +259,8 @@ pub enum Algorithm {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LengthCalculationMethod {
-    Bytes = 0,
-    Characters = 1,
+	Bytes = 0,
+	Characters = 1,
 }
 
 /// Available string normalization methods.
@@ -301,11 +301,11 @@ pub enum LengthCalculationMethod {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum Normalization {
-    Nfd = 1,
-    Nfkd = 2,
-    Nfc = 3,
-    Nfkc = 4,
-    None = 0,
+	Nfd = 1,
+	Nfkd = 2,
+	Nfc = 3,
+	Nfkc = 4,
+	None = 0,
 }
 
 /// Defines whether or not LibreAuth should comply with recommendations from a specific standard.
@@ -334,53 +334,53 @@ pub enum Normalization {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub enum PasswordStorageStandard {
-    /// Default mode of operation, safe.
-    NoStandard = 0,
-    /// Comply with the [NIST Special Publication 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html).
-    Nist80063b = 1,
+	/// Default mode of operation, safe.
+	NoStandard = 0,
+	/// Comply with the [NIST Special Publication 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html).
+	Nist80063b = 1,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) enum XHMAC {
-    Before(Vec<u8>),
-    After(Vec<u8>),
-    None,
+	Before(Vec<u8>),
+	After(Vec<u8>),
+	None,
 }
 
 impl fmt::Display for XHMAC {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            XHMAC::Before(_) => "before",
-            XHMAC::After(_) => "after",
-            XHMAC::None => "none",
-        };
-        write!(f, "{}", s)
-    }
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let s = match self {
+			XHMAC::Before(_) => "before",
+			XHMAC::After(_) => "after",
+			XHMAC::None => "none",
+		};
+		write!(f, "{}", s)
+	}
 }
 
 impl XHMAC {
-    pub(crate) fn is_none(&self) -> bool {
-        matches!(*self, XHMAC::None)
-    }
+	pub(crate) fn is_none(&self) -> bool {
+		matches!(*self, XHMAC::None)
+	}
 
-    pub(crate) fn is_some(&self) -> bool {
-        !self.is_none()
-    }
+	pub(crate) fn is_some(&self) -> bool {
+		!self.is_none()
+	}
 }
 
 trait HashingFunction {
-    fn get_id(&self) -> String;
-    fn get_parameters(&self) -> HashMap<String, String>;
-    fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), Error>;
-    fn get_salt(&self) -> Option<Vec<u8>>;
-    fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), Error>;
-    fn set_salt_len(&mut self, salt_len: usize) -> Result<(), Error>;
-    fn set_normalization(&mut self, norm: Normalization) -> Result<(), Error>;
-    fn hash(&self, input: &[u8]) -> Vec<u8>;
+	fn get_id(&self) -> String;
+	fn get_parameters(&self) -> HashMap<String, String>;
+	fn set_parameter(&mut self, name: &str, value: &str) -> Result<(), Error>;
+	fn get_salt(&self) -> Option<Vec<u8>>;
+	fn set_salt(&mut self, salt: Vec<u8>) -> Result<(), Error>;
+	fn set_salt_len(&mut self, salt_len: usize) -> Result<(), Error>;
+	fn set_normalization(&mut self, norm: Normalization) -> Result<(), Error>;
+	fn hash(&self, input: &[u8]) -> Vec<u8>;
 }
 
 struct HashedDuo {
-    raw: Vec<u8>,
-    formated: String,
+	raw: Vec<u8>,
+	formated: String,
 }
