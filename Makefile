@@ -18,6 +18,7 @@ $(NAME):
 audit:
 	@cargo outdated --exit-code 1
 	@cargo audit
+	@cargo deny check
 
 install:
 	@install -D --mode=0644 $(LA_INCDIR)/$(NAME).h $(DESTDIR)$(INCLUDEDIR)/$(NAME).h
