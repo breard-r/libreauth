@@ -50,8 +50,8 @@ pub struct KeyBuilder {
 
 impl KeyBuilder {
 	/// Create a new random key builder.
-	pub fn new() -> KeyBuilder {
-		KeyBuilder {
+	pub fn new() -> Self {
+		Self {
 			size: 21,
 			key: None,
 		}

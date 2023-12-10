@@ -122,7 +122,7 @@ impl HOTP {
 	}
 
 	/// Increments the internal counter.
-	pub fn increment_counter(&mut self) -> &mut HOTP {
+	pub fn increment_counter(&mut self) -> &mut Self {
 		self.counter += 1;
 		self
 	}
@@ -389,8 +389,8 @@ impl Default for HOTPBuilder {
 
 impl HOTPBuilder {
 	/// Generates the base configuration for HOTP code generation.
-	pub fn new() -> HOTPBuilder {
-		HOTPBuilder {
+	pub fn new() -> Self {
+		Self {
 			key: None,
 			counter: 0,
 			output_len: DEFAULT_OTP_OUT_LEN,
@@ -401,16 +401,16 @@ impl HOTPBuilder {
 		}
 	}
 
-	builder_common!(HOTPBuilder);
+	builder_common!();
 
 	/// Sets the counter. Default is 0.
-	pub fn counter(&mut self, counter: u64) -> &mut HOTPBuilder {
+	pub fn counter(&mut self, counter: u64) -> &mut Self {
 		self.counter = counter;
 		self
 	}
 
 	/// Sets a look-ahead parameter. Default is 0.
-	pub fn look_ahead(&mut self, nb: u64) -> &mut HOTPBuilder {
+	pub fn look_ahead(&mut self, nb: u64) -> &mut Self {
 		self.look_ahead = nb;
 		self
 	}

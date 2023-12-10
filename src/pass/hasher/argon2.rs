@@ -43,8 +43,8 @@ pub struct Argon2Hash {
 }
 
 impl Argon2Hash {
-	pub fn new() -> Argon2Hash {
-		Argon2Hash {
+	pub fn new() -> Self {
+		Self {
 			passes: DEFAULT_PASSES,
 			mem_cost: DEFAULT_MEM_COST,
 			lanes: DEFAULT_LANES,

@@ -147,21 +147,21 @@ impl From<Error> for ErrorCode {
 }
 
 macro_rules! builder_common {
-	($t:ty) => {
+	() => {
 		/// Sets the shared secret.
-		pub fn key(&mut self, key: &[u8]) -> &mut $t {
+		pub fn key(&mut self, key: &[u8]) -> &mut Self {
 			self.key = Some(key.to_owned());
 			self
 		}
 
 		/// Sets the shared secret. This secret is passed as an ASCII string.
-		pub fn ascii_key(&mut self, key: &str) -> &mut $t {
+		pub fn ascii_key(&mut self, key: &str) -> &mut Self {
 			self.key = Some(key.as_bytes().to_vec());
 			self
 		}
 
 		/// Sets the shared secret. This secret is passed as an hexadecimal encoded string.
-		pub fn hex_key(&mut self, key: &str) -> &mut $t {
+		pub fn hex_key(&mut self, key: &str) -> &mut Self {
 			match hex::decode(key) {
 				Ok(k) => {
 					self.key = Some(k);
@@ -174,7 +174,7 @@ macro_rules! builder_common {
 		}
 
 		/// Sets the shared secret. This secret is passed as a base32 encoded string.
-		pub fn base32_key(&mut self, key: &str) -> &mut $t {
+		pub fn base32_key(&mut self, key: &str) -> &mut Self {
 			match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
 				Some(k) => {
 					self.key = Some(k);
@@ -187,7 +187,7 @@ macro_rules! builder_common {
 		}
 
 		/// Sets the shared secret. This secret is passed as a base64 encoded string.
-		pub fn base64_key(&mut self, key: &str) -> &mut $t {
+		pub fn base64_key(&mut self, key: &str) -> &mut Self {
 			use base64::Engine;
 			match base64::engine::general_purpose::STANDARD.decode(key) {
 				Ok(k) => {
@@ -213,19 +213,19 @@ macro_rules! builder_common {
 		}
 
 		/// Sets the number of characters for the code. The minimum and maximum values depends the base. Default is 6.
-		pub fn output_len(&mut self, output_len: usize) -> &mut $t {
+		pub fn output_len(&mut self, output_len: usize) -> &mut Self {
 			self.output_len = output_len;
 			self
 		}
 
 		/// Sets the base used to represents the output code. Default is "0123456789".
-		pub fn output_base(&mut self, base: &str) -> &mut $t {
+		pub fn output_base(&mut self, base: &str) -> &mut Self {
 			self.output_base = base.to_string();
 			self
 		}
 
 		/// Sets the hash function. Default is Sha1.
-		pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut $t {
+		pub fn hash_function(&mut self, hash_function: HashFunction) -> &mut Self {
 			self.hash_function = hash_function;
 			self
 		}

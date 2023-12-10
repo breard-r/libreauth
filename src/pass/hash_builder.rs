@@ -87,14 +87,14 @@ impl Default for HashBuilder {
 
 impl HashBuilder {
 	/// Create a new HashBuilder object with default parameters.
-	pub fn new() -> HashBuilder {
-		HashBuilder::new_std(PasswordStorageStandard::NoStandard)
+	pub fn new() -> Self {
+		Self::new_std(PasswordStorageStandard::NoStandard)
 	}
 
 	/// Create a new HashBuilder object with default parameters for a specific standard.
-	pub fn new_std(std: PasswordStorageStandard) -> HashBuilder {
+	pub fn new_std(std: PasswordStorageStandard) -> Self {
 		match std {
-			PasswordStorageStandard::NoStandard => HashBuilder {
+			PasswordStorageStandard::NoStandard => Self {
 				standard: PasswordStorageStandard::NoStandard,
 				normalization: std_default::DEFAULT_NORMALIZATION,
 				min_len: std_default::DEFAULT_PASSWORD_MIN_LEN,
@@ -109,7 +109,7 @@ impl HashBuilder {
 				xhmac: XHMAC::None,
 				xhmax_alg: std_default::DEFAULT_XHMAC_ALGORITHM,
 			},
-			PasswordStorageStandard::Nist80063b => HashBuilder {
+			PasswordStorageStandard::Nist80063b => Self {
 				standard: PasswordStorageStandard::Nist80063b,
 				normalization: std_nist::DEFAULT_NORMALIZATION,
 				min_len: std_nist::DEFAULT_PASSWORD_MIN_LEN,
@@ -129,12 +129,12 @@ impl HashBuilder {
 
 	/// Create a new Hasher object from a PHC formatted string.
 	pub fn from_phc(data: &str) -> Result<Hasher, Error> {
-		HashBuilder::from_phc_internal(data, None)
+		Self::from_phc_internal(data, None)
 	}
 
 	/// Create a new Hasher object from a PHC formatted string and an external pepper for an additional HMAC.
 	pub fn from_phc_xhmac(data: &str, pepper: &[u8]) -> Result<Hasher, Error> {
-		HashBuilder::from_phc_internal(data, Some(pepper.to_vec()))
+		Self::from_phc_internal(data, Some(pepper.to_vec()))
 	}
 
 	fn from_phc_internal(data: &str, pepper: Option<Vec<u8>>) -> Result<Hasher, Error> {
@@ -200,7 +200,7 @@ impl HashBuilder {
 			}
 			None => std_default::DEFAULT_XHMAC_ALGORITHM,
 		};
-		let hash_builder = HashBuilder {
+		let hash_builder = Self {
 			standard: PasswordStorageStandard::NoStandard,
 			normalization: norm,
 			min_len: min_l,
@@ -252,20 +252,20 @@ impl HashBuilder {
 	}
 
 	/// Set the way the password will be normalized.
-	pub fn normalization(&mut self, normalization: Normalization) -> &mut HashBuilder {
+	pub fn normalization(&mut self, normalization: Normalization) -> &mut Self {
 		self.normalization = normalization;
 		self
 	}
 
 	/// Set the password hashing algorithm.
-	pub fn algorithm(&mut self, algorithm: Algorithm) -> &mut HashBuilder {
+	pub fn algorithm(&mut self, algorithm: Algorithm) -> &mut Self {
 		self.algorithm = algorithm;
 		self.parameters = HashMap::new();
 		self
 	}
 
 	/// Set the way the password length will be calculated.
-	pub fn length_calculation(&mut self, method: LengthCalculationMethod) -> &mut HashBuilder {
+	pub fn length_calculation(&mut self, method: LengthCalculationMethod) -> &mut Self {
 		self.length_calculation = method;
 		self
 	}
@@ -273,49 +273,49 @@ impl HashBuilder {
 	/// Set the salt length.
 	///
 	/// Unused if a salt is given.
-	pub fn salt_len(&mut self, len: usize) -> &mut HashBuilder {
+	pub fn salt_len(&mut self, len: usize) -> &mut Self {
 		self.salt_len = len;
 		self
 	}
 
 	/// Set the password minimal length.
-	pub fn min_len(&mut self, len: usize) -> &mut HashBuilder {
+	pub fn min_len(&mut self, len: usize) -> &mut Self {
 		self.min_len = len;
 		self
 	}
 
 	/// Set the password maximal length.
-	pub fn max_len(&mut self, len: usize) -> &mut HashBuilder {
+	pub fn max_len(&mut self, len: usize) -> &mut Self {
 		self.max_len = len;
 		self
 	}
 
 	/// Add a parameter that will be used by the password hashing algorithm.
-	pub fn add_param(&mut self, key: &str, value: &str) -> &mut HashBuilder {
+	pub fn add_param(&mut self, key: &str, value: &str) -> &mut Self {
 		self.parameters.insert(key.to_string(), value.to_string());
 		self
 	}
 
 	/// Set the hashing scheme version number.
-	pub fn version(&mut self, version: usize) -> &mut HashBuilder {
+	pub fn version(&mut self, version: usize) -> &mut Self {
 		self.version = version + INTERNAL_VERSION;
 		self
 	}
 
 	/// Set the hash function that will be used to compute the additional HMAC.
-	pub fn xhmac(&mut self, hash_func: HashFunction) -> &mut HashBuilder {
+	pub fn xhmac(&mut self, hash_func: HashFunction) -> &mut Self {
 		self.xhmax_alg = hash_func;
 		self
 	}
 
 	/// Add an additional HMAC with a pepper before hashing the password.
-	pub fn xhmac_before(&mut self, pepper: &[u8]) -> &mut HashBuilder {
+	pub fn xhmac_before(&mut self, pepper: &[u8]) -> &mut Self {
 		self.xhmac = XHMAC::Before(pepper.to_vec());
 		self
 	}
 
 	/// Add an additional HMAC with a pepper after hashing the password.
-	pub fn xhmac_after(&mut self, pepper: &[u8]) -> &mut HashBuilder {
+	pub fn xhmac_after(&mut self, pepper: &[u8]) -> &mut Self {
 		self.xhmac = XHMAC::After(pepper.to_vec());
 		self
 	}

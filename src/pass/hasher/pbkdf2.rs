@@ -34,8 +34,8 @@ pub struct Pbkdf2Hash {
 }
 
 impl Pbkdf2Hash {
-	pub fn new() -> Pbkdf2Hash {
-		Pbkdf2Hash {
+	pub fn new() -> Self {
+		Self {
 			hash_function: DEFAULT_HASH_FUNCTION,
 			nb_iter: DEFAULT_ITER,
 			salt: KeyBuilder::new()

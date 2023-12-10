@@ -217,8 +217,8 @@ impl Default for TOTPBuilder {
 
 impl TOTPBuilder {
 	/// Generates the base configuration for TOTP code generation.
-	pub fn new() -> TOTPBuilder {
-		TOTPBuilder {
+	pub fn new() -> Self {
+		Self {
 			key: None,
 			timestamp_offset: 0,
 			positive_tolerance: 0,
@@ -232,10 +232,10 @@ impl TOTPBuilder {
 		}
 	}
 
-	builder_common!(TOTPBuilder);
+	builder_common!();
 
 	/// Sets a custom value for the current Unix time instead of the real one.
-	pub fn timestamp(&mut self, timestamp: i64) -> &mut TOTPBuilder {
+	pub fn timestamp(&mut self, timestamp: i64) -> &mut Self {
 		let current_timestamp = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap()
@@ -246,7 +246,7 @@ impl TOTPBuilder {
 
 	/// Sets the number of periods ahead or behind the current one for which the user code will
 	/// still be considered valid. You should not set a value higher than 2. Default is 0.
-	pub fn tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+	pub fn tolerance(&mut self, tolerance: u64) -> &mut Self {
 		self.positive_tolerance = tolerance;
 		self.negative_tolerance = tolerance;
 		self
@@ -254,20 +254,20 @@ impl TOTPBuilder {
 
 	/// Sets the number of periods ahead the current one for which the user code will
 	/// still be considered valid. You should not set a value higher than 2. Default is 0.
-	pub fn positive_tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+	pub fn positive_tolerance(&mut self, tolerance: u64) -> &mut Self {
 		self.positive_tolerance = tolerance;
 		self
 	}
 
 	/// Sets the number of periods behind the current one for which the user code will
 	/// still be considered valid. You should not set a value higher than 2. Default is 0.
-	pub fn negative_tolerance(&mut self, tolerance: u64) -> &mut TOTPBuilder {
+	pub fn negative_tolerance(&mut self, tolerance: u64) -> &mut Self {
 		self.negative_tolerance = tolerance;
 		self
 	}
 
 	/// Sets the time step in seconds (X). May not be zero. Default is 30.
-	pub fn period(&mut self, period: u32) -> &mut TOTPBuilder {
+	pub fn period(&mut self, period: u32) -> &mut Self {
 		if period == 0 {
 			self.runtime_error = Some(Error::InvalidPeriod);
 		} else {
@@ -277,7 +277,7 @@ impl TOTPBuilder {
 	}
 
 	/// Sets the Unix time to start counting time steps (T0). Default is 0.
-	pub fn initial_time(&mut self, initial_time: u64) -> &mut TOTPBuilder {
+	pub fn initial_time(&mut self, initial_time: u64) -> &mut Self {
 		self.initial_time = initial_time;
 		self
 	}
