@@ -1,5 +1,6 @@
-use super::{error::Error, std_default, HashingFunction, Normalization};
 use crate::key::KeyBuilder;
+use crate::pass::error::Error;
+use crate::pass::{std_default, HashingFunction, Normalization};
 use std::collections::HashMap;
 
 const MIN_SALT_LENGTH: usize = 8; // in bytes

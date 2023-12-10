@@ -1,6 +1,10 @@
+mod argon2;
+mod balloon;
+pub(crate) mod pbkdf2;
+
 use super::{
-	argon2, balloon, error::Error, pbkdf2, std_default, Algorithm, HashedDuo, HashingFunction,
-	LengthCalculationMethod, Normalization, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
+	error::Error, std_default, Algorithm, HashedDuo, HashingFunction, LengthCalculationMethod,
+	Normalization, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
 };
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;

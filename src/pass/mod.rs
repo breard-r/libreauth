@@ -175,14 +175,11 @@ macro_rules! set_normalization {
 	};
 }
 
-pub(crate) mod argon2;
-pub(crate) mod balloon;
 #[cfg(feature = "cbindings")]
 mod cbindings;
 mod error;
 mod hash_builder;
 mod hasher;
-pub(crate) mod pbkdf2;
 mod phc;
 pub(crate) mod std_default;
 pub(crate) mod std_nist;

@@ -1,7 +1,7 @@
-use super::error::Error;
-use super::{std_default, HashingFunction, Normalization};
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
+use crate::pass::error::Error;
+use crate::pass::{std_default, HashingFunction, Normalization};
 use balloon_hash::{Algorithm, Balloon, Params};
 use sha2::{Sha256, Sha384, Sha512, Sha512_256};
 use sha3::{Keccak256, Keccak384, Keccak512, Sha3_256, Sha3_384, Sha3_512};

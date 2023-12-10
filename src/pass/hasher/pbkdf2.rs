@@ -1,7 +1,7 @@
-use super::error::Error;
-use super::{std_default, HashingFunction, Normalization};
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
+use crate::pass::error::Error;
+use crate::pass::{std_default, HashingFunction, Normalization};
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use sha1::Sha1;
@@ -11,11 +11,11 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 pub const DEFAULT_HASH_FUNCTION: HashFunction = HashFunction::Sha512;
+pub const DEFAULT_ITER: u32 = 45_000;
 const MIN_SALT_LENGTH: usize = 4; // in bytes
 const MAX_SALT_LENGTH: usize = 256; // in bytes
 const MIN_ITER: u32 = 10_000;
 const MAX_ITER: u32 = 200_000;
-pub const DEFAULT_ITER: u32 = 45_000;
 
 macro_rules! process_pbkdf2 {
 	($obj: ident, $input: ident, $hash: ty, $len: expr) => {{
