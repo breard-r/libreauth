@@ -9,22 +9,22 @@ use std::ffi::CStr;
 use std::time::SystemTime;
 
 macro_rules! otp_init {
-    ($cfg_type: ty, $cfg: ident, $($field: ident, $value: expr), *) => {
-        if $cfg.is_null() {
-            Err(ErrorCode::NullPtr)
-        } else {
-                let c: &mut $cfg_type = deref_ptr_mut!($cfg, ErrorCode::NullPtr);
-                c.key = std::ptr::null();
-                c.key_len = 0;
-                c.output_len = crate::oath::DEFAULT_OTP_OUT_LEN;
-                c.output_base = std::ptr::null();
-                c.hash_function = crate::oath::DEFAULT_OTP_HASH;
-                $(
-                    c.$field = $value;
-                )*
-                Ok(c)
-        }
-    }
+	($cfg_type: ty, $cfg: ident, $($field: ident, $value: expr), *) => {
+		if $cfg.is_null() {
+			Err(ErrorCode::NullPtr)
+		} else {
+			let c: &mut $cfg_type = deref_ptr_mut!($cfg, ErrorCode::NullPtr);
+			c.key = std::ptr::null();
+			c.key_len = 0;
+			c.output_len = crate::oath::DEFAULT_OTP_OUT_LEN;
+			c.output_base = std::ptr::null();
+			c.hash_function = crate::oath::DEFAULT_OTP_HASH;
+			$(
+				c.$field = $value;
+			)*
+				Ok(c)
+		}
+	}
 }
 
 /// [C binding] HOTP configuration storage

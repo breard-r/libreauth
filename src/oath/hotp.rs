@@ -1334,9 +1334,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&counter=0"
-        );
+			uri,
+			"otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider+1&counter=0"
+		);
 	}
 
 	#[test]
@@ -1356,9 +1356,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0"
-        );
+			uri,
+			"otpauth://hotp/Provider%201:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=0"
+		);
 	}
 
 	#[test]
@@ -1373,9 +1373,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://hotp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0"
-        );
+			uri,
+			"otpauth://hotp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0"
+		);
 	}
 
 	#[test]
@@ -1392,8 +1392,8 @@ mod tests {
 
 		assert_eq!(uri.len(), 141);
 		assert!(uri.starts_with(
-                "otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&"
-        ));
+			"otpauth://hotp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&counter=0&"
+		));
 		assert!(uri.contains("&foo=bar+baz"));
 		assert!(uri.contains("&foo+2=%C3%A8_%C3%A9"));
 	}

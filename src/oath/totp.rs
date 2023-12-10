@@ -889,9 +889,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
-        );
+			uri,
+			"otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
+		);
 	}
 
 	#[test]
@@ -905,9 +905,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://totp/%C3%B6_%C3%88%20%E2%80%A6:D%C3%ABrp+toto@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=%C3%B6_%C3%88+%E2%80%A6"
-        );
+			uri,
+			"otpauth://totp/%C3%B6_%C3%88%20%E2%80%A6:D%C3%ABrp+toto@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=%C3%B6_%C3%88+%E2%80%A6"
+		);
 	}
 
 	#[test]
@@ -922,9 +922,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
-        );
+			uri,
+			"otpauth://totp/Provider1Label?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1"
+		);
 	}
 
 	#[test]
@@ -939,9 +939,9 @@ mod tests {
 			.finalize();
 
 		assert_eq!(
-            uri,
-            "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&foo=bar+baz"
-        );
+			uri,
+			"otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&foo=bar+baz"
+		);
 	}
 
 	#[test]
