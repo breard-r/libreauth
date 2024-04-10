@@ -99,8 +99,8 @@ impl From<Error> for ErrorCode {
 	}
 }
 
-impl From<crypto_mac::InvalidKeyLength> for ErrorCode {
-	fn from(_error: crypto_mac::InvalidKeyLength) -> Self {
+impl From<digest::InvalidLength> for ErrorCode {
+	fn from(_error: digest::InvalidLength) -> Self {
 		ErrorCode::InvalidPasswordFormat
 	}
 }
