@@ -80,7 +80,7 @@ impl KeyBuilder {
 		self
 	}
 
-	/// Return the current key as a Vec<u8>.
+	/// Return the current key as a `Vec<u8>`.
 	pub fn as_vec(&self) -> Vec<u8> {
 		self.key.clone().unwrap()
 	}
