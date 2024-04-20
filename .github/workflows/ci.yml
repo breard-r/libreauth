@@ -24,40 +24,38 @@ jobs:
           - beta
           - nightly
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install valgrind
         run: sudo apt update && sudo apt install -y valgrind
       - name: Install Rust ${{ matrix.rust }}
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: ${{ matrix.rust }}
-            override: true
-            profile: minimal
+        run: rustup toolchain install ${{ matrix.rust }}
       - name: Run cargo build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --verbose --all-features
+        run: cargo +${{ matrix.rust }} build --verbose
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --verbose --all-features
+        run: cargo +${{ matrix.rust }} test --verbose
       - name: Run C bindings tests
         run: make -C tests clean test
   formatting:
     name: Cargo fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
+      - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update stable
+      - name: Run cargo fmt
+        run: cargo +stable fmt --all -- --check
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update Rust
+        run: rustup update stable
+      - name: Run clippy
+        run: cargo +stable clippy --all-features
   cargo-deny:
     name: Check dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v1
