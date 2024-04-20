@@ -30,9 +30,9 @@ jobs:
       - name: Install Rust ${{ matrix.rust }}
         run: rustup toolchain install ${{ matrix.rust }}
       - name: Run cargo build
-        run: cargo +${{ matrix.rust }} build --verbose
+        run: cargo +${{ matrix.rust }} build --all-features --verbose
       - name: Run cargo test
-        run: cargo +${{ matrix.rust }} test --verbose
+        run: cargo +${{ matrix.rust }} test --all-features --verbose
       - name: Run C bindings tests
         run: make -C tests clean test
   formatting:
