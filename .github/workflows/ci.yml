@@ -8,7 +8,6 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.66.1
           - 1.67.1
           - 1.68.2
           - 1.69.0
