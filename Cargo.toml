@@ -32,7 +32,7 @@ stderror = ["thiserror"]
 
 [dependencies]
 balloon-hash = { version = "0.4.0", default-features = false, optional = true, features = ["alloc"] }
-base32 = { version = "0.4.0", default-features = false, optional = true }
+base32 = { version = "0.5.1", default-features = false, optional = true }
 base64 = { version = "0.22.0", default-features = false, optional = true, features = ["std"] }
 digest = { version = "0.10.0", default-features = false, optional = true,  features = ["mac"] }
 getrandom = { version = "0.2.9", default-features = false, optional = true }
@@ -45,6 +45,6 @@ rust-argon2 = { version = "2.0.0", default-features = false, optional = true }
 sha-1 = { version = "0.10.1", default-features = false, optional = true }
 sha2 = { version = "0.10.6", default-features = false, optional = true }
 sha3 = { version = "0.10.7", default-features = false, optional = true }
-thiserror = { version = "1.0.40", default-features = false, optional = true }
+thiserror = { version = "2.0.3", default-features = false, optional = true }
 unicode-normalization = { version = "0.1.22", default-features = false, optional = true }
 url = { version = "2.3.1", default-features = false, optional = true }

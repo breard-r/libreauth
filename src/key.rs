@@ -93,7 +93,7 @@ impl KeyBuilder {
 	/// Return the current key as a base 32 encoded string.
 	pub fn as_base32(&self) -> String {
 		base32::encode(
-			base32::Alphabet::RFC4648 { padding: false },
+			base32::Alphabet::Rfc4648 { padding: false },
 			self.key.clone().unwrap().as_slice(),
 		)
 	}

@@ -210,7 +210,7 @@ impl<'a> KeyUriBuilder<'a> {
 		uri.set_path(&label_final);
 
 		let secret_final = base32::encode(
-			base32::Alphabet::RFC4648 { padding: false },
+			base32::Alphabet::Rfc4648 { padding: false },
 			self.key.as_slice(),
 		);
 		uri.query_pairs_mut().append_pair("secret", &secret_final);

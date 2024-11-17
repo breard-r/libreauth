@@ -175,7 +175,7 @@ macro_rules! builder_common {
 
 		/// Sets the shared secret. This secret is passed as a base32 encoded string.
 		pub fn base32_key(&mut self, key: &str) -> &mut Self {
-			match base32::decode(base32::Alphabet::RFC4648 { padding: false }, &key) {
+			match base32::decode(base32::Alphabet::Rfc4648 { padding: false }, &key) {
 				Some(k) => {
 					self.key = Some(k);
 				}
