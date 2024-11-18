@@ -206,7 +206,7 @@ macro_rules! builder_common {
 			for _ in 1..self.output_len {
 				nb_bits = match nb_bits.checked_mul(base_len) {
 					Some(nb_bits) => nb_bits,
-					None => return ::std::usize::MAX,
+					None => return usize::MAX,
 				};
 			}
 			nb_bits
