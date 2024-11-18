@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - ReleaseDate
 
 ### Added
-- Balloon password hashing.
+- Experimental support for Balloon password hashing.
 
 ### Changed
 - The minimal required Rust version is now Rust 1.67.

@@ -252,6 +252,7 @@ pub const PASSWORD_STORAGE_LEN: usize = 512;
 pub enum Algorithm {
 	Argon2 = 0,
 	Pbkdf2 = 1,
+	#[cfg(feature = "balloon")]
 	Balloon = 2,
 }
 

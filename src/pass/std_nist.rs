@@ -47,6 +47,7 @@ pub fn is_valid(h: &HashBuilder) -> bool {
 		Algorithm::Argon2 => {
 			return false;
 		}
+		#[cfg(feature = "balloon")]
 		Algorithm::Balloon => {
 			return false; // TODO
 		}

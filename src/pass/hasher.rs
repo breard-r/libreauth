@@ -1,4 +1,5 @@
 mod argon2;
+#[cfg(feature = "balloon")]
 mod balloon;
 pub(crate) mod pbkdf2;
 
@@ -80,6 +81,7 @@ impl Hasher {
 	fn get_hash_func(&self) -> Result<Box<dyn HashingFunction>, Error> {
 		let mut hash_func: Box<dyn HashingFunction> = match self.algorithm {
 			Algorithm::Argon2 => Box::new(argon2::Argon2Hash::new()),
+			#[cfg(feature = "balloon")]
 			Algorithm::Balloon => Box::new(balloon::BalloonHash::new()),
 			Algorithm::Pbkdf2 => Box::new(pbkdf2::Pbkdf2Hash::new()),
 		};
