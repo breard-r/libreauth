@@ -1,6 +1,6 @@
 [package]
 name = "libreauth"
-version = "0.16.0"
+version = "0.17.0"
 authors = ["Rodolphe Breard <rodolphe@what.tf>"]
 edition = "2021"
 rust-version = "1.67"
