@@ -88,10 +88,7 @@ fn get_phc(input: &str) -> IResult<&str, PHCData> {
 	let (input, parameters) = opt(parse_params)(input)?;
 	let (input, salt) = get_phc_part_if(input, parameters.is_some())?;
 	let (input, hash) = get_phc_part_if(input, salt.is_some())?;
-	let parameters = match parameters {
-		Some(p) => p,
-		None => HashMap::new(),
-	};
+	let parameters = parameters.unwrap_or_default();
 	let data = PHCData {
 		id: id.to_string(),
 		parameters,
