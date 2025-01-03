@@ -24,6 +24,8 @@ jobs:
           - nightly
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Install valgrind
         run: sudo apt update && sudo apt install -y valgrind
       - name: Install Rust ${{ matrix.rust }}
@@ -39,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Update Rust
         run: rustup update stable
       - name: Run cargo fmt
@@ -48,6 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Update Rust
         run: rustup update stable
       - name: Run clippy
@@ -57,4 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: EmbarkStudios/cargo-deny-action@v1
