@@ -4,7 +4,7 @@ use nom::bytes::complete::{tag, take_while, take_while1};
 use nom::combinator::{map_res, opt};
 use nom::multi::fold_many0;
 use nom::sequence::{preceded, separated_pair, terminated};
-use nom::IResult;
+use nom::{IResult, Parser};
 use std::collections::HashMap;
 
 fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
@@ -38,14 +38,14 @@ fn is_param_value_char(chr: char) -> bool {
 }
 
 fn get_id(input: &str) -> IResult<&str, &str> {
-	preceded(tag("$"), take_while1(is_id_char))(input)
+	preceded(tag("$"), take_while1(is_id_char)).parse(input)
 }
 
 fn get_phc_part(input: &str) -> IResult<&str, Option<Vec<u8>>> {
 	if input.is_empty() {
 		return Ok((input, None));
 	}
-	map_res(preceded(tag("$"), take_while(is_b64)), from_b64)(input)
+	map_res(preceded(tag("$"), take_while(is_b64)), from_b64).parse(input)
 }
 
 // TODO: replace by the not-yet implemented nom::opt()
@@ -65,7 +65,8 @@ fn get_param_elem(input: &str) -> IResult<&str, (&str, &str)> {
 			take_while1(is_param_value_char),
 		),
 		opt(tag(",")),
-	)(input)
+	)
+	.parse(input)
 }
 
 fn get_params(input: &str) -> IResult<&str, HashMap<String, String>> {
@@ -76,16 +77,17 @@ fn get_params(input: &str) -> IResult<&str, HashMap<String, String>> {
 			hm.insert(k.to_string(), v.to_string());
 			hm
 		},
-	)(input)
+	)
+	.parse(input)
 }
 
 fn parse_params(input: &str) -> IResult<&str, HashMap<String, String>> {
-	preceded(tag("$"), get_params)(input)
+	preceded(tag("$"), get_params).parse(input)
 }
 
 fn get_phc(input: &str) -> IResult<&str, PHCData> {
 	let (input, id) = get_id(input)?;
-	let (input, parameters) = opt(parse_params)(input)?;
+	let (input, parameters) = opt(parse_params).parse(input)?;
 	let (input, salt) = get_phc_part_if(input, parameters.is_some())?;
 	let (input, hash) = get_phc_part_if(input, salt.is_some())?;
 	let parameters = parameters.unwrap_or_default();
