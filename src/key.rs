@@ -39,7 +39,6 @@ mod cbindings;
 pub use self::cbindings::libreauth_keygen;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use getrandom::getrandom;
 
 /// Random key builder.
 #[derive(Default)]
@@ -73,7 +72,7 @@ impl KeyBuilder {
 			panic!();
 		}
 		let mut key: Vec<u8> = vec![0; self.size];
-		if let Err(e) = getrandom(key.as_mut_slice()) {
+		if let Err(e) = getrandom::fill(key.as_mut_slice()) {
 			panic!("Fatal error: {}", e);
 		}
 		self.key = Some(key);

@@ -36,7 +36,7 @@ balloon-hash = { version = "0.4.0", default-features = false, optional = true, f
 base32 = { version = "0.5.1", default-features = false, optional = true }
 base64 = { version = "0.22.0", default-features = false, optional = true, features = ["std"] }
 digest = { version = "0.10.0", default-features = false, optional = true,  features = ["mac"] }
-getrandom = { version = "0.2.9", default-features = false, optional = true }
+getrandom = { version = "0.3.3", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true, features = ["std"] }
 hmac = { version = "0.12.1", default-features = false, optional = true }
 libc = { version = "0.2.141", default-features = false, optional = true }
