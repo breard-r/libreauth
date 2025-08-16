@@ -112,6 +112,7 @@ impl HashingFunction for Argon2Hash {
 			ad: &[],
 			hash_length: self.output_len,
 			lanes: self.lanes,
+			thread_mode: argon2::ThreadMode::Parallel,
 			mem_cost: two.pow(self.mem_cost),
 			secret: &[],
 			time_cost: self.passes,
