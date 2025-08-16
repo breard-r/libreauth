@@ -86,7 +86,7 @@ fn get_cfg<T>(cfg: *const T) -> Result<&'static T, ErrorCode> {
 	if cfg.is_null() {
 		return Err(ErrorCode::NullPtr);
 	}
-	let cfg: &T = unsafe { deref_ptr!(cfg, Err(ErrorCode::NullPtr)) };
+	let cfg: &T = deref_ptr!(cfg, Err(ErrorCode::NullPtr));
 	Ok(cfg)
 }
 
@@ -94,7 +94,7 @@ fn get_mut_cfg<T>(cfg: *mut T) -> Result<&'static mut T, ErrorCode> {
 	if cfg.is_null() {
 		return Err(ErrorCode::NullPtr);
 	}
-	let cfg: &mut T = unsafe { deref_ptr_mut!(cfg, Err(ErrorCode::NullPtr)) };
+	let cfg: &mut T = deref_ptr_mut!(cfg, Err(ErrorCode::NullPtr));
 	Ok(cfg)
 }
 
@@ -102,7 +102,7 @@ fn get_code(code: *const u8, code_len: usize) -> Result<String, ErrorCode> {
 	if code.is_null() {
 		return Err(ErrorCode::NullPtr);
 	}
-	let code = unsafe { get_slice!(code, code_len) };
+	let code = get_slice!(code, code_len);
 	match String::from_utf8(code) {
 		Ok(code) => Ok(code),
 		Err(_) => Err(ErrorCode::InvalidUTF8),
@@ -113,14 +113,14 @@ fn get_mut_code(code: *mut u8, code_len: usize) -> Result<&'static mut [u8], Err
 	if code.is_null() {
 		return Err(ErrorCode::NullPtr);
 	}
-	Ok(unsafe { get_slice_mut!(code, code_len + 1) })
+	Ok(get_slice_mut!(code, code_len + 1))
 }
 
 fn get_output_base(output_base: *const libc::c_char) -> Result<String, ErrorCode> {
 	if output_base.is_null() {
 		return Ok(crate::oath::DEFAULT_OTP_OUT_BASE.to_string());
 	}
-	let output_base = unsafe { get_string!(output_base) };
+	let output_base = get_string!(output_base);
 	match output_base.len() {
 		0 | 1 => Err(ErrorCode::InvalidBaseLen),
 		_ => Ok(output_base),
@@ -133,7 +133,7 @@ fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
 	} else {
 		match key_len {
 			0 => Err(ErrorCode::InvalidKeyLen),
-			l => Ok(unsafe { get_slice!(key, l) }),
+			l => Ok(get_slice!(key, l)),
 		}
 	}
 }
@@ -161,7 +161,7 @@ fn get_key(key: *const u8, key_len: usize) -> Result<Vec<u8>, ErrorCode> {
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 	let res: Result<&mut HOTPcfg, ErrorCode> = otp_init!(HOTPcfg, cfg, counter, 0, look_ahead, 0);
 	match res {
@@ -198,7 +198,7 @@ pub unsafe extern "C" fn libreauth_hotp_init(cfg: *mut HOTPcfg) -> ErrorCode {
 ///
 /// printf("HOTP code: %s\n", code);
 /// ```
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) -> ErrorCode {
 	let cfg = get_value_or_errno!(get_cfg(cfg));
 	let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
@@ -249,7 +249,7 @@ pub extern "C" fn libreauth_hotp_generate(cfg: *const HOTPcfg, code: *mut u8) ->
 ///     printf("Invalid HOTP code\n");
 /// }
 /// ```
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sync: i32) -> i32 {
 	let cfg = get_value_or_false!(get_mut_cfg(cfg));
 	let code = get_value_or_false!(get_code(code, cfg.output_len));
@@ -266,11 +266,7 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sy
 	{
 		Ok(mut hotp) => {
 			if sync == 0 {
-				if hotp.is_valid(&code) {
-					1
-				} else {
-					0
-				}
+				if hotp.is_valid(&code) { 1 } else { 0 }
 			} else if hotp.is_valid_sync(&code) {
 				cfg.counter = hotp.get_counter();
 				1
@@ -296,7 +292,7 @@ pub extern "C" fn libreauth_hotp_is_valid(cfg: *mut HOTPcfg, code: *const u8, sy
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[cfg(feature = "oath-uri")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_hotp_get_uri(
 	cfg: *const HOTPcfg,
 	issuer: *const libc::c_char,
@@ -359,7 +355,7 @@ pub unsafe extern "C" fn libreauth_hotp_get_uri(
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 	let res: Result<&mut TOTPcfg, ErrorCode> = otp_init!(
 		TOTPcfg,
@@ -412,7 +408,7 @@ pub unsafe extern "C" fn libreauth_totp_init(cfg: *mut TOTPcfg) -> ErrorCode {
 ///
 /// printf("TOTP code: %s\n", code);
 /// ```
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) -> ErrorCode {
 	let cfg = get_value_or_errno!(get_cfg(cfg));
 	let code = get_value_or_errno!(get_mut_code(code, cfg.output_len));
@@ -463,7 +459,7 @@ pub extern "C" fn libreauth_totp_generate(cfg: *const TOTPcfg, code: *mut u8) ->
 ///     printf("Invalid TOTP code\n");
 /// }
 /// ```
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) -> i32 {
 	let cfg = get_value_or_false!(get_cfg(cfg));
 	let code = get_value_or_false!(get_code(code, cfg.output_len));
@@ -506,7 +502,7 @@ pub extern "C" fn libreauth_totp_is_valid(cfg: *const TOTPcfg, code: *const u8) 
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
 #[cfg(feature = "oath-uri")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_totp_get_uri(
 	cfg: *const TOTPcfg,
 	issuer: *const libc::c_char,

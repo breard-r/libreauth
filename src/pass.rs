@@ -187,6 +187,10 @@ pub(crate) mod std_nist;
 mod tests;
 
 #[cfg(feature = "cbindings")]
+pub use self::cbindings::PassCfg;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::XHMACType;
+#[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_hash;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_init;
@@ -196,10 +200,6 @@ pub use self::cbindings::libreauth_pass_init_from_phc;
 pub use self::cbindings::libreauth_pass_init_std;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_pass_is_valid;
-#[cfg(feature = "cbindings")]
-pub use self::cbindings::PassCfg;
-#[cfg(feature = "cbindings")]
-pub use self::cbindings::XHMACType;
 pub use self::error::Error;
 pub use error::ErrorCode;
 pub use hash_builder::HashBuilder;

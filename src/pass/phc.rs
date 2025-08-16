@@ -1,5 +1,5 @@
-use base64::engine::general_purpose::STANDARD_NO_PAD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD_NO_PAD;
 use nom::bytes::complete::{tag, take_while, take_while1};
 use nom::combinator::{map_res, opt};
 use nom::multi::fold_many0;
@@ -10,10 +10,7 @@ use std::collections::HashMap;
 fn from_b64(data: &str) -> Result<Option<Vec<u8>>, ()> {
 	Ok(match data.len() {
 		0 => None,
-		_ => match STANDARD_NO_PAD.decode(data.as_bytes()) {
-			Ok(r) => Some(r),
-			Err(_) => None,
-		},
+		_ => STANDARD_NO_PAD.decode(data.as_bytes()).ok(),
 	})
 }
 

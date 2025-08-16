@@ -1,6 +1,6 @@
 use super::{
-	std_default, std_nist, Algorithm, ErrorCode, HashBuilder, LengthCalculationMethod,
-	Normalization, PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION,
+	Algorithm, DEFAULT_USER_VERSION, ErrorCode, HashBuilder, INTERNAL_VERSION,
+	LengthCalculationMethod, Normalization, PasswordStorageStandard, std_default, std_nist,
 };
 use crate::hash::HashFunction;
 use crate::pass::XHMAC;
@@ -81,9 +81,9 @@ pub struct PassCfg {
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
-	libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard)
+	unsafe { libreauth_pass_init_std(cfg, PasswordStorageStandard::NoStandard) }
 }
 
 /// [C binding] Initialize a `struct libreauth_pass_cfg` with the default values for a given
@@ -97,7 +97,7 @@ pub unsafe extern "C" fn libreauth_pass_init(cfg: *mut PassCfg) -> ErrorCode {
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_pass_init_std(
 	cfg: *mut PassCfg,
 	std: PasswordStorageStandard,
@@ -146,7 +146,7 @@ pub unsafe extern "C" fn libreauth_pass_init_std(
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_pass_init_from_phc(
 	cfg: *mut PassCfg,
 	phc: *const libc::c_char,
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn libreauth_pass_init_from_phc(
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_pass_hash(
 	cfg: *const PassCfg,
 	pass: *const libc::c_char,
@@ -273,7 +273,7 @@ pub unsafe extern "C" fn libreauth_pass_hash(
 ///
 /// - `pass`: password to check
 /// - `reference`: string representing a previously hashed password using LibreAuth's PHC notation
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_pass_is_valid(
 	pass: *const libc::c_char,
 	reference: *const libc::c_char,
@@ -289,17 +289,17 @@ pub extern "C" fn libreauth_pass_is_valid(
 /// - `reference`: string representing a previously hashed password using LibreAuth's PHC notation
 /// - `key`: XHMAC key
 /// - `key_len`: XHMAC key length, in bytes
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn libreauth_pass_is_valid_xhmac(
 	pass: *const libc::c_char,
 	reference: *const libc::c_char,
 	key: *const u8,
 	key_len: libc::size_t,
 ) -> i32 {
-	let p = unsafe { get_string!(pass) };
-	let r = unsafe { get_string!(reference) };
+	let p = get_string!(pass);
+	let r = get_string!(reference);
 	let checker = if !key.is_null() {
-		let k = unsafe { get_slice!(key, key_len) };
+		let k = get_slice!(key, key_len);
 		HashBuilder::from_phc_xhmac(r.as_str(), &k)
 	} else {
 		HashBuilder::from_phc(r.as_str())
@@ -310,9 +310,5 @@ pub extern "C" fn libreauth_pass_is_valid_xhmac(
 			return 0;
 		}
 	};
-	if checker.is_valid(&p) {
-		1
-	} else {
-		0
-	}
+	if checker.is_valid(&p) { 1 } else { 0 }
 }

@@ -1,8 +1,8 @@
 #[cfg(feature = "oath-uri")]
 use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{
-	Error, HashFunction, DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE,
-	DEFAULT_OTP_OUT_LEN,
+	DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, Error,
+	HashFunction,
 };
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};

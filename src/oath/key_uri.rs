@@ -27,9 +27,7 @@ macro_rules! do_insert_param {
 }
 
 macro_rules! insert_param {
-	($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{
-		do_insert_param!($s, $uri, $elem, $name, $def, $is_gauth, false)
-	}};
+	($s: ident, $uri: ident, $elem: expr, $name: expr, $def: expr, $is_gauth: expr) => {{ do_insert_param!($s, $uri, $elem, $name, $def, $is_gauth, false) }};
 }
 
 macro_rules! insert_param_opt {

@@ -238,15 +238,17 @@ mod key_uri;
 pub use self::key_uri::{KeyUriBuilder, ParametersVisibility};
 
 mod hotp;
-pub use self::hotp::HOTPBuilder;
 pub use self::hotp::HOTP;
+pub use self::hotp::HOTPBuilder;
 
 mod totp;
-pub use self::totp::TOTPBuilder;
 pub use self::totp::TOTP;
+pub use self::totp::TOTPBuilder;
 
 #[cfg(feature = "cbindings")]
 mod cbindings;
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::HOTPcfg;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_generate;
 #[cfg(all(feature = "cbindings", feature = "oath-uri"))]
@@ -255,9 +257,9 @@ pub use self::cbindings::libreauth_hotp_get_uri;
 pub use self::cbindings::libreauth_hotp_init;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_hotp_is_valid;
-#[cfg(feature = "cbindings")]
-pub use self::cbindings::HOTPcfg;
 
+#[cfg(feature = "cbindings")]
+pub use self::cbindings::TOTPcfg;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_generate;
 #[cfg(all(feature = "cbindings", feature = "oath-uri"))]
@@ -266,5 +268,3 @@ pub use self::cbindings::libreauth_totp_get_uri;
 pub use self::cbindings::libreauth_totp_init;
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_totp_is_valid;
-#[cfg(feature = "cbindings")]
-pub use self::cbindings::TOTPcfg;

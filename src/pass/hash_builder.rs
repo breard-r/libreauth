@@ -1,7 +1,7 @@
 use super::error::Error;
 use super::{
-	std_default, std_nist, Algorithm, Hasher, LengthCalculationMethod, Normalization,
-	PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
+	Algorithm, DEFAULT_USER_VERSION, Hasher, INTERNAL_VERSION, LengthCalculationMethod,
+	Normalization, PasswordStorageStandard, XHMAC, std_default, std_nist,
 };
 use crate::hash::HashFunction;
 use crate::pass::phc::PHCData;
@@ -213,7 +213,7 @@ impl HashBuilder {
 			parameters: phc.parameters.clone(),
 			ref_hash: phc.hash,
 			salt_len: match &phc.salt {
-				Some(ref s) => s.len(),
+				Some(s) => s.len(),
 				None => std_default::DEFAULT_SALT_LEN,
 			},
 			ref_salt: phc.salt,

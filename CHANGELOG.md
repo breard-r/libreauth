@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - ReleaseDate
 
 ### Changed
-- The minimal required Rust version is now Rust 1.71.
+- Upgraded to Rust edition 2024.
+- The minimum supported Rust version (MSRV) is now 1.85.
 
 
 ## [0.17.0] - 2024-11-18

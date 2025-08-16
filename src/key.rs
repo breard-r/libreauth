@@ -37,8 +37,8 @@ mod cbindings;
 
 #[cfg(feature = "cbindings")]
 pub use self::cbindings::libreauth_keygen;
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 
 /// Random key builder.
 #[derive(Default)]

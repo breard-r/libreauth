@@ -5,7 +5,7 @@ macro_rules! deref_ptr {
 		if $cfg.is_null() {
 			return $ret;
 		} else {
-			&*$cfg
+			unsafe { &*$cfg }
 		}
 	}};
 }
@@ -17,7 +17,7 @@ macro_rules! deref_ptr_mut {
 		if $cfg.is_null() {
 			return $ret;
 		} else {
-			&mut *$cfg
+			unsafe { &mut *$cfg }
 		}
 	}};
 }
@@ -25,25 +25,19 @@ macro_rules! deref_ptr_mut {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! get_slice {
-	($buff: expr, $buff_size: expr) => {{
-		std::slice::from_raw_parts($buff, $buff_size).to_owned()
-	}};
+	($buff: expr, $buff_size: expr) => {{ unsafe { std::slice::from_raw_parts($buff, $buff_size).to_owned() } }};
 }
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! get_slice_mut {
-	($buff: expr, $buff_size: expr) => {{
-		std::slice::from_raw_parts_mut($buff, $buff_size)
-	}};
+	($buff: expr, $buff_size: expr) => {{ unsafe { std::slice::from_raw_parts_mut($buff, $buff_size) } }};
 }
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! get_string {
-	($ptr: expr) => {{
-		String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap()
-	}};
+	($ptr: expr) => {{ unsafe { String::from_utf8(CStr::from_ptr($ptr).to_bytes().to_vec()).unwrap() } }};
 }
 
 #[doc(hidden)]

@@ -1,6 +1,6 @@
 use super::{
-	std_default, std_nist, Algorithm, HashBuilder, LengthCalculationMethod, Normalization,
-	PasswordStorageStandard, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
+	Algorithm, DEFAULT_USER_VERSION, HashBuilder, INTERNAL_VERSION, LengthCalculationMethod,
+	Normalization, PasswordStorageStandard, XHMAC, std_default, std_nist,
 };
 use crate::hash::HashFunction;
 

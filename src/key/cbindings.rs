@@ -24,7 +24,7 @@ use crate::get_slice_mut;
 /// # Safety
 ///
 /// This function is a C binding and is therefore unsafe. It is not meant to be used in Rust.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn libreauth_keygen(buff: *mut u8, buff_len: libc::size_t) -> i32 {
 	let key_size = buff_len;
 	if key_size == 0 || buff.is_null() {

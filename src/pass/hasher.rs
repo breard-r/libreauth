@@ -4,8 +4,8 @@ mod balloon;
 pub(crate) mod pbkdf2;
 
 use super::{
-	error::Error, std_default, Algorithm, HashedDuo, HashingFunction, LengthCalculationMethod,
-	Normalization, DEFAULT_USER_VERSION, INTERNAL_VERSION, XHMAC,
+	Algorithm, DEFAULT_USER_VERSION, HashedDuo, HashingFunction, INTERNAL_VERSION,
+	LengthCalculationMethod, Normalization, XHMAC, error::Error, std_default,
 };
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;

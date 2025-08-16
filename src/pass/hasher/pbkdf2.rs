@@ -1,7 +1,7 @@
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
 use crate::pass::error::Error;
-use crate::pass::{std_default, HashingFunction, Normalization};
+use crate::pass::{HashingFunction, Normalization, std_default};
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use sha1::Sha1;

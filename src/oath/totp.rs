@@ -1,8 +1,8 @@
 #[cfg(feature = "oath-uri")]
 use super::DEFAULT_KEY_URI_PARAM_POLICY;
 use super::{
-	Error, HOTPBuilder, HashFunction, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN,
-	DEFAULT_TOTP_PERIOD, DEFAULT_TOTP_T0,
+	DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
+	DEFAULT_TOTP_T0, Error, HOTPBuilder, HashFunction,
 };
 #[cfg(feature = "oath-uri")]
 use crate::oath::key_uri::{KeyUriBuilder, UriType};
@@ -958,7 +958,10 @@ mod tests {
 		let uri = totp
 			.key_uri_format("Provider1", "alice@example.com")
 			.finalize();
-		assert_eq!(uri, "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&base=qwertyuiop");
+		assert_eq!(
+			uri,
+			"otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&base=qwertyuiop"
+		);
 	}
 
 	#[test]
@@ -975,6 +978,9 @@ mod tests {
 		let uri = totp
 			.key_uri_format("Provider1", "alice@example.com")
 			.finalize();
-		assert_eq!(uri, "otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&base=%C3%A8_%C3%A9%C3%B6%E2%82%AC%E2%80%A6%C3%B7%E2%80%94%E2%98%BA");
+		assert_eq!(
+			uri,
+			"otpauth://totp/Provider1:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Provider1&base=%C3%A8_%C3%A9%C3%B6%E2%82%AC%E2%80%A6%C3%B7%E2%80%94%E2%98%BA"
+		);
 	}
 }
