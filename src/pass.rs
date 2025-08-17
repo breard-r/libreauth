@@ -34,9 +34,9 @@
 //!         <tr>
 //!             <td rowspan="7">Global parameters</td>
 //!             <td>len-calc</td>
-//!             <td>string: bytes | chars</td>
+//!             <td>string: bytes | chars <i>(deprecated)</i> | codepoints | graphemes</td>
 //!             <td>Unicode string length calculation method.</td>
-//!             <td>chars</td>
+//!             <td>codepoints</td>
 //!         </tr>
 //!         <tr>
 //!             <td>norm</td>
