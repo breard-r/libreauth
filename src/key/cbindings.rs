@@ -1,5 +1,5 @@
-use super::KeyBuilder;
 use crate::get_slice_mut;
+use crate::key::KeyBuilder;
 
 /// [C binding] Generate a random key.
 ///

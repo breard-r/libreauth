@@ -3,14 +3,15 @@ mod argon2;
 mod balloon;
 pub(crate) mod pbkdf2;
 
-use super::{
-	Algorithm, DEFAULT_USER_VERSION, HashedDuo, HashingFunction, INTERNAL_VERSION,
-	LengthCalculationMethod, Normalization, XHMAC, error::Error, std_default,
-};
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
+use crate::pass::error::Error;
 use crate::pass::length::password_length;
 use crate::pass::phc::PHCData;
+use crate::pass::{
+	Algorithm, DEFAULT_USER_VERSION, HashedDuo, HashingFunction, INTERNAL_VERSION,
+	LengthCalculationMethod, Normalization, XHMAC, std_default,
+};
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256};

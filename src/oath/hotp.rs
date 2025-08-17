@@ -1,11 +1,11 @@
 #[cfg(feature = "oath-uri")]
-use super::DEFAULT_KEY_URI_PARAM_POLICY;
-use super::{
+use crate::oath::DEFAULT_KEY_URI_PARAM_POLICY;
+#[cfg(feature = "oath-uri")]
+use crate::oath::key_uri::{KeyUriBuilder, UriType};
+use crate::oath::{
 	DEFAULT_LOOK_AHEAD, DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, Error,
 	HashFunction,
 };
-#[cfg(feature = "oath-uri")]
-use crate::oath::key_uri::{KeyUriBuilder, UriType};
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256};
@@ -441,7 +441,7 @@ impl HOTPBuilder {
 
 #[cfg(test)]
 mod tests {
-	use super::HOTPBuilder;
+	use super::*;
 	use crate::hash::HashFunction;
 	#[cfg(feature = "oath-uri")]
 	use crate::oath::ParametersVisibility;

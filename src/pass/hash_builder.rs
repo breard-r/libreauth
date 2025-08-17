@@ -1,10 +1,10 @@
-use super::error::Error;
-use super::{
+use crate::hash::HashFunction;
+use crate::pass::error::Error;
+use crate::pass::phc::PHCData;
+use crate::pass::{
 	Algorithm, DEFAULT_USER_VERSION, Hasher, INTERNAL_VERSION, LengthCalculationMethod,
 	Normalization, PasswordStorageStandard, XHMAC, std_default, std_nist,
 };
-use crate::hash::HashFunction;
-use crate::pass::phc::PHCData;
 use std::collections::HashMap;
 use std::str::FromStr;
 

@@ -1,5 +1,5 @@
-use super::{Algorithm, LengthCalculationMethod, Normalization};
 use crate::hash::HashFunction;
+use crate::pass::{Algorithm, LengthCalculationMethod, Normalization};
 
 pub const DEFAULT_NORMALIZATION: Normalization = Normalization::Nfkc;
 pub const DEFAULT_PASSWORD_MIN_LEN: usize = 8;

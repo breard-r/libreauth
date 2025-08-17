@@ -1,11 +1,11 @@
 #[cfg(feature = "oath-uri")]
-use super::DEFAULT_KEY_URI_PARAM_POLICY;
-use super::{
+use crate::oath::DEFAULT_KEY_URI_PARAM_POLICY;
+#[cfg(feature = "oath-uri")]
+use crate::oath::key_uri::{KeyUriBuilder, UriType};
+use crate::oath::{
 	DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
 	DEFAULT_TOTP_T0, Error, HOTPBuilder, HashFunction,
 };
-#[cfg(feature = "oath-uri")]
-use crate::oath::key_uri::{KeyUriBuilder, UriType};
 #[cfg(feature = "oath-uri")]
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -311,7 +311,7 @@ impl TOTPBuilder {
 
 #[cfg(test)]
 mod tests {
-	use super::TOTPBuilder;
+	use super::*;
 	use crate::hash::HashFunction;
 
 	#[test]

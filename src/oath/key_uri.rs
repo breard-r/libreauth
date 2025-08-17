@@ -1,8 +1,8 @@
-use super::{
+use crate::oath::HashFunction;
+use crate::oath::{
 	DEFAULT_OTP_HASH, DEFAULT_OTP_OUT_BASE, DEFAULT_OTP_OUT_LEN, DEFAULT_TOTP_PERIOD,
 	DEFAULT_TOTP_T0,
 };
-use crate::oath::HashFunction;
 use std::collections::HashMap;
 use url::Url;
 

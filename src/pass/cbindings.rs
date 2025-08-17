@@ -1,9 +1,9 @@
-use super::{
+use crate::hash::HashFunction;
+use crate::pass::XHMAC;
+use crate::pass::{
 	Algorithm, DEFAULT_USER_VERSION, ErrorCode, HashBuilder, INTERNAL_VERSION,
 	LengthCalculationMethod, Normalization, PasswordStorageStandard, std_default, std_nist,
 };
-use crate::hash::HashFunction;
-use crate::pass::XHMAC;
 use crate::{deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string};
 use std::ffi::CStr;
 

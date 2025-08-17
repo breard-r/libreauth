@@ -153,7 +153,7 @@ impl PHCData {
 
 #[cfg(test)]
 mod tests {
-	use super::PHCData;
+	use super::*;
 
 	#[test]
 	fn test_to_string_same() {

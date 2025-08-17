@@ -1,6 +1,4 @@
-use super::HOTPBuilder;
-use super::TOTPBuilder;
-use crate::oath::{ErrorCode, HashFunction};
+use crate::oath::{ErrorCode, HOTPBuilder, HashFunction, TOTPBuilder};
 use crate::{
 	deref_ptr, deref_ptr_mut, get_slice, get_slice_mut, get_string, get_value_or_errno,
 	get_value_or_false,

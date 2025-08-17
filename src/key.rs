@@ -105,7 +105,7 @@ impl KeyBuilder {
 
 #[cfg(test)]
 mod tests {
-	use super::KeyBuilder;
+	use super::*;
 
 	#[test]
 	fn test_uniqueness() {

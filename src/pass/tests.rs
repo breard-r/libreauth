@@ -1,14 +1,11 @@
-use super::{
-	Algorithm, DEFAULT_USER_VERSION, HashBuilder, INTERNAL_VERSION, LengthCalculationMethod,
-	Normalization, PasswordStorageStandard, XHMAC, std_default, std_nist,
-};
 use crate::hash::HashFunction;
 use crate::pass::length::password_length;
+use crate::pass::*;
 
 #[cfg(feature = "stderror")]
 #[test]
 fn test_stderror() {
-	let err = super::Error::PasswordTooLong {
+	let err = Error::PasswordTooLong {
 		max: 128,
 		actual: 1024,
 	};
