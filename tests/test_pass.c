@@ -54,7 +54,7 @@ static uint32_t test_valid_pass(void) {
 	assert(cfg1.salt_len == 16);
 	assert(cfg1.version == 0);
 	assert(cfg1.algorithm == LIBREAUTH_PASS_ARGON2);
-	assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+	assert(cfg1.length_calculation == LIBREAUTH_PASS_CODEPOINTS);
 	assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
 	assert(cfg1.standard == LIBREAUTH_PASS_NOSTANDARD);
 
@@ -68,7 +68,7 @@ static uint32_t test_valid_pass(void) {
 	assert(cfg2.salt_len == 16);
 	assert(cfg2.version == 0);
 	assert(cfg2.algorithm == LIBREAUTH_PASS_ARGON2);
-	assert(cfg2.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+	assert(cfg2.length_calculation == LIBREAUTH_PASS_CODEPOINTS);
 	assert(cfg2.normalization == LIBREAUTH_PASS_NFKC);
 	assert(cfg2.standard == LIBREAUTH_PASS_NOSTANDARD);
 
@@ -93,7 +93,7 @@ static uint32_t test_nist_pass(void) {
 	assert(cfg1.salt_len == 16);
 	assert(cfg1.version == 0);
 	assert(cfg1.algorithm == LIBREAUTH_PASS_PBKDF2);
-	assert(cfg1.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+	assert(cfg1.length_calculation == LIBREAUTH_PASS_CODEPOINTS);
 	assert(cfg1.normalization == LIBREAUTH_PASS_NFKC);
 	assert(cfg1.standard == LIBREAUTH_PASS_NIST80063B);
 	cfg1.version = 42;
@@ -108,7 +108,7 @@ static uint32_t test_nist_pass(void) {
 	assert(cfg2.salt_len == 16);
 	assert(cfg2.version == 42);
 	assert(cfg2.algorithm == LIBREAUTH_PASS_PBKDF2);
-	assert(cfg2.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+	assert(cfg2.length_calculation == LIBREAUTH_PASS_CODEPOINTS);
 	assert(cfg2.normalization == LIBREAUTH_PASS_NFKC);
 	// If built from PHC, the standard is irrelevant.
 	assert(cfg2.standard == LIBREAUTH_PASS_NOSTANDARD);
@@ -133,7 +133,7 @@ static uint32_t test_invalid_pass(void) {
 	assert(cfg.salt_len == 4);
 	assert(cfg.version == 0);
 	assert(cfg.algorithm == LIBREAUTH_PASS_PBKDF2);
-	assert(cfg.length_calculation == LIBREAUTH_PASS_CHARACTERS);
+	assert(cfg.length_calculation == LIBREAUTH_PASS_CODEPOINTS);
 	assert(cfg.normalization == LIBREAUTH_PASS_NFKC);
 	assert(cfg.standard == LIBREAUTH_PASS_NOSTANDARD);
 

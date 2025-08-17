@@ -146,9 +146,11 @@ impl HashBuilder {
 			Some(v) => match v.as_str() {
 				"bytes" => LengthCalculationMethod::Bytes,
 				"chars" => LengthCalculationMethod::Characters,
+				"codepoints" => LengthCalculationMethod::CodePoints,
+				"graphemes" => LengthCalculationMethod::Graphemes,
 				_ => return Err(Error::InvalidPasswordFormat),
 			},
-			None => LengthCalculationMethod::Characters,
+			None => LengthCalculationMethod::CodePoints,
 		};
 		let norm = match phc.parameters.remove("norm") {
 			Some(v) => match v.as_str() {

@@ -9,6 +9,7 @@ use super::{
 };
 use crate::hash::HashFunction;
 use crate::key::KeyBuilder;
+use crate::pass::length::password_length;
 use crate::pass::phc::PHCData;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
@@ -43,16 +44,7 @@ pub struct Hasher {
 
 impl Hasher {
 	fn check_password(&self, password: &str) -> Result<(), Error> {
-		let pass_len = match self.length_calculation {
-			LengthCalculationMethod::Bytes => password.len(),
-			LengthCalculationMethod::Characters => {
-				let mut len = 0;
-				for _ in password.chars() {
-					len += 1;
-				}
-				len
-			}
-		};
+		let pass_len = password_length(password, self.length_calculation);
 		if pass_len < self.min_len {
 			return Err(Error::PasswordTooShort {
 				min: self.min_len,
@@ -136,6 +128,8 @@ impl Hasher {
 		let lc = match self.length_calculation {
 			LengthCalculationMethod::Bytes => "bytes",
 			LengthCalculationMethod::Characters => "chars",
+			LengthCalculationMethod::CodePoints => "codepoints",
+			LengthCalculationMethod::Graphemes => "graphemes",
 		};
 		let mut params = hash_func.get_parameters();
 		params.insert("len-calc".to_string(), lc.to_string());

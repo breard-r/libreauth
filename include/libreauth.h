@@ -92,7 +92,9 @@ typedef enum {
 
 typedef enum {
 	LIBREAUTH_PASS_BYTES		= 0,
-	LIBREAUTH_PASS_CHARACTERS	= 1
+	LIBREAUTH_PASS_CHARACTERS	= 1,
+	LIBREAUTH_PASS_CODEPOINTS	= 2,
+	LIBREAUTH_PASS_GRAPHEMES	= 3
 } libreauth_pass_len_calc;
 
 typedef enum {

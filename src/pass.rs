@@ -180,6 +180,7 @@ mod cbindings;
 mod error;
 mod hash_builder;
 mod hasher;
+pub(crate) mod length;
 mod phc;
 pub(crate) mod std_default;
 pub(crate) mod std_nist;
@@ -274,8 +275,16 @@ pub enum Algorithm {
 ///             <td>LIBREAUTH_PASS_BYTES</td>
 ///         </tr>
 ///         <tr>
-///             <td>Characters</td>
+///             <td>Characters (deprecated)</td>
 ///             <td>LIBREAUTH_PASS_CHARACTERS</td>
+///         </tr>
+///         <tr>
+///             <td>CodePoints</td>
+///             <td>LIBREAUTH_PASS_CODEPOINTS</td>
+///         </tr>
+///         <tr>
+///             <td>Graphemes</td>
+///             <td>LIBREAUTH_PASS_GRAPHEMES</td>
 ///         </tr>
 ///     </tbody>
 /// </table>
@@ -283,7 +292,13 @@ pub enum Algorithm {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LengthCalculationMethod {
 	Bytes = 0,
+	#[deprecated(
+		since = "0.18.0",
+		note = "Characters are loosely defined, you should use CodePoints instead."
+	)]
 	Characters = 1,
+	CodePoints = 2,
+	Graphemes = 3,
 }
 
 /// Available string normalization methods.

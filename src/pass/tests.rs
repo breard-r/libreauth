@@ -3,6 +3,7 @@ use super::{
 	Normalization, PasswordStorageStandard, XHMAC, std_default, std_nist,
 };
 use crate::hash::HashFunction;
+use crate::pass::length::password_length;
 
 #[cfg(feature = "stderror")]
 #[test]
@@ -238,6 +239,51 @@ fn test_no_normalize() {
 	assert!(!checker.is_valid(&s2));
 	assert!(!checker.is_valid(&s3));
 	assert!(!checker.is_valid(&s4));
+}
+
+#[test]
+fn test_length_calc_bytes() {
+	let tests = [
+		("", 0),
+		(" ", 1),
+		("a    b", 6),
+		("My Password", 11),
+		("Ṱ̴̥̤͓̰͙̞̞̔̈́ͅͅȩ̵̟̻̈́͑̅̆̇́͒͛̌̂̈́̈́͋̂ş̷̛̬͍͈̹̘̮̠̯̠͓̙͉̒̎͐͑͋͜͝t̴̡̥̮̼͉̳̩̮̲̱̬̰̓̋̈́͆̚͜", 148),
+	];
+	for (password, ctrl_len) in tests {
+		let calc_len = password_length(password, LengthCalculationMethod::Bytes);
+		assert_eq!(calc_len, ctrl_len);
+	}
+}
+
+#[test]
+fn test_length_calc_codepoints() {
+	let tests = [
+		("", 0),
+		(" ", 1),
+		("a    b", 6),
+		("My Password", 11),
+		("Ṱ̴̥̤͓̰͙̞̞̔̈́ͅͅȩ̵̟̻̈́͑̅̆̇́͒͛̌̂̈́̈́͋̂ş̷̛̬͍͈̹̘̮̠̯̠͓̙͉̒̎͐͑͋͜͝t̴̡̥̮̼͉̳̩̮̲̱̬̰̓̋̈́͆̚͜", 76),
+	];
+	for (password, ctrl_len) in tests {
+		let calc_len = password_length(password, LengthCalculationMethod::CodePoints);
+		assert_eq!(calc_len, ctrl_len);
+	}
+}
+
+#[test]
+fn test_length_calc_graphemes() {
+	let tests = [
+		("", 0),
+		(" ", 1),
+		("a    b", 6),
+		("My Password", 11),
+		("Ṱ̴̥̤͓̰͙̞̞̔̈́ͅͅȩ̵̟̻̈́͑̅̆̇́͒͛̌̂̈́̈́͋̂ş̷̛̬͍͈̹̘̮̠̯̠͓̙͉̒̎͐͑͋͜͝t̴̡̥̮̼͉̳̩̮̲̱̬̰̓̋̈́͆̚͜", 4),
+	];
+	for (password, ctrl_len) in tests {
+		let calc_len = password_length(password, LengthCalculationMethod::Graphemes);
+		assert_eq!(calc_len, ctrl_len);
+	}
 }
 
 #[test]

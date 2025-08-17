@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+- New length calculation methods: CodePoints and Graphemes.
+
 ### Changed
 - Upgraded to Rust edition 2024.
 - The minimum supported Rust version (MSRV) is now 1.85.
+- The `Characters` length calculation method has been deprecated.
 
 
 ## [0.17.0] - 2024-11-18

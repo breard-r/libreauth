@@ -48,4 +48,5 @@ sha2 = { version = "0.10.6", default-features = false, optional = true }
 sha3 = { version = "0.10.7", default-features = false, optional = true }
 thiserror = { version = "2.0.3", default-features = false, optional = true }
 unicode-normalization = { version = "0.1.22", default-features = false, optional = true }
+unicode_reader = { version = "1.0.2", default-features = false }
 url = { version = "2.3.1", optional = true }
