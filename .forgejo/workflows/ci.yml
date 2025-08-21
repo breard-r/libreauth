@@ -72,7 +72,7 @@ jobs:
     runs-on: codeberg-tiny
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v4
-      - name: Install REUSE
-        run: sudo apt update && sudo apt install -y reuse
+      - name: Install pipx
+        run: sudo apt update && sudo apt install -y pipx
       - name: Run REUSE
-        run: reuse lint
+        run: pipx run reuse lint
