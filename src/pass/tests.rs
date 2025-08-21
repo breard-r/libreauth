@@ -254,6 +254,21 @@ fn test_length_calc_bytes() {
 }
 
 #[test]
+fn test_length_calc_chars() {
+	let tests = [
+		("", 0),
+		(" ", 1),
+		("a    b", 6),
+		("My Password", 11),
+		("Ṱ̴̥̤͓̰͙̞̞̔̈́ͅͅȩ̵̟̻̈́͑̅̆̇́͒͛̌̂̈́̈́͋̂ş̷̛̬͍͈̹̘̮̠̯̠͓̙͉̒̎͐͑͋͜͝t̴̡̥̮̼͉̳̩̮̲̱̬̰̓̋̈́͆̚͜", 76),
+	];
+	for (password, ctrl_len) in tests {
+		let calc_len = password_length(password, LengthCalculationMethod::Characters);
+		assert_eq!(calc_len, ctrl_len);
+	}
+}
+
+#[test]
 fn test_length_calc_codepoints() {
 	let tests = [
 		("", 0),
