@@ -25,7 +25,7 @@ jobs:
       - name: Install rustup
         run: ./rustup_install.sh -y
       - name: Install Rust ${{ matrix.rust }}
-        run: rustup toolchain install ${{ matrix.rust }}
+        run: source "$HOME/.cargo/env" && rustup toolchain install ${{ matrix.rust }}
       - name: Run cargo build
         run: source "$HOME/.cargo/env" && cargo +${{ matrix.rust }} build --all-features --verbose
       - name: Run cargo test
