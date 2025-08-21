@@ -1,6 +1,5 @@
 # LibreAuth
 
-[![Build Status](https://github.com/breard-r/libreauth/actions/workflows/ci.yml/badge.svg)](https://github.com/breard-r/libreauth/actions/workflows/ci.yml)
 [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
 [![LibreAuth on docs.rs](https://docs.rs/libreauth/badge.svg)](https://docs.rs/libreauth/)
 [![License: CeCILL-C](https://img.shields.io/badge/license-CeCILL--C-green.svg)](http://cecill.info/licences/Licence_CeCILL-C_V1-en.html)

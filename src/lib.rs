@@ -1,5 +1,4 @@
 //!
-//! [![Build Status](https://github.com/breard-r/libreauth/actions/workflows/ci.yml/badge.svg)](https://github.com/breard-r/libreauth/actions/workflows/ci.yml)
 //! [![LibreAuth on crates.io](https://img.shields.io/crates/v/libreauth.svg)](https://crates.io/crates/libreauth)
 //! [![LibreAuth on docs.rs](https://docs.rs/libreauth/badge.svg)](https://docs.rs/libreauth/)
 //!
