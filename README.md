@@ -74,18 +74,15 @@ present in the first stable version and their individual status.
 You can find LibreAuth on [crates.io](https://crates.io/crates/libreauth) and
 include it in your `Cargo.toml`:
 
-```toml
-libreauth = "*"
+```
+cargo add libreauth
 ```
 
-Modules can be cherry-picked using `default-features = false` and then using
-only the features you want.
+Modules can be cherry-picked using `--no-default-features` and then using only
+the features you want.
 
-```toml
-[dependencies.libreauth]
-version = "*"
-default-features = false
-features = ["key", "oath", "pass"]
+```
+cargo add libreauth --no-default-features --features key,oath,pass
 ```
 
 
