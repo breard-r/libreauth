@@ -158,5 +158,13 @@ $ ./totp
 LibreAuth is a free software available either under the CeCILL-C or the CeCILL
 2.1 license. For a quick summary of those licenses, you can read the
 [frequently asked questions](http://cecill.info/faq.en.html) on the licenses'
-website. A full copy of those licenses are available in this repository both in
-english and french.
+website.
+
+Some file that are not directly part of the source code itself are distributed
+under the CC0-1.0 license.
+
+This project is [REUSE][reuse] compliant. You will therefore find a copy of
+every license in the `LICENSES` directory and more details on the applicable
+license of every file in the `REUSE.toml` file.
+
+[reuse]: https://reuse.software/
