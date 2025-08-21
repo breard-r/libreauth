@@ -1,0 +1,69 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Build & test on Rust ${{ matrix.rust }}
+    runs-on: codeberg-tiny
+    strategy:
+      matrix:
+        rust:
+          - 1.85.1
+          - 1.86.0
+          - 1.87.0
+          - 1.88.0
+          - 1.89.0
+          - stable
+          - beta
+          - nightly
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Install valgrind
+        run: sudo apt update && sudo apt install -y build-essential valgrind
+      - name: Download rustup install script
+        run: curl --proto '=https' --tlsv1.2 --output 'rustup_install.sh' -sSf https://sh.rustup.rs && chmod a+x 'rustup_install.sh'
+      - name: Install rustup
+        run: ./rustup_install.sh -y
+      - name: Install Rust ${{ matrix.rust }}
+        run: rustup toolchain install ${{ matrix.rust }}
+      - name: Run cargo build
+        run: source "$HOME/.cargo/env" && cargo +${{ matrix.rust }} build --all-features --verbose
+      - name: Run cargo test
+        run: source "$HOME/.cargo/env" && cargo +${{ matrix.rust }} test --all-features --verbose
+      - name: Run C bindings tests
+        run: make -C tests clean test
+  formatting:
+    name: Cargo fmt
+    runs-on: codeberg-tiny
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Download rustup install script
+        run: curl --proto '=https' --tlsv1.2 --output 'rustup_install.sh' -sSf https://sh.rustup.rs && chmod a+x 'rustup_install.sh'
+      - name: Install rustup
+        run: ./rustup_install.sh -y
+      - name: Run cargo fmt
+        run: source "$HOME/.cargo/env" && cargo +stable fmt --all -- --check
+  clippy:
+    name: Clippy
+    runs-on: codeberg-tiny
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Download rustup install script
+        run: curl --proto '=https' --tlsv1.2 --output 'rustup_install.sh' -sSf https://sh.rustup.rs && chmod a+x 'rustup_install.sh'
+      - name: Install rustup
+        run: ./rustup_install.sh -y
+      - name: Run clippy
+        run: source "$HOME/.cargo/env" && cargo +stable clippy --all-features
+  cargo-deny:
+    name: Check dependencies
+    runs-on: codeberg-tiny
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Download rustup install script
+        run: curl --proto '=https' --tlsv1.2 --output 'rustup_install.sh' -sSf https://sh.rustup.rs && chmod a+x 'rustup_install.sh'
+      - name: Install rustup
+        run: ./rustup_install.sh -y
+      - name: Install cargo-deny
+        run: source "$HOME/.cargo/env" && cargo install --locked cargo-deny
+      - name: Run cargo-deny
+        run: source "$HOME/.cargo/env" && cargo deny --all-features check
