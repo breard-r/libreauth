@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v4
       - name: Install valgrind
-        run: sudo apt update && sudo apt install -y build-essential valgrind
+        run: sudo apt update && sudo apt install -y clang build-essential valgrind
       - name: Download rustup install script
         run: curl --proto '=https' --tlsv1.2 --output 'rustup_install.sh' -sSf https://sh.rustup.rs && chmod a+x 'rustup_install.sh'
       - name: Install rustup
