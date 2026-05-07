@@ -86,6 +86,19 @@ the features you want.
 cargo add libreauth --no-default-features --features key,oath,pass
 ```
 
+Available features are:
+
+- `cbindings`: include bindings for the C language
+- `key`: include the key generation module
+- `oath`: include the oath module
+- `oath-uri`: allows to build an URI for HOTP and TOTP
+- `pass`: include the password authentication module
+- `balloon`: add the Balloon hash function to the password hashing module
+- `stderror`: derive the [`std::error::Error`][err_trait] trait for
+  `libreauth::oath::Error` and `libreauth::pass::Error`
+
+[err_trait]: https://doc.rust-lang.org/std/error/trait.Error.html
+
 
 ## Using outside Rust
 
