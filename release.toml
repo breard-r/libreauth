@@ -1,7 +1,0 @@
-pre-release-commit-message = "LibreAuth version {{version}}"
-pre-release-hook = ["make", "clean", "audit", "test"]
-pre-release-replacements = [
-    {file="CHANGELOG.md", search="Unreleased", replace="{{version}}"},
-    {file="CHANGELOG.md", search="ReleaseDate", replace="{{date}}"},
-]
-tag-message = "LibreAuth version {{version}}"
